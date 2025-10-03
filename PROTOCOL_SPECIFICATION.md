@@ -21,8 +21,8 @@ Represents a smart input field with constraints and value sources.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `displayName` | string | ✓ | Human-readable field label |
 | `description` | string | | Detailed explanation of field purpose |
-| `inputType` | string | ✓ | Input type: `TEXT`, `NUMBER`, `DATE`, `BOOLEAN`, `SELECT` |
 | `dataType` | string | ✓ | Data type: `STRING`, `NUMBER`, `DATE`, `BOOLEAN` |
 | `expectMultipleValues` | boolean | ✓ | Whether field accepts array of values |
 | `constraints` | map<string, ConstraintDescriptor> | ✓ | Named constraints describing expected values |
@@ -30,13 +30,12 @@ Represents a smart input field with constraints and value sources.
 **Note on types:** 
 - `dataType` describes the **singleton element type** only
 - If `expectMultipleValues` is `true`, the field works with arrays of this type
-- `inputType` hints at the UI component to use (`SELECT` for dropdowns, `TEXT` for text inputs, etc.)
 
 **Example:**
 ```json
 {
+  "displayName": "Task Assignee",
   "description": "Select user(s) to assign task to",
-  "inputType": "SELECT",
   "dataType": "STRING",
   "expectMultipleValues": false,
   "constraints": {
@@ -102,7 +101,7 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
 
 **Validation order:**
 1. Check `required` (if absent and `required=true` → error)
-2. Type validation (implicit from `applicableToType`)
+2. Type validation (implicit from `dataType`)
 3. `pattern` (if present)
 4. `min` and `max` (interpret based on context)
 5. `format` (semantic hint, optional strict validation)
@@ -165,7 +164,7 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
 **Date range:**
 ```json
 {
-  "applicableToType": "DATE",
+  "dataType": "DATE",
   "expectMultipleValues": false,
   "constraints": {
     "startDate": {
@@ -181,7 +180,7 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
 **Static enum:**
 ```json
 {
-  "applicableToType": "STRING",
+  "dataType": "STRING",
   "expectMultipleValues": false,
   "constraints": {
     "status": {
@@ -199,7 +198,7 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
 **Remote values:**
 ```json
 {
-  "applicableToType": "STRING",
+  "dataType": "STRING",
   "expectMultipleValues": false,
   "constraints": {
     "assignee": {
@@ -227,7 +226,7 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
 **Pattern with format hint:**
 ```json
 {
-  "applicableToType": "STRING",
+  "dataType": "STRING",
   "expectMultipleValues": false,
   "constraints": {
     "email": {
@@ -310,8 +309,8 @@ Represents a single value option.
 ### Example 1: Simple Text Input
 ```json
 {
+  "displayName": "Username",
   "description": "User's unique identifier",
-  "inputType": "TEXT",
   "dataType": "STRING",
   "expectMultipleValues": false,
   "constraints": {
@@ -330,8 +329,8 @@ Represents a single value option.
 ### Example 2: Numeric Range Input
 ```json
 {
+  "displayName": "Price",
   "description": "Price filter range",
-  "inputType": "NUMBER",
   "dataType": "NUMBER",
   "expectMultipleValues": false,
   "constraints": {
@@ -349,8 +348,8 @@ Represents a single value option.
 ### Example 3: Email Input with Pattern
 ```json
 {
+  "displayName": "Email Address",
   "description": "Contact email address",
-  "inputType": "TEXT",
   "dataType": "STRING",
   "expectMultipleValues": false,
   "constraints": {
@@ -368,8 +367,8 @@ Represents a single value option.
 ### Example 4: Static Select Field
 ```json
 {
+  "displayName": "Status",
   "description": "Filter by status",
-  "inputType": "SELECT",
   "dataType": "STRING",
   "expectMultipleValues": false,
   "constraints": {
@@ -390,8 +389,8 @@ Represents a single value option.
 ### Example 5: Searchable User Select with Pagination
 ```json
 {
+  "displayName": "Assigned To",
   "description": "Assign task to user",
-  "inputType": "SELECT",
   "dataType": "STRING",
   "expectMultipleValues": false,
   "constraints": {
@@ -430,8 +429,8 @@ Represents a single value option.
 ### Example 6: Multi-Select Tags with Search
 ```json
 {
+  "displayName": "Tags",
   "description": "Select relevant tags for content",
-  "inputType": "SELECT",
   "dataType": "STRING",
   "expectMultipleValues": true,
   "constraints": {
@@ -464,8 +463,8 @@ Represents a single value option.
 ### Example 7: Date Range Input
 ```json
 {
+  "displayName": "Created Date",
   "description": "Filter by creation date",
-  "inputType": "DATE",
   "dataType": "DATE",
   "expectMultipleValues": false,
   "constraints": {
@@ -489,7 +488,6 @@ Represents a single value option.
 
 **Query Parameters:**
 - `dataType` (optional): Filter by data type (`STRING`, `NUMBER`, `DATE`, `BOOLEAN`)
-- `inputType` (optional): Filter by input type (`TEXT`, `SELECT`, `NUMBER`, `DATE`)
 
 **Response:**
 ```json
@@ -561,7 +559,7 @@ GET /api/tags?q=java
    - If `valuesEndpoint` present → fetch and render dropdown/select with pagination
    - Otherwise → render based on type and constraints
 
-2. **Determine input type based on `applicableToType`:**
+2. **Determine input type based on `dataType`:**
    - `STRING` → text input (validate with `pattern`, `min`/`max` for length)
    - `NUMBER` → number input (validate with `min`/`max` for value)
    - `BOOLEAN` → checkbox/toggle
@@ -582,7 +580,7 @@ GET /api/tags?q=java
 
 **Validation Logic Example:**
 ```javascript
-function validateConstraint(value, constraint, applicableToType, expectMultiple) {
+function validateConstraint(value, constraint, dataType, expectMultiple) {
   // Check required
   if (constraint.required && !value) {
     return constraint.errorMessage || "This field is required";
@@ -600,18 +598,18 @@ function validateConstraint(value, constraint, applicableToType, expectMultiple)
     }
     // Validate each element
     for (const item of value) {
-      const error = validateSingleValue(item, constraint, applicableToType);
+      const error = validateSingleValue(item, constraint, dataType);
       if (error) return error;
     }
     return null;
   }
   
   // For single values
-  return validateSingleValue(value, constraint, applicableToType);
+  return validateSingleValue(value, constraint, dataType);
 }
 
-function validateSingleValue(value, constraint, applicableToType) {
-  if (applicableToType === "STRING") {
+function validateSingleValue(value, constraint, dataType) {
+  if (dataType === "STRING") {
     if (constraint.pattern && !new RegExp(constraint.pattern).test(value)) {
       return constraint.errorMessage || "Invalid format";
     }
@@ -623,7 +621,7 @@ function validateSingleValue(value, constraint, applicableToType) {
     }
   }
   
-  if (applicableToType === "NUMBER") {
+  if (dataType === "NUMBER") {
     if (constraint.min !== undefined && value < constraint.min) {
       return constraint.errorMessage || `Minimum value is ${constraint.min}`;
     }
@@ -632,7 +630,7 @@ function validateSingleValue(value, constraint, applicableToType) {
     }
   }
   
-  if (applicableToType === "DATE") {
+  if (dataType === "DATE") {
     const date = new Date(value);
     if (constraint.min && date < new Date(constraint.min)) {
       return constraint.errorMessage || `Date must be after ${constraint.min}`;
@@ -679,16 +677,15 @@ async function fetchValues(valuesEndpoint, page = 1) {
 
 ### 5.2 Server-Side Behavior
 
-**Operator Registration:**
-1. Define operators with complete metadata
-2. Ensure `id` is unique and stable
-3. Provide clear `description` and `errorMessage` for each constraint
-4. Set appropriate `applicableToType`
-5. Define all constraints with proper validation rules
+**Field Specification:**
+1. Define fields with complete metadata
+2. Provide clear `description` and `errorMessage` for each constraint
+3. Set appropriate `dataType`
+4. Define all constraints with proper validation rules
 
 **Constraint Validation:**
 1. Check all `required` constraints are satisfied
-2. Validate types match declared `applicableToType`
+2. Validate types match declared `dataType`
 3. Apply context-dependent `min`/`max` validation
 4. Validate `pattern` for strings
 5. Return appropriate `errorMessage` when validation fails
@@ -702,12 +699,10 @@ async function fetchValues(valuesEndpoint, page = 1) {
 
 ### 5.3 Best Practices
 
-**Operator Design:**
-- Use meaningful, stable `id` strings
-- Never assume client knowledge of specific operators
+**Field Design:**
 - Provide complete, self-contained metadata
 - Keep constraints simple and focused
-- Use `applicableToType` precisely (one type per operator)
+- Use `dataType` precisely (one type per field)
 
 **Constraint Design:**
 - Use clear, descriptive constraint keys
@@ -754,8 +749,7 @@ async function fetchValues(valuesEndpoint, page = 1) {
 ```
 
 **Error Codes:**
-- `INVALID_PROPERTY`: Unknown property name
-- `UNSUPPORTED_OPERATOR`: Operator not applicable to property type
+- `INVALID_FIELD`: Unknown field name
 - `CONSTRAINT_VIOLATION`: Constraint validation failed
 - `VALUES_FETCH_ERROR`: Failed to fetch values from endpoint
 - `MISSING_REQUIRED_CONSTRAINT`: Required constraint not provided
@@ -768,8 +762,8 @@ async function fetchValues(valuesEndpoint, page = 1) {
 Protocol version: **2.0.0**
 
 **Key Principles:**
-- Clients discover operators dynamically
-- No assumptions about operator IDs or availability
+- Clients discover field specifications dynamically
+- No assumptions about field names or availability
 - Metadata is self-contained and complete
 - Backward compatibility through additive changes
 
@@ -780,7 +774,7 @@ Protocol version: **2.0.0**
 
 **Non-breaking changes:**
 - Adding optional fields
-- Adding new operators
+- Adding new field types
 - Extending validation rules
 - Adding new pagination strategies
 
@@ -801,53 +795,51 @@ Protocol version: **2.0.0**
 
 ## 9. Complete Usage Flow
 
-### Scenario: Dynamic filter with paginated user selection
+### Scenario: Dynamic field with paginated user selection
 
-**Step 1:** Client requests operators
+**Step 1:** Client requests field specification
 ```
-GET /api/operators/property/assignee
+GET /api/fields/assignee
 ```
 
 **Step 2:** Server responds
 ```json
 {
-  "property": "assignee",
-  "propertyType": "STRING",
-  "operators": [
-    {
-      "id": "assigned_to",
-      "displayName": "Assigned to",
-      "applicableToType": "STRING",
-      "expectMultipleValues": false,
-      "constraints": {
-        "userId": {
-          "required": true,
-          "errorMessage": "Please select a user",
-          "valuesEndpoint": {
-            "protocol": "HTTP",
-            "uri": "/api/users",
-            "paginationStrategy": "PAGE_NUMBER",
-            "responseMapping": {
-              "dataField": "data",
-              "totalField": "total",
-              "hasNextField": "hasNext"
-            },
-            "requestParams": {
-              "pageParam": "page",
-              "limitParam": "limit",
-              "defaultLimit": 50
-            }
+  "field": {
+    "displayName": "Assigned To",
+    "description": "Assign task to user",
+    "dataType": "STRING",
+    "expectMultipleValues": false,
+    "constraints": {
+      "value": {
+        "required": true,
+        "errorMessage": "Please select a user",
+        "valuesEndpoint": {
+          "protocol": "HTTP",
+          "uri": "/api/users",
+          "searchField": "name",
+          "paginationStrategy": "PAGE_NUMBER",
+          "responseMapping": {
+            "dataField": "data",
+            "totalField": "total",
+            "hasNextField": "hasNext"
+          },
+          "requestParams": {
+            "pageParam": "page",
+            "limitParam": "limit",
+            "searchParam": "search",
+            "defaultLimit": 50
           }
         }
       }
     }
-  ]
+  }
 }
 ```
 
 **Step 3:** Client fetches first page
 ```
-GET /api/users?page=1&limit=50
+GET /api/users?page=1&limit=50&search=john
 ```
 
 **Step 4:** Server returns
@@ -855,27 +847,24 @@ GET /api/users?page=1&limit=50
 {
   "data": [
     { "value": "usr_123", "label": "John Doe" },
-    { "value": "usr_456", "label": "Jane Smith" }
+    { "value": "usr_456", "label": "John Smith" }
   ],
-  "total": 150,
-  "hasNext": true
+  "total": 2,
+  "hasNext": false
 }
 ```
 
-**Step 5:** Client renders dropdown, user selects, loads more pages as needed
+**Step 5:** Client renders input field, user selects, loads more pages as needed
 
 **Step 6:** User submits:
 ```json
 {
-  "property": "assignee",
-  "operator": "assigned_to",
-  "constraints": {
-    "userId": "usr_123"
-  }
+  "field": "assignee",
+  "value": "usr_123"
 }
 ```
 
-**Step 7:** Server validates and applies filter
+**Step 7:** Server validates and processes input
 
 ---
 
