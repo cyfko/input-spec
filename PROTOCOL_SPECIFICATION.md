@@ -65,7 +65,9 @@ Represents a smart input field with constraints and value sources.
     }
   ]
 }
-```### 2.2 ConstraintDescriptor
+```
+
+### 2.2 ConstraintDescriptor
 
 Describes a single constraint on parameter values.
 
