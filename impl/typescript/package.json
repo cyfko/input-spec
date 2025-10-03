@@ -1,0 +1,65 @@
+{
+  "name": "input-field-spec-ts",
+  "version": "1.0.0",
+  "description": "TypeScript implementation of the Dynamic Input Field Specification Protocol v2.0",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.esm.js",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "dev": "tsup src/index.ts --format cjs,esm --dts --watch",
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "lint": "eslint src/**/*.ts",
+    "lint:fix": "eslint src/**/*.ts --fix",
+    "format": "prettier --write src/**/*.ts",
+    "check-format": "prettier --check src/**/*.ts",
+    "clean": "rimraf dist",
+    "prepublishOnly": "npm run clean && npm run build && npm run test",
+    "type-check": "tsc --noEmit",
+    "examples:basic": "tsx examples/basic-validation.ts",
+    "examples:dynamic": "tsx examples/dynamic-values.ts",
+    "examples:complete": "tsx examples/complete-form.ts",
+    "examples:demo": "tsx examples/demo.ts",
+    "examples:all": "npm run examples:demo"
+  },
+  "keywords": [
+    "input-field",
+    "validation",
+    "form",
+    "specification",
+    "protocol",
+    "typescript"
+  ],
+  "author": "cyfko",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/cyfko/input-spec.git",
+    "directory": "impl"
+  },
+  "files": [
+    "dist"
+  ],
+  "devDependencies": {
+    "@types/jest": "^29.5.14",
+    "@types/node": "^20.19.19",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
+    "eslint": "^8.53.0",
+    "eslint-config-prettier": "^9.1.2",
+    "eslint-plugin-prettier": "^5.5.4",
+    "jest": "^29.7.0",
+    "prettier": "^3.0.3",
+    "rimraf": "^6.0.1",
+    "ts-jest": "^29.4.4",
+    "tsup": "^7.2.0",
+    "tsx": "^4.20.6",
+    "typescript": "^5.9.3"
+  },
+  "engines": {
+    "node": ">=16.0.0"
+  },
+  "packageManager": "pnpm@8.10.0"
+}

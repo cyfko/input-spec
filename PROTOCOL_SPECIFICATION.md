@@ -25,11 +25,14 @@ Represents a smart input field with constraints and value sources.
 | `description` | string | | Detailed explanation of field purpose |
 | `dataType` | string | ✓ | Data type: `STRING`, `NUMBER`, `DATE`, `BOOLEAN` |
 | `expectMultipleValues` | boolean | ✓ | Whether field accepts array of values |
-| `constraints` | map<string, ConstraintDescriptor> | ✓ | Named constraints describing expected values |
+| `required` | boolean | ✓ | Whether this field is required (moved from constraints for better API design) |
+| `constraints` | ConstraintDescriptor[] | ✓ | Array of constraints with ordered execution |
 
-**Note on types:** 
+**Note on types:**
 - `dataType` describes the **singleton element type** only
 - If `expectMultipleValues` is `true`, the field works with arrays of this type
+- **Constraints are executed in order**, allowing for logical sequencing of validation rules
+- The `required` field has been moved to the top-level for better API ergonomics
 
 **Example:**
 ```json
@@ -38,11 +41,12 @@ Represents a smart input field with constraints and value sources.
   "description": "Select user(s) to assign task to",
   "dataType": "STRING",
   "expectMultipleValues": false,
-  "constraints": {
-    "value": {
-      "required": true,
-      "description": "User identifier",
-      "errorMessage": "Please select a user",
+  "required": true,
+  "constraints": [
+    {
+      "name": "format",
+      "description": "User identifier validation",
+      "errorMessage": "Please select a valid user",
       "valuesEndpoint": {
         "protocol": "HTTP",
         "uri": "/api/users",
@@ -59,17 +63,15 @@ Represents a smart input field with constraints and value sources.
         }
       }
     }
-  }
+  ]
 }
-```
-
-### 2.2 ConstraintDescriptor
+```### 2.2 ConstraintDescriptor
 
 Describes a single constraint on parameter values.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `required` | boolean | ✓ | Whether constraint must be satisfied |
+| `name` | string | ✓ | Unique identifier for this constraint (used for validation ordering) |
 | `description` | string | | Human-readable explanation |
 | `errorMessage` | string | | Error message if constraint not satisfied |
 | `defaultValue` | any | | Default value if not provided |
@@ -98,14 +100,18 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
 - `pattern` and `format` apply **per element** (whether singleton or in array)
 - When `expectMultipleValues` is `true`, `min`/`max` constrain the **array length**
 - All constraints present must be satisfied (logical AND)
+- **Constraints are processed in array order**, enabling deterministic validation sequencing
+- The `required` validation is now handled at the `InputFieldSpec` level, not per constraint
 
 **Validation order:**
-1. Check `required` (if absent and `required=true` → error)
+1. Check field-level `required` (if field is empty and `required=true` → error)
 2. Type validation (implicit from `dataType`)
-3. `pattern` (if present)
-4. `min` and `max` (interpret based on context)
-5. `format` (semantic hint, optional strict validation)
-6. `enumValues` or `valuesEndpoint` (if present)
+3. **Execute constraints in array order:**
+   - For each constraint in the `constraints` array:
+     - Apply `pattern` (if present)
+     - Apply `min` and `max` (interpret based on context)
+     - Apply `format` (semantic hint, optional strict validation)
+     - Apply `enumValues` or `valuesEndpoint` (if present)
 
 **Examples:**
 
@@ -114,16 +120,17 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
 {
   "dataType": "STRING",
   "expectMultipleValues": false,
-  "constraints": {
-    "value": {
-      "required": true,
+  "required": true,
+  "constraints": [
+    {
+      "name": "value",
       "min": 3,
       "max": 20,
       "pattern": "^[a-zA-Z0-9_]+$",
       "description": "Username (3-20 alphanumeric characters)",
       "errorMessage": "Username must be 3-20 characters, alphanumeric with underscores"
     }
-  }
+  ]
 }
 ```
 
@@ -132,15 +139,16 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
 {
   "dataType": "NUMBER",
   "expectMultipleValues": false,
-  "constraints": {
-    "value": {
-      "required": true,
+  "required": true,
+  "constraints": [
+    {
+      "name": "value",
       "min": 0,
       "max": 150,
       "description": "Age in years",
       "errorMessage": "Age must be between 0 and 150"
     }
-  }
+  ]
 }
 ```
 
@@ -149,15 +157,16 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
 {
   "dataType": "STRING",
   "expectMultipleValues": true,
-  "constraints": {
-    "value": {
-      "required": true,
+  "required": true,
+  "constraints": [
+    {
+      "name": "value",
       "min": 1,
       "max": 10,
       "description": "Select 1 to 10 tags",
       "errorMessage": "You must select between 1 and 10 tags"
     }
-  }
+  ]
 }
 ```
 
@@ -166,14 +175,15 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
 {
   "dataType": "DATE",
   "expectMultipleValues": false,
-  "constraints": {
-    "startDate": {
-      "required": true,
+  "required": true,
+  "constraints": [
+    {
+      "name": "startDate",
       "format": "iso8601",
       "description": "Start date",
       "errorMessage": "Start date is required"
     }
-  }
+  ]
 }
 ```
 
@@ -182,16 +192,17 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
 {
   "dataType": "STRING",
   "expectMultipleValues": false,
-  "constraints": {
-    "status": {
-      "required": true,
+  "required": true,
+  "constraints": [
+    {
+      "name": "status",
       "errorMessage": "Please select a status",
       "enumValues": [
         { "value": "ACTIVE", "label": "Active" },
         { "value": "INACTIVE", "label": "Inactive" }
       ]
     }
-  }
+  ]
 }
 ```
 
@@ -200,9 +211,10 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
 {
   "dataType": "STRING",
   "expectMultipleValues": false,
-  "constraints": {
-    "assignee": {
-      "required": false,
+  "required": false,
+  "constraints": [
+    {
+      "name": "assignee",
       "description": "Assigned user",
       "errorMessage": "Invalid user selected",
       "valuesEndpoint": {
@@ -219,7 +231,7 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
         }
       }
     }
-  }
+  ]
 }
 ```
 
@@ -228,15 +240,16 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
 {
   "dataType": "STRING",
   "expectMultipleValues": false,
-  "constraints": {
-    "email": {
-      "required": true,
+  "required": true,
+  "constraints": [
+    {
+      "name": "email",
       "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
       "format": "email",
       "description": "Valid email address",
       "errorMessage": "Please provide a valid email address"
     }
-  }
+  ]
 }
 ```
 
@@ -313,16 +326,17 @@ Represents a single value option.
   "description": "User's unique identifier",
   "dataType": "STRING",
   "expectMultipleValues": false,
-  "constraints": {
-    "value": {
-      "required": true,
+  "required": true,
+  "constraints": [
+    {
+      "name": "value",
       "min": 3,
       "max": 20,
       "pattern": "^[a-zA-Z0-9_]+$",
       "description": "Username (3-20 alphanumeric characters)",
       "errorMessage": "Username must be 3-20 characters, alphanumeric with underscores"
     }
-  }
+  ]
 }
 ```
 
@@ -333,15 +347,16 @@ Represents a single value option.
   "description": "Price filter range",
   "dataType": "NUMBER",
   "expectMultipleValues": false,
-  "constraints": {
-    "value": {
-      "required": true,
+  "required": true,
+  "constraints": [
+    {
+      "name": "value",
       "min": 0,
       "description": "Price value",
       "errorMessage": "Price must be greater than 0",
       "defaultValue": 0
     }
-  }
+  ]
 }
 ```
 
@@ -352,15 +367,16 @@ Represents a single value option.
   "description": "Contact email address",
   "dataType": "STRING",
   "expectMultipleValues": false,
-  "constraints": {
-    "value": {
-      "required": true,
+  "required": true,
+  "constraints": [
+    {
+      "name": "value",
       "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
       "format": "email",
       "description": "Valid email address",
       "errorMessage": "Please provide a valid email address"
     }
-  }
+  ]
 }
 ```
 
@@ -371,9 +387,10 @@ Represents a single value option.
   "description": "Filter by status",
   "dataType": "STRING",
   "expectMultipleValues": false,
-  "constraints": {
-    "value": {
-      "required": true,
+  "required": true,
+  "constraints": [
+    {
+      "name": "value",
       "description": "Item status",
       "errorMessage": "Please select a status",
       "enumValues": [
@@ -382,7 +399,7 @@ Represents a single value option.
         { "value": "pending", "label": "Pending" }
       ]
     }
-  }
+  ]
 }
 ```
 
@@ -393,9 +410,10 @@ Represents a single value option.
   "description": "Assign task to user",
   "dataType": "STRING",
   "expectMultipleValues": false,
-  "constraints": {
-    "value": {
-      "required": true,
+  "required": true,
+  "constraints": [
+    {
+      "name": "value",
       "description": "User to assign task to",
       "errorMessage": "Please select a user",
       "valuesEndpoint": {
@@ -422,7 +440,7 @@ Represents a single value option.
         }
       }
     }
-  }
+  ]
 }
 ```
 
@@ -433,9 +451,10 @@ Represents a single value option.
   "description": "Select relevant tags for content",
   "dataType": "STRING",
   "expectMultipleValues": true,
-  "constraints": {
-    "value": {
-      "required": true,
+  "required": true,
+  "constraints": [
+    {
+      "name": "value",
       "min": 1,
       "max": 5,
       "description": "Select 1 to 5 relevant tags",
@@ -456,7 +475,7 @@ Represents a single value option.
         }
       }
     }
-  }
+  ]
 }
 ```
 
@@ -467,14 +486,15 @@ Represents a single value option.
   "description": "Filter by creation date",
   "dataType": "DATE",
   "expectMultipleValues": false,
-  "constraints": {
-    "value": {
-      "required": false,
+  "required": false,
+  "constraints": [
+    {
+      "name": "value",
       "format": "iso8601",
       "description": "Creation date",
       "errorMessage": "Please provide a valid date"
     }
-  }
+  ]
 }
 ```
 
@@ -555,57 +575,84 @@ GET /api/tags?q=java
 **Rendering UI Controls:**
 
 1. **Check for value sources:**
-   - If `enumValues` present → render dropdown/select
-   - If `valuesEndpoint` present → fetch and render dropdown/select with pagination
+   - Look through the `constraints` array for any constraint with `enumValues` → render dropdown/select
+   - Look through the `constraints` array for any constraint with `valuesEndpoint` → fetch and render dropdown/select with pagination
    - Otherwise → render based on type and constraints
 
 2. **Determine input type based on `dataType`:**
-   - `STRING` → text input (validate with `pattern`, `min`/`max` for length)
-   - `NUMBER` → number input (validate with `min`/`max` for value)
+   - `STRING` → text input (validate with `pattern`, `min`/`max` for length from constraints)
+   - `NUMBER` → number input (validate with `min`/`max` for value from constraints)
    - `BOOLEAN` → checkbox/toggle
-   - `DATE` → date picker (validate with `min`/`max` for date range)
+   - `DATE` → date picker (validate with `min`/`max` for date range from constraints)
 
 3. **Handle `expectMultipleValues`:**
    - If `true` and has value source → multi-select dropdown
    - If `true` and free input → add/remove input fields
-   - Validate array length with `min`/`max`
+   - Validate array length with `min`/`max` from constraints
 
-4. **Apply validation:**
-   - `required`: Show error if empty and required
-   - `pattern`: Validate each element against regex
-   - `min`/`max`: Context-dependent validation
-   - `format`: Use as hint for input type and optional validation
+4. **Apply validation in constraint order:**
+   - Check field-level `required`: Show error if empty and required
+   - Process each constraint in the `constraints` array sequentially:
+     - `pattern`: Validate each element against regex
+     - `min`/`max`: Context-dependent validation
+     - `format`: Use as hint for input type and optional validation
+     - `enumValues`/`valuesEndpoint`: Restrict to allowed values
 
-5. **Display `errorMessage` when validation fails**
+5. **Display appropriate `errorMessage` when validation fails**
+
+6. **Process constraints in order** to enable deterministic validation flow
 
 **Validation Logic Example:**
 ```javascript
-function validateConstraint(value, constraint, dataType, expectMultiple) {
-  // Check required
-  if (constraint.required && !value) {
-    return constraint.errorMessage || "This field is required";
+function validateField(value, fieldSpec) {
+  const errors = [];
+
+  // Check field-level required constraint
+  if (fieldSpec.required && !value) {
+    return ["This field is required"];
   }
-  
-  if (!value) return null; // Not required and empty = valid
-  
+
+  if (!value) return []; // Not required and empty = valid
+
   // For arrays
-  if (expectMultiple) {
-    if (constraint.min && value.length < constraint.min) {
-      return constraint.errorMessage || `Minimum ${constraint.min} items required`;
+  if (fieldSpec.expectMultipleValues) {
+    if (!Array.isArray(value)) {
+      return ["Expected an array of values"];
     }
-    if (constraint.max && value.length > constraint.max) {
-      return constraint.errorMessage || `Maximum ${constraint.max} items allowed`;
+    
+    // Process constraints in order
+    for (const constraint of fieldSpec.constraints) {
+      const error = validateArrayConstraint(value, constraint, fieldSpec.dataType);
+      if (error) errors.push(error);
     }
+    
     // Validate each element
-    for (const item of value) {
-      const error = validateSingleValue(item, constraint, dataType);
-      if (error) return error;
+    for (let i = 0; i < value.length; i++) {
+      for (const constraint of fieldSpec.constraints) {
+        const error = validateSingleValue(value[i], constraint, fieldSpec.dataType);
+        if (error) errors.push(`${constraint.name}[${i}]: ${error}`);
+      }
     }
-    return null;
+    return errors;
+  }
+
+  // For single values - process constraints in order
+  for (const constraint of fieldSpec.constraints) {
+    const error = validateSingleValue(value, constraint, fieldSpec.dataType);
+    if (error) errors.push(error);
   }
   
-  // For single values
-  return validateSingleValue(value, constraint, dataType);
+  return errors;
+}
+
+function validateArrayConstraint(array, constraint, dataType) {
+  if (constraint.min && array.length < constraint.min) {
+    return constraint.errorMessage || `Minimum ${constraint.min} items required`;
+  }
+  if (constraint.max && array.length > constraint.max) {
+    return constraint.errorMessage || `Maximum ${constraint.max} items allowed`;
+  }
+  return null;
 }
 
 function validateSingleValue(value, constraint, dataType) {
@@ -620,7 +667,7 @@ function validateSingleValue(value, constraint, dataType) {
       return constraint.errorMessage || `Maximum ${constraint.max} characters`;
     }
   }
-  
+
   if (dataType === "NUMBER") {
     if (constraint.min !== undefined && value < constraint.min) {
       return constraint.errorMessage || `Minimum value is ${constraint.min}`;
@@ -629,7 +676,7 @@ function validateSingleValue(value, constraint, dataType) {
       return constraint.errorMessage || `Maximum value is ${constraint.max}`;
     }
   }
-  
+
   if (dataType === "DATE") {
     const date = new Date(value);
     if (constraint.min && date < new Date(constraint.min)) {
@@ -639,12 +686,18 @@ function validateSingleValue(value, constraint, dataType) {
       return constraint.errorMessage || `Date must be before ${constraint.max}`;
     }
   }
-  
+
+  // Check enum values
+  if (constraint.enumValues) {
+    const validValues = constraint.enumValues.map(ev => ev.value);
+    if (!validValues.includes(value)) {
+      return constraint.errorMessage || "Invalid value selected";
+    }
+  }
+
   return null; // Valid
 }
-```
-
-**Fetching Paginated Values:**
+```**Fetching Paginated Values:**
 ```javascript
 async function fetchValues(valuesEndpoint, page = 1) {
   const { uri, method, paginationStrategy, requestParams, responseMapping } = valuesEndpoint;
@@ -810,9 +863,10 @@ GET /api/fields/assignee
     "description": "Assign task to user",
     "dataType": "STRING",
     "expectMultipleValues": false,
-    "constraints": {
-      "value": {
-        "required": true,
+    "required": true,
+    "constraints": [
+      {
+        "name": "value",
         "errorMessage": "Please select a user",
         "valuesEndpoint": {
           "protocol": "HTTP",
@@ -832,7 +886,7 @@ GET /api/fields/assignee
           }
         }
       }
-    }
+    ]
   }
 }
 ```
