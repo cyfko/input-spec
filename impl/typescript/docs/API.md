@@ -1,54 +1,115 @@
-# API Reference
+# API Reference: Two Sides of Dynamic Forms
 
-Complete reference for the Dynamic Input Field Specification Protocol v2.0 TypeScript implementation.
+**Frontend developers**: Use these APIs to consume field specs from your backend  
+**Backend developers**: Use these types to generate field specs in your APIs
 
-## Table of Contents
+## Frontend Usage: Consuming Field Specs
 
-- [Core Types](#core-types)
-- [Classes](#classes)
-- [Interfaces](#interfaces)
-- [Utility Functions](#utility-functions)
-- [Examples](#examples)
+### Quick Start for Frontend Teams
+
+```typescript
+import { FieldValidator, InputFieldSpec } from 'input-field-spec-ts';
+
+// 1. Get field definition from YOUR backend API
+const emailFieldSpec: InputFieldSpec = await fetch('/api/form-fields/email')
+  .then(response => response.json());
+
+// 2. Validate user input using backend-defined rules
+const validator = new FieldValidator();
+const result = validator.validate(userEmail, emailFieldSpec);
+
+// 3. Handle validation results
+if (!result.isValid) {
+  // Show errors defined by your backend
+  console.log(result.errors.map(e => e.message));
+}
+```
+
+## Backend Usage: Generating Field Specs
+
+### Quick Start for Backend Teams
+
+```typescript
+import { InputFieldSpec, ConstraintDescriptor } from 'input-field-spec-ts';
+
+// Generate field specs in your API endpoints
+app.get('/api/form-fields/email', (req, res) => {
+  const emailFieldSpec: InputFieldSpec = {
+    displayName: "Email Address",
+    dataType: "STRING",
+    expectMultipleValues: false,
+    required: true,
+    constraints: [
+      { 
+        name: "email", 
+        type: "email", 
+        message: "Please enter a valid email address" 
+      },
+      { 
+        name: "maxLength", 
+        type: "maxLength", 
+        value: 100,
+        message: "Email too long (max 100 characters)"
+      }
+    ]
+  };
+  
+  res.json(emailFieldSpec);
+});
+```
 
 ## Core Types
 
 ### InputFieldSpec
 
-Represents a complete field specification with validation constraints and metadata.
+The heart of the protocol - represents a complete field specification that your backend sends to your frontend.
 
 ```typescript
 interface InputFieldSpec {
-  displayName: string;
-  description?: string;
-  dataType: DataType;
-  expectMultipleValues: boolean;
-  required: boolean;                    // ✨ v2.0: Moved to top-level
-  constraints: ConstraintDescriptor[];  // ✨ v2.0: Now an array with ordered execution
+  displayName: string;                  // What users see as field label
+  description?: string;                 // Optional help text
+  dataType: DataType;                   // 'STRING' | 'NUMBER' | 'DATE' | 'BOOLEAN'
+  expectMultipleValues: boolean;        // Array input or single value?
+  required: boolean;                    // Is this field required?
+  constraints: ConstraintDescriptor[];  // Validation rules (ordered execution)
+  valuesEndpoint?: ValuesEndpoint;      // For autocomplete/dropdown data
 }
 ```
 
-**Properties:**
-- `displayName` - Human-readable field label
-- `description` - Optional detailed explanation
-- `dataType` - Data type: `'STRING' | 'NUMBER' | 'DATE' | 'BOOLEAN'`
-- `expectMultipleValues` - Whether field accepts arrays
-- `required` - Whether the field is required (v2.0: moved from constraints)
-- `constraints` - Array of validation constraints executed in order
+**Real-world examples:**
 
-**Example:**
 ```typescript
-const emailField: InputFieldSpec = {
-  displayName: 'Email Address',
-  dataType: 'STRING',
-  expectMultipleValues: false,
-  required: true,
-  constraints: [
-    {
-      name: 'email',
-      pattern: '^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$',
-      errorMessage: 'Please enter a valid email address'
-    }
-  ]
+// Backend generates different email rules based on user type
+function createEmailField(isPremiumUser: boolean): InputFieldSpec {
+  const constraints: ConstraintDescriptor[] = [
+    { name: "email", type: "email", message: "Invalid email format" }
+  ];
+  
+  if (isPremiumUser) {
+    constraints.push({ 
+      name: "maxLength", 
+      type: "maxLength", 
+      value: 200,
+      message: "Email too long (premium: max 200 chars)" 
+    });
+  } else {
+    constraints.push({ 
+      name: "maxLength", 
+      type: "maxLength", 
+      value: 50,
+      message: "Email too long (basic: max 50 chars)" 
+    });
+  }
+
+  return {
+    displayName: "Email Address",
+    dataType: "STRING",
+    expectMultipleValues: false,
+    required: true,
+    constraints
+  };
+}
+```
 };
 ```
 

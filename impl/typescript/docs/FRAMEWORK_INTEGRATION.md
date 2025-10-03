@@ -1,54 +1,88 @@
-# Framework Integration Examples
+# Framework Integration: Frontend Consuming Backend Specs
 
-This document shows how to integrate the Dynamic Input Field Specification Protocol with popular frontend frameworks while preserving their HTTP interceptor systems.
+**This guide shows how frontend frameworks consume InputFieldSpec from backend APIs**
+
+Stop hardcoding validation rules! Let your backend define field specifications and your frontend frameworks consume them seamlessly.
+
+## The Pattern: Backend Defines, Frontend Consumes
+
+### 1. Backend API Returns Field Specs
+```typescript
+// Your backend API (Express.js example)
+app.get('/api/form-fields/user-profile', (req, res) => {
+  const userRole = req.user.role;
+  
+  // Different validation rules based on user role
+  const emailField: InputFieldSpec = {
+    displayName: "Email Address",
+    dataType: "STRING",
+    required: true,
+    constraints: [
+      { name: "email", type: "email", message: "Invalid email format" },
+      { 
+        name: "maxLength", 
+        type: "maxLength", 
+        value: userRole === 'premium' ? 200 : 50,
+        message: `Email too long (max ${userRole === 'premium' ? 200 : 50} chars)`
+      }
+    ]
+  };
+
+  res.json({ fields: [emailField] });
+});
+```
+
+### 2. Frontend Fetches and Uses Specs
+```typescript
+// Frontend fetches field definition from backend
+const fieldSpecs = await fetch('/api/form-fields/user-profile')
+  .then(r => r.json());
+
+// Validate using backend-defined rules
+const validator = new FieldValidator();
+const result = validator.validate(userInput, fieldSpecs.fields[0]);
+```
 
 ## Angular Integration
 
-### Basic Setup with Angular HttpClient
+### Real-World Angular Service
 
 ```typescript
-// app.module.ts
-import { HttpClientModule } from '@angular/common/http';
-import { NgModule } from '@angular/core';
-
-@NgModule({
-  imports: [HttpClientModule],
-  // ...
-})
-export class AppModule { }
-```
-
-```typescript
-// field-validation.service.ts
+// user-form.service.ts
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
 import { 
   FieldValidator, 
   ValuesResolver, 
   MemoryCacheProvider,
   HttpClientFactory,
-  InputFieldSpec,
-  ValuesEndpoint,
-  FetchValuesOptions 
+  InputFieldSpec 
 } from 'input-field-spec-ts';
 
 @Injectable({
   providedIn: 'root'
 })
-export class FieldValidationService {
+export class UserFormService {
   private validator: FieldValidator;
   private valuesResolver: ValuesResolver;
 
-  constructor(private angularHttpClient: HttpClient) {
-    // ✅ Use Angular's HttpClient - preserves interceptors!
-    const httpClientAdapter = HttpClientFactory.createAngularAdapter(angularHttpClient);
+  constructor(private http: HttpClient) {
+    // ✅ Preserves your Angular interceptors and DI!
+    const httpClientAdapter = HttpClientFactory.createAngularAdapter(this.http);
     const cacheProvider = new MemoryCacheProvider();
     
     this.validator = new FieldValidator();
     this.valuesResolver = new ValuesResolver(httpClientAdapter, cacheProvider);
   }
 
-  async validateField(fieldSpec: InputFieldSpec, value: any) {
+  // Get form fields from YOUR backend
+  getFormFields(formType: string): Observable<{fields: InputFieldSpec[]}> {
+    return this.http.get<{fields: InputFieldSpec[]}>(`/api/forms/${formType}/fields`);
+  }
+
+  // Validate using backend-defined rules
+  validateField(fieldSpec: InputFieldSpec, value: any) {
     return this.validator.validate(fieldSpec, value);
   }
 
