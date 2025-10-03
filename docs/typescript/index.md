@@ -1,86 +1,45 @@
-# TypeScript Implementation - Moved# Stop Hardcoding Forms! TypeScript Implementation
+# Stop Hardcoding Forms! TypeScript Implementation
 
-
-
-**📍 This documentation has moved!****Let your backend de    constra    constraints.push({ 
-
+**Let your backend de    constra    constraints.push({ 
       name: "maxLength", 
-
-The TypeScript implementation documentation is now available at:      max: 50,
-
-**[https://cyfko.github.io/input-spec/typescript/](https://cyfko.github.io/input-spec/typescript/)**      errorMessage: "Email too long (basic: max 50 chars)" 
-
+      max: 50,
+      errorMessage: "Email too long (basic: max 50 chars)" 
     });ush({ 
-
-## Quick Links      name: "maxLength", 
-
+      name: "maxLength", 
       max: 200,
+      errorMessage: "Email too long (premium: max 200 chars)" 
+    });orm fields and validation rules. Your frontend just renders them.**
 
-- 🚀 [**Getting Started**](https://cyfko.github.io/input-spec/typescript/) - Main documentation      errorMessage: "Email too long (premium: max 200 chars)" 
-
-- 📚 [**API Reference**](https://cyfko.github.io/input-spec/typescript/API) - Complete API docs    });orm fields and validation rules. Your frontend just renders them.**
-
-- ⚙️ [**Framework Integration**](https://cyfko.github.io/input-spec/typescript/FRAMEWORK_INTEGRATION) - Angular, React, Vue
-
-- 📊 [**Performance Guide**](https://cyfko.github.io/input-spec/typescript/PERFORMANCE) - Optimization tips## The Two Sides of Dynamic Forms
-
-- 🏗️ [**Architecture**](https://cyfko.github.io/input-spec/typescript/ARCHITECTURE) - Design decisions
+## The Two Sides of Dynamic Forms
 
 ### 🎯 Frontend Developer? You Consume Field Specs
+Your backend sends you complete field definitions. No more hardcoded validation!
 
-## InstallationYour backend sends you complete field definitions. No more hardcoded validation!
+```typescript
+// Instead of hardcoding validation rules...
+const emailValidation = { required: true, pattern: /email-regex/ }; // 😤
 
-
-
-```bash```typescript
-
-npm install input-field-spec-ts// Instead of hardcoding validation rules...
-
-```const emailValidation = { required: true, pattern: /email-regex/ }; // 😤
-
-
-
-## Quick Start// Your backend sends you the complete field specification!
-
+// Your backend sends you the complete field specification!
 const emailFieldSpec = await fetch('/api/form-fields/email').then(r => r.json());
+// Returns: { displayName: "Email", required: true, constraints: [...] }
+```
 
-```typescript// Returns: { displayName: "Email", required: true, constraints: [...] }
+### ⚙️ Backend Developer? You Generate Field Specs  
+You control all validation logic and form behavior from your API.
 
-import { InputFieldSpec, FieldValidator } from 'input-field-spec-ts';```
-
-
-
-const fieldSpec: InputFieldSpec = {### ⚙️ Backend Developer? You Generate Field Specs  
-
-  displayName: "Email",You control all validation logic and form behavior from your API.
-
-  dataType: "STRING",
-
-  required: true,```typescript
-
-  constraints: [// In your API endpoint
-
-    { name: "email", pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", errorMessage: "Invalid email" }app.get('/api/form-fields/email', (req, res) => {
-
-  ]  const emailFieldSpec: InputFieldSpec = {
-
-};    displayName: "Email Address",
-
+```typescript
+// In your API endpoint
+app.get('/api/form-fields/email', (req, res) => {
+  const emailFieldSpec: InputFieldSpec = {
+    displayName: "Email Address",
     dataType: "STRING", 
-
-const validator = new FieldValidator();    required: true,
-
-const result = validator.validate("user@example.com", fieldSpec);    constraints: [
-
-```      { name: "email", pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", errorMessage: "Please enter a valid email" },
-
+    required: true,
+    constraints: [
+      { name: "email", pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", errorMessage: "Please enter a valid email" },
       { name: "maxLength", max: 100, errorMessage: "Email too long (max 100 chars)" }
-
----    ]
-
+    ]
   };
-
-**Please update your bookmarks to the new location: [https://cyfko.github.io/input-spec/typescript/](https://cyfko.github.io/input-spec/typescript/)**  res.json(emailFieldSpec);
+  res.json(emailFieldSpec);
 });
 ```
 

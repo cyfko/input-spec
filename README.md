@@ -28,7 +28,7 @@ The complete protocol specification is available in [`PROTOCOL_SPECIFICATION.md`
 
 ### TypeScript Implementation (Production Ready)
 - **Status**: ✅ **Published** - `input-field-spec-ts@1.0.0`
-- **Location**: [`impl/typescript/`](./impl/typescript/)
+- **Location**: [`docs/typescript/`](https://cyfko.github.io/input-spec/typescript/)
 - **Features**: 
   - Zero dependencies
   - Framework integration (Angular, React, Vue)
@@ -71,11 +71,11 @@ const result = validator.validate("user@example.com", emailField);
 - [**Examples**](./PROTOCOL_SPECIFICATION.md#examples) - Real-world usage examples
 
 ### TypeScript Implementation
-- [**README**](./impl/typescript/README.md) - Getting started guide
-- [**API Reference**](./impl/typescript/docs/API.md) - Complete API documentation
-- [**Framework Integration**](./impl/typescript/docs/FRAMEWORK_INTEGRATION.md) - Angular, React, Vue guides
-- [**Performance Guide**](./impl/typescript/docs/PERFORMANCE.md) - Optimization techniques
-- [**Architecture**](./impl/typescript/docs/ARCHITECTURE.md) - Design decisions
+- [**README**](https://cyfko.github.io/input-spec/typescript/) - Getting started guide
+- [**API Reference**](https://cyfko.github.io/input-spec/typescript/API) - Complete API documentation
+- [**Framework Integration**](https://cyfko.github.io/input-spec/typescript/FRAMEWORK_INTEGRATION) - Angular, React, Vue guides
+- [**Performance Guide**](https://cyfko.github.io/input-spec/typescript/PERFORMANCE) - Optimization techniques
+- [**Architecture**](https://cyfko.github.io/input-spec/typescript/ARCHITECTURE) - Design decisions
 
 ## 🏗️ Core Concepts
 
