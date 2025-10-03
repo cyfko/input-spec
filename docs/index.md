@@ -10,15 +10,15 @@ Welcome to the **Dynamic Input Field Specification Protocol** documentation site
 ## Quick Navigation
 
 ### 📋 Protocol
-- [**Protocol Specification**](../PROTOCOL_SPECIFICATION.md) - Complete protocol definition
-- [**Core Concepts**](../README.md#core-concepts) - Key concepts and features
+- [**Protocol Specification**](https://github.com/cyfko/input-spec/blob/main/PROTOCOL_SPECIFICATION.md) - Complete protocol definition
+- [**Project Overview**](https://github.com/cyfko/input-spec/blob/main/README.md) - Core concepts and features
 
 ### 🚀 Implementations
-- [**TypeScript Implementation**](../impl/typescript/) - Production ready (v1.0.0)
-  - [Getting Started](../impl/typescript/README.md)
-  - [API Reference](../impl/typescript/docs/API.md)
-  - [Framework Integration](../impl/typescript/docs/FRAMEWORK_INTEGRATION.md)
-  - [Performance Guide](../impl/typescript/docs/PERFORMANCE.md)
+- [**TypeScript Implementation**](https://github.com/cyfko/input-spec/tree/main/impl/typescript) - Production ready (v1.0.0)
+  - [Getting Started](https://github.com/cyfko/input-spec/blob/main/impl/typescript/README.md)
+  - [API Reference](https://github.com/cyfko/input-spec/blob/main/impl/typescript/docs/API.md)
+  - [Framework Integration](https://github.com/cyfko/input-spec/blob/main/impl/typescript/docs/FRAMEWORK_INTEGRATION.md)
+  - [Performance Guide](https://github.com/cyfko/input-spec/blob/main/impl/typescript/docs/PERFORMANCE.md)
 
 ### 🎯 Quick Start
 
@@ -54,6 +54,12 @@ The protocol enables:
 - **Smart autocomplete** with searchable remote data sources
 - **Framework integration** for Angular, React, Vue.js
 - **Zero dependencies** with high performance
+
+**Key Resources:**
+- [📋 Complete Protocol Specification](https://github.com/cyfko/input-spec/blob/main/PROTOCOL_SPECIFICATION.md)
+- [🚀 TypeScript Implementation Guide](https://github.com/cyfko/input-spec/blob/main/impl/typescript/README.md)
+- [⚙️ Framework Integration Examples](https://github.com/cyfko/input-spec/blob/main/impl/typescript/docs/FRAMEWORK_INTEGRATION.md)
+- [📊 Performance Optimization](https://github.com/cyfko/input-spec/blob/main/impl/typescript/docs/PERFORMANCE.md)
 
 ### 🤝 Get Involved
 
