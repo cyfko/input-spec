@@ -1,6 +1,14 @@
 # Stop Hardcoding Forms! TypeScript Implementation
 
-**Let your backend define form fields and validation rules. Your frontend just renders them.**
+**Let your backend de    constra    constraints.push({ 
+      name: "maxLength", 
+      max: 50,
+      errorMessage: "Email too long (basic: max 50 chars)" 
+    });ush({ 
+      name: "maxLength", 
+      max: 200,
+      errorMessage: "Email too long (premium: max 200 chars)" 
+    });orm fields and validation rules. Your frontend just renders them.**
 
 ## The Two Sides of Dynamic Forms
 
@@ -27,8 +35,8 @@ app.get('/api/form-fields/email', (req, res) => {
     dataType: "STRING", 
     required: true,
     constraints: [
-      { name: "email", type: "email", message: "Please enter a valid email" },
-      { name: "maxLength", type: "maxLength", value: 100 }
+      { name: "email", pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", errorMessage: "Please enter a valid email" },
+      { name: "maxLength", max: 100, errorMessage: "Email too long (max 100 chars)" }
     ]
   };
   res.json(emailFieldSpec);
@@ -68,7 +76,7 @@ import { InputFieldSpec, ConstraintDescriptor } from 'input-field-spec-ts';
 // Generate field specs based on your business logic
 function createEmailField(userTier: 'basic' | 'premium'): InputFieldSpec {
   const constraints: ConstraintDescriptor[] = [
-    { name: "email", type: "email", message: "Please enter a valid email" }
+    { name: "email", pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", errorMessage: "Please enter a valid email" }
   ];
   
   // Premium users get longer email addresses
@@ -134,7 +142,7 @@ app.get('/api/clients/:clientId/form-fields/user', async (req, res) => {
     dataType: "STRING",
     required: true,
     constraints: [
-      { name: "email", type: "email", message: "Invalid email format" }
+      { name: "email", pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", errorMessage: "Invalid email format" }
     ]
   };
 
@@ -142,9 +150,8 @@ app.get('/api/clients/:clientId/form-fields/user', async (req, res) => {
   if (client.restrictEmailDomains) {
     emailField.constraints.push({
       name: "allowedDomains",
-      type: "pattern", 
-      value: `^[^@]+@(${client.allowedDomains.join('|')})$`,
-      message: `Email must be from: ${client.allowedDomains.join(', ')}`
+      pattern: `^[^@]+@(${client.allowedDomains.join('|')})$`,
+      errorMessage: `Email must be from: ${client.allowedDomains.join(', ')}`
     });
   }
 
@@ -185,7 +192,7 @@ app.get('/api/form-fields/product', async (req, res) => {
   
   let searchEndpoint = '/api/products/search';
   let constraints: ConstraintDescriptor[] = [
-    { name: "required", type: "required", message: "Please select a product" }
+    { name: "required", errorMessage: "Please select a product" }
   ];
 
   // Admin users can see all products including discontinued
@@ -197,9 +204,8 @@ app.get('/api/form-fields/product', async (req, res) => {
   if (userRole === 'sales') {
     constraints.push({
       name: "minQuantity",
-      type: "min",
-      value: 10,
-      message: "Sales orders minimum 10 units"
+      min: 10,
+      errorMessage: "Sales orders minimum 10 units"
     });
   }
 
@@ -258,8 +264,8 @@ app.get('/api/forms/registration', async (req, res) => {
       dataType: "STRING",
       required: true,
       constraints: [
-        { name: "email", type: "email", message: "Invalid email format" },
-        { name: "maxLength", type: "maxLength", value: 100 }
+        { name: "email", pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", errorMessage: "Invalid email format" },
+        { name: "maxLength", max: 100, errorMessage: "Email too long (max 100 chars)" }
       ]
     }
   ];
@@ -272,9 +278,8 @@ app.get('/api/forms/registration', async (req, res) => {
     constraints: [
       {
         name: "phoneFormat",
-        type: "pattern",
-        value: countryConfig.phonePattern,
-        message: `Invalid phone format for ${country}`
+        pattern: countryConfig.phonePattern,
+        errorMessage: `Invalid phone format for ${country}`
       }
     ]
   });
@@ -288,9 +293,8 @@ app.get('/api/forms/registration', async (req, res) => {
       constraints: [
         {
           name: "taxIdFormat", 
-          type: "pattern",
-          value: countryConfig.taxIdPattern,
-          message: `Invalid tax ID format for ${country}`
+          pattern: countryConfig.taxIdPattern,
+          errorMessage: `Invalid tax ID format for ${country}`
         }
       ]
     });

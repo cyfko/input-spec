@@ -42,14 +42,13 @@ app.get('/api/form-fields/email', (req, res) => {
     constraints: [
       { 
         name: "email", 
-        type: "email", 
-        message: "Please enter a valid email address" 
+        pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
+        errorMessage: "Please enter a valid email address" 
       },
       { 
         name: "maxLength", 
-        type: "maxLength", 
-        value: 100,
-        message: "Email too long (max 100 characters)"
+        max: 100,
+        errorMessage: "Email too long (max 100 characters)"
       }
     ]
   };
@@ -82,22 +81,20 @@ interface InputFieldSpec {
 // Backend generates different email rules based on user type
 function createEmailField(isPremiumUser: boolean): InputFieldSpec {
   const constraints: ConstraintDescriptor[] = [
-    { name: "email", type: "email", message: "Invalid email format" }
+    { name: "email", pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", errorMessage: "Invalid email format" }
   ];
   
   if (isPremiumUser) {
     constraints.push({ 
       name: "maxLength", 
-      type: "maxLength", 
-      value: 200,
-      message: "Email too long (premium: max 200 chars)" 
+      max: 200,
+      errorMessage: "Email too long (premium: max 200 chars)" 
     });
   } else {
     constraints.push({ 
       name: "maxLength", 
-      type: "maxLength", 
-      value: 50,
-      message: "Email too long (basic: max 50 chars)" 
+      max: 50,
+      errorMessage: "Email too long (basic: max 50 chars)" 
     });
   }
 
