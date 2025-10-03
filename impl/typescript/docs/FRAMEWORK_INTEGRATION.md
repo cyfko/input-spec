@@ -26,7 +26,10 @@ import {
   FieldValidator, 
   ValuesResolver, 
   MemoryCacheProvider,
-  HttpClientFactory 
+  HttpClientFactory,
+  InputFieldSpec,
+  ValuesEndpoint,
+  FetchValuesOptions 
 } from 'input-field-spec-ts';
 
 @Injectable({
@@ -319,7 +322,10 @@ import {
   FieldValidator, 
   ValuesResolver, 
   ConfigurableFetchHttpClient,
-  MemoryCacheProvider 
+  MemoryCacheProvider,
+  ClientOptions,
+  RequestInterceptor,
+  ErrorHandler
 } from 'input-field-spec-ts';
 
 // ✅ Create HTTP client with custom interceptors

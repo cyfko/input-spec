@@ -1,7 +1,7 @@
 {
   "name": "input-field-spec-ts",
-  "version": "2.0.0",
-  "description": "Zero-dependency TypeScript implementation of the Dynamic Input Field Specification Protocol v2.0 with framework integration support",
+  "version": "1.0.0",
+  "description": "Zero-dependency TypeScript implementation of the Dynamic Input Field Specification Protocol with framework integration support",
   "main": "dist/index.js",
   "types": "dist/index.d.ts",
   "module": "dist/index.mjs",
@@ -66,8 +66,6 @@
   "files": [
     "dist/**/*",
     "README.md",
-    "RELEASE_NOTES.md",
-    "MIGRATION.md",
     "docs/**/*"
   ],
   "devDependencies": {

@@ -1,0 +1,35 @@
+# Configuration for GitHub Pages
+title: "Dynamic Input Field Specification Protocol"
+description: "Zero-dependency TypeScript implementation for building dynamic forms with real-time validation"
+
+# Theme
+theme: jekyll-theme-minimal
+
+# GitHub metadata
+github:
+  repository_url: https://github.com/cyfko/input-spec
+
+# Navigation
+plugins:
+  - jekyll-github-metadata
+  - jekyll-seo-tag
+
+# Markdown processing
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+
+# File inclusion
+include:
+  - README.md
+
+# Exclude files
+exclude:
+  - vendor
+  - .bundle
+  - .sass-cache
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - "*.gemspec"

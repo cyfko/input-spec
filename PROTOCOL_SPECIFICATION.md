@@ -1,4 +1,4 @@
-# Dynamic Input Field Specification Protocol v2.0
+# Dynamic Input Field Specification Protocol v1.0
 
 ## 1. Introduction
 

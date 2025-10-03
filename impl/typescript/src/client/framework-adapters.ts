@@ -31,7 +31,19 @@ export class AngularHttpClientAdapter implements HttpClient {
       }
     );
 
-    return observable.toPromise();
+    // Convert Observable to Promise - Angular 13+ compatible
+    return new Promise<T>((resolve, reject) => {
+      const subscription = observable.subscribe({
+        next: (data: T) => {
+          subscription.unsubscribe();
+          resolve(data);
+        },
+        error: (error: any) => {
+          subscription.unsubscribe();
+          reject(error);
+        }
+      });
+    });
   }
 }
 

@@ -1,6 +1,6 @@
-# Dynamic Input Field Specification - TypeScript Implementation v2.0
+# Dynamic Input Field Specification - TypeScript Implementation v1.0
 
-A zero-dependency TypeScript implementation of the Dynamic Input Field Specification Protocol v2.0 with ordered constraint execution and enhanced API ergonomics.
+A zero-dependency TypeScript implementation of the Dynamic Input Field Specification Protocol v1.0 with ordered constraint execution and enhanced API ergonomics.
 
 ## 🚀 Quick Start
 
