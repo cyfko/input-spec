@@ -1,9 +1,10 @@
 <!DOCTYPE html>
-<html lang="fr">
+<html lang="fr" data-theme="light">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>{{ page.title | default: site.title }}</title>
+  <meta name="color-scheme" content="light dark">
   <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
   <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
   <script src="{{ '/assets/main.js' | relative_url }}"></script>
@@ -13,13 +14,16 @@
   <a class="skip-link" href="#main" tabindex="0">Aller au contenu</a>
   <header class="header" role="banner">
     <span>Dynamic Input Field Specification Protocol</span>
+    <button class="theme-toggle" id="themeToggle" type="button" aria-label="Basculer le thème">Mode sombre</button>
   </header>
   <nav aria-label="Navigation latérale principale">
     {% include sidebar.html %}
   </nav>
-  <main id="main" class="main-content" role="main">
-    {{ content }}
-  </main>
+  <div class="page-wrapper">
+    <main id="main" class="main-content" role="main">
+      {{ content }}
+    </main>
+  </div>
   <footer class="footer" role="contentinfo">
     Documentation générée — <a href="https://github.com/cyfko/input-spec">cyfko/input-spec</a> — MIT License
   </footer>
