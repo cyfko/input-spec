@@ -1,6 +1,6 @@
 # Jekyll configuration for GitHub Pages
-baseurl: ""
-url: "https://cyfko.github.io/input-spec"
+baseurl: "/input-spec"
+url: "https://cyfko.github.io"
 theme: minima
 plugins:
   - jekyll-seo-tag

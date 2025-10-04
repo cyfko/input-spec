@@ -12,13 +12,12 @@
 </head>
 <body>
   <a class="skip-link" href="#main" tabindex="0">Aller au contenu</a>
+  <noscript><div class="warning" style="margin:0;border-radius:0;">JavaScript désactivé : le thème et les diagrammes peuvent ne pas s’afficher correctement.</div></noscript>
   <header class="header" role="banner">
     <span>Dynamic Input Field Specification Protocol</span>
     <button class="theme-toggle" id="themeToggle" type="button" aria-label="Basculer le thème">Mode sombre</button>
   </header>
-  <nav aria-label="Navigation latérale principale">
-    {% include sidebar.html %}
-  </nav>
+  {% include sidebar.html %}
   <div class="page-wrapper">
     <main id="main" class="main-content" role="main">
       {{ content }}
