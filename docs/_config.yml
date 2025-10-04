@@ -1,35 +1,78 @@
-# Configuration for GitHub Pages
+# Configuration GitHub Pages pour Input Field Specification Protocol
 title: "Dynamic Input Field Specification Protocol"
-description: "Zero-dependency TypeScript implementation for building dynamic forms with real-time validation"
+description: "Un protocole moderne et agnostique pour des champs de formulaire intelligents et adaptatifs"
+
+# Site settings
+url: "https://cyfko.github.io"
+baseurl: "/input-spec"
+repository: "cyfko/input-spec"
+author: "Équipe Input-Spec"
+email: "contact@cyfko.io"
+
+# Build settings
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    css_class: 'highlight'
+
+# Plugins
+plugins:
+  - jekyll-feed
+  - jekyll-sitemap
+  - jekyll-seo-tag
+  - jekyll-github-metadata
 
 # Theme
-theme: jekyll-theme-minimal
+theme: minima
+
+# SEO and meta
+lang: fr-FR
+
+# Navigation structure
+navigation:
+  - title: "🏠 Accueil"
+    url: "/input-spec/"
+  - title: "🚀 Démarrage rapide"
+    url: "/input-spec/docs/QUICK_START"
+  - title: "🎓 Guide intermédiaire"
+    url: "/input-spec/docs/INTERMEDIATE_GUIDE"
+  - title: "🔧 Guide expert"
+    url: "/input-spec/docs/EXPERT_GUIDE"
+  - title: "❓ FAQ"
+    url: "/input-spec/docs/FAQ"
+  - title: "📋 Spécification"
+    url: "/input-spec/PROTOCOL_SPECIFICATION"
+  - title: "🤝 Contribuer"
+    url: "/input-spec/docs/CONTRIBUTING"
+
+# Social links
+social_links:
+  github: "cyfko/input-spec"
 
 # GitHub metadata
 github:
   repository_url: https://github.com/cyfko/input-spec
 
-# Navigation
-plugins:
-  - jekyll-github-metadata
-  - jekyll-seo-tag
-
-# Markdown processing
-markdown: kramdown
-kramdown:
-  input: GFM
-  syntax_highlighter: rouge
-
-# File inclusion
+# Include additional files
 include:
+  - docs
   - README.md
 
-# Exclude files
+# Exclude from build
 exclude:
   - vendor
   - .bundle
   - .sass-cache
+  - .jekyll-cache
   - Gemfile
   - Gemfile.lock
   - node_modules
+  - package.json
+  - package-lock.json
   - "*.gemspec"
+  - impl/
+  - tests/
+  - .gitignore
+  - .git
