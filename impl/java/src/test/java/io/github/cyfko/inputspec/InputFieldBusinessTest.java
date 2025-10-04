@@ -29,13 +29,12 @@ class InputFieldBusinessTest {
             .errorMessage("Username must be 3-20 characters, alphanumeric only")
             .build();
         
-        InputFieldSpec username = new InputFieldSpec();
-        username.setDisplayName("Username");
-        username.setDescription("Choose a unique username");
-        username.setDataType(DataType.STRING);
-        username.setRequired(true);
-        username.setExpectMultipleValues(false);
-        username.setConstraints(Arrays.asList(usernameConstraint));
+        InputFieldSpec username = InputFieldSpec.builder("Username", DataType.STRING)
+            .description("Choose a unique username")
+            .required(true)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(usernameConstraint))
+            .build();
         
         // 2. Champ email
         ConstraintDescriptor emailConstraint = ConstraintDescriptor.builder("email_format")
@@ -44,13 +43,12 @@ class InputFieldBusinessTest {
             .errorMessage("Please enter a valid email address")
             .build();
         
-        InputFieldSpec email = new InputFieldSpec();
-        email.setDisplayName("Email Address");
-        email.setDescription("Your email address for login");
-        email.setDataType(DataType.STRING);
-        email.setRequired(true);
-        email.setExpectMultipleValues(false);
-        email.setConstraints(Arrays.asList(emailConstraint));
+        InputFieldSpec email = InputFieldSpec.builder("Email Address", DataType.STRING)
+            .description("Your email address for login")
+            .required(true)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(emailConstraint))
+            .build();
         
         // 3. Champ âge avec validation numérique
         ConstraintDescriptor ageConstraint = new ConstraintDescriptor("age_range");
@@ -58,13 +56,12 @@ class InputFieldBusinessTest {
         ageConstraint.setMax(120);
         ageConstraint.setErrorMessage("Age must be between 18 and 120");
         
-        InputFieldSpec age = new InputFieldSpec();
-        age.setDisplayName("Age");
-        age.setDescription("Your age in years");
-        age.setDataType(DataType.NUMBER);
-        age.setRequired(true);
-        age.setExpectMultipleValues(false);
-        age.setConstraints(Arrays.asList(ageConstraint));
+        InputFieldSpec age = InputFieldSpec.builder("Age", DataType.NUMBER)
+            .description("Your age in years")
+            .required(true)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(ageConstraint))
+            .build();
         
         // Test sérialisation complète du formulaire
         List<InputFieldSpec> form = Arrays.asList(username, email, age);
@@ -91,26 +88,25 @@ class InputFieldBusinessTest {
     @DisplayName("Should handle dynamic select field with values endpoint")
     void testDynamicSelectFieldScenario() throws JsonProcessingException {
         // Scénario : sélection de pays depuis une API
-        ResponseMapping mapping = new ResponseMapping();
-        mapping.setDataField("countries");
+        ResponseMapping mapping = ResponseMapping.builder()
+            .dataField("countries")
+            .build();
         
-        ValuesEndpoint endpoint = new ValuesEndpoint();
-        endpoint.setUri("/api/countries");
-        endpoint.setResponseMapping(mapping);
-        endpoint.setCacheStrategy(CacheStrategy.LONG_TERM);
-        endpoint.setPaginationStrategy(PaginationStrategy.PAGE_NUMBER);
+        ValuesEndpoint endpoint = ValuesEndpoint.builder("/api/countries", mapping)
+            .cacheStrategy(CacheStrategy.LONG_TERM)
+            .paginationStrategy(PaginationStrategy.PAGE_NUMBER)
+            .build();
         
         ConstraintDescriptor dynamicConstraint = new ConstraintDescriptor("country_selection");
         dynamicConstraint.setValuesEndpoint(endpoint);
         dynamicConstraint.setErrorMessage("Please select a valid country");
         
-        InputFieldSpec countryField = new InputFieldSpec();
-        countryField.setDisplayName("Country");
-        countryField.setDescription("Select your country");
-        countryField.setDataType(DataType.STRING);
-        countryField.setRequired(true);
-        countryField.setExpectMultipleValues(false);
-        countryField.setConstraints(Arrays.asList(dynamicConstraint));
+        InputFieldSpec countryField = InputFieldSpec.builder("Country", DataType.STRING)
+            .description("Select your country")
+            .required(true)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(dynamicConstraint))
+            .build();
         
         String json = objectMapper.writeValueAsString(countryField);
         InputFieldSpec deserialized = objectMapper.readValue(json, InputFieldSpec.class);
@@ -148,13 +144,12 @@ class InputFieldBusinessTest {
         jobConstraint.setEnumValues(jobTypes);
         jobConstraint.setErrorMessage("Please select your job type");
         
-        InputFieldSpec jobField = new InputFieldSpec();
-        jobField.setDisplayName("Job Type");
-        jobField.setDescription("Select your primary job role");
-        jobField.setDataType(DataType.STRING);
-        jobField.setRequired(true);
-        jobField.setExpectMultipleValues(false);
-        jobField.setConstraints(Arrays.asList(jobConstraint));
+        InputFieldSpec jobField = InputFieldSpec.builder("Job Type", DataType.STRING)
+            .description("Select your primary job role")
+            .required(true)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(jobConstraint))
+            .build();
         
         // 2. Champ conditionnel "Autre"
         ConstraintDescriptor otherConstraint = new ConstraintDescriptor("other_job_text");
@@ -162,13 +157,12 @@ class InputFieldBusinessTest {
         otherConstraint.setMax(100);
         otherConstraint.setErrorMessage("Please describe your job (5-100 characters)");
         
-        InputFieldSpec otherJobField = new InputFieldSpec();
-        otherJobField.setDisplayName("Other Job Type");
-        otherJobField.setDescription("Please specify your job type");
-        otherJobField.setDataType(DataType.STRING);
-        otherJobField.setRequired(false); // Sera requis conditionnellement
-        otherJobField.setExpectMultipleValues(false);
-        otherJobField.setConstraints(Arrays.asList(otherConstraint));
+        InputFieldSpec otherJobField = InputFieldSpec.builder("Other Job Type", DataType.STRING)
+            .description("Please specify your job type")
+            .required(false)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(otherConstraint))
+            .build();
         
         // Test que les champs peuvent être liés logiquement
         String jobJson = objectMapper.writeValueAsString(jobField);
@@ -195,34 +189,34 @@ class InputFieldBusinessTest {
         // Test tous les types de données avec contraintes appropriées
         
         // DATE avec format
-        InputFieldSpec dateField = new InputFieldSpec();
-        dateField.setDisplayName("Birth Date");
-        dateField.setDataType(DataType.DATE);
-        dateField.setExpectMultipleValues(false);
         ConstraintDescriptor dateConstraint = new ConstraintDescriptor("date_format");
         dateConstraint.setFormat("date");
         dateConstraint.setErrorMessage("Please enter a valid date");
-        dateField.setConstraints(Arrays.asList(dateConstraint));
+        
+        InputFieldSpec dateField = InputFieldSpec.builder("Birth Date", DataType.DATE)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(dateConstraint))
+            .build();
         
         // NUMBER avec precision
-        InputFieldSpec priceField = new InputFieldSpec();
-        priceField.setDisplayName("Price");
-        priceField.setDataType(DataType.NUMBER);
-        priceField.setExpectMultipleValues(false);
         ConstraintDescriptor priceConstraint = new ConstraintDescriptor("price_range");
         priceConstraint.setMin(0);
         priceConstraint.setMax(999999);
         priceConstraint.setErrorMessage("Price must be between 0 and 999,999");
-        priceField.setConstraints(Arrays.asList(priceConstraint));
+        
+        InputFieldSpec priceField = InputFieldSpec.builder("Price", DataType.NUMBER)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(priceConstraint))
+            .build();
         
         // BOOLEAN avec valeur par défaut
-        InputFieldSpec newsletterField = new InputFieldSpec();
-        newsletterField.setDisplayName("Newsletter");
-        newsletterField.setDataType(DataType.BOOLEAN);
-        newsletterField.setExpectMultipleValues(false);
         ConstraintDescriptor newsletterConstraint = new ConstraintDescriptor("newsletter_default");
         newsletterConstraint.setDefaultValue("false");
-        newsletterField.setConstraints(Arrays.asList(newsletterConstraint));
+        
+        InputFieldSpec newsletterField = InputFieldSpec.builder("Newsletter", DataType.BOOLEAN)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(newsletterConstraint))
+            .build();
         
         List<InputFieldSpec> complexFields = Arrays.asList(dateField, priceField, newsletterField);
         
@@ -260,12 +254,6 @@ class InputFieldBusinessTest {
     void testFieldValidationChain() throws JsonProcessingException {
         // Test validation en chaîne selon protocole
         
-        InputFieldSpec field = new InputFieldSpec();
-        field.setDisplayName("Password");
-        field.setDataType(DataType.STRING);
-        field.setRequired(true);
-        field.setExpectMultipleValues(false);
-        
         // Contraintes multiples dans l'ordre logique
         ConstraintDescriptor lengthConstraint = new ConstraintDescriptor("length");
         lengthConstraint.setMin(8);
@@ -281,7 +269,11 @@ class InputFieldBusinessTest {
         commonConstraint.setErrorMessage("Password too common, please choose a different one");
         
         // Ordre important : longueur -> force -> unicité
-        field.setConstraints(Arrays.asList(lengthConstraint, strengthConstraint, commonConstraint));
+        InputFieldSpec field = InputFieldSpec.builder("Password", DataType.STRING)
+            .required(true)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(lengthConstraint, strengthConstraint, commonConstraint))
+            .build();
         
         String json = objectMapper.writeValueAsString(field);
         InputFieldSpec deserialized = objectMapper.readValue(json, InputFieldSpec.class);
@@ -313,10 +305,9 @@ class InputFieldBusinessTest {
         
         // Test qu'un champ valide fonctionne
         assertDoesNotThrow(() -> {
-            InputFieldSpec field = new InputFieldSpec();
-            field.setDisplayName("Test Field");
-            field.setDataType(DataType.STRING);
-            field.setRequired(true);
+            InputFieldSpec field = InputFieldSpec.builder("Test Field", DataType.STRING)
+                .required(true)
+                .build();
         });
     }
 }

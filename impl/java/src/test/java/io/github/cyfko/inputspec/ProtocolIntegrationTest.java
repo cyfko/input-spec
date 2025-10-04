@@ -33,13 +33,12 @@ class ProtocolIntegrationTest {
             .errorMessage("Name can only contain letters, spaces, apostrophes and hyphens")
             .build();
         
-        InputFieldSpec fullNameField = new InputFieldSpec();
-        fullNameField.setDisplayName("Full Name");
-        fullNameField.setDescription("Enter your full name");
-        fullNameField.setDataType(DataType.STRING);
-        fullNameField.setRequired(true);
-        fullNameField.setExpectMultipleValues(false);
-        fullNameField.setConstraints(Arrays.asList(nameLength, namePattern));
+        InputFieldSpec fullNameField = InputFieldSpec.builder("Full Name", DataType.STRING)
+            .description("Enter your full name")
+            .required(true)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(nameLength, namePattern))
+            .build();
         
         // 2. Champ compétences avec valeurs multiples
         ConstraintDescriptor skillsConstraint = new ConstraintDescriptor("skills_selection");
@@ -59,35 +58,33 @@ class ProtocolIntegrationTest {
         ));
         skillsConstraint.setErrorMessage("Please select 1-10 skills");
         
-        InputFieldSpec skillsField = new InputFieldSpec();
-        skillsField.setDisplayName("Technical Skills");
-        skillsField.setDescription("Select your technical skills");
-        skillsField.setDataType(DataType.STRING);
-        skillsField.setRequired(true);
-        skillsField.setExpectMultipleValues(true); // Valeurs multiples !
-        skillsField.setConstraints(Arrays.asList(skillsConstraint));
+        InputFieldSpec skillsField = InputFieldSpec.builder("Technical Skills", DataType.STRING)
+            .description("Select your technical skills")
+            .required(true)
+            .expectMultipleValues(true)
+            .constraints(Arrays.asList(skillsConstraint))
+            .build();
         
         // 3. Champ localisation avec endpoint dynamique
-        ResponseMapping locationMapping = new ResponseMapping();
-        locationMapping.setDataField("cities");
+        ResponseMapping locationMapping = ResponseMapping.builder()
+            .dataField("cities")
+            .build();
         
-        ValuesEndpoint locationEndpoint = new ValuesEndpoint();
-        locationEndpoint.setUri("/api/locations");
-        locationEndpoint.setResponseMapping(locationMapping);
-        locationEndpoint.setCacheStrategy(CacheStrategy.SHORT_TERM);
-        locationEndpoint.setPaginationStrategy(PaginationStrategy.PAGE_NUMBER);
+        ValuesEndpoint locationEndpoint = ValuesEndpoint.builder("/api/locations", locationMapping)
+            .cacheStrategy(CacheStrategy.SHORT_TERM)
+            .paginationStrategy(PaginationStrategy.PAGE_NUMBER)
+            .build();
         
         ConstraintDescriptor locationConstraint = new ConstraintDescriptor("location_selection");
         locationConstraint.setValuesEndpoint(locationEndpoint);
         locationConstraint.setErrorMessage("Please select a valid location");
         
-        InputFieldSpec locationField = new InputFieldSpec();
-        locationField.setDisplayName("Location");
-        locationField.setDescription("Select your current location");
-        locationField.setDataType(DataType.STRING);
-        locationField.setRequired(true);
-        locationField.setExpectMultipleValues(false);
-        locationField.setConstraints(Arrays.asList(locationConstraint));
+        InputFieldSpec locationField = InputFieldSpec.builder("Location", DataType.STRING)
+            .description("Select your current location")
+            .required(true)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(locationConstraint))
+            .build();
         
         // Test sérialisation/désérialisation complète
         List<InputFieldSpec> profileForm = Arrays.asList(fullNameField, skillsField, locationField);
@@ -138,13 +135,12 @@ class ProtocolIntegrationTest {
         priceRange.setFormat("currency");
         priceRange.setErrorMessage("Price must be between $0.01 and $999,999.99");
         
-        InputFieldSpec priceField = new InputFieldSpec();
-        priceField.setDisplayName("Product Price");
-        priceField.setDescription("Set the product price in USD");
-        priceField.setDataType(DataType.NUMBER);
-        priceField.setRequired(true);
-        priceField.setExpectMultipleValues(false);
-        priceField.setConstraints(Arrays.asList(priceRange));
+        InputFieldSpec priceField = InputFieldSpec.builder("Product Price", DataType.NUMBER)
+            .description("Set the product price in USD")
+            .required(true)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(priceRange))
+            .build();
         
         // 2. Catégories avec hiérarchie
         ConstraintDescriptor categoryConstraint = new ConstraintDescriptor("category_hierarchy");
@@ -161,13 +157,12 @@ class ProtocolIntegrationTest {
         ));
         categoryConstraint.setErrorMessage("Please select a valid category");
         
-        InputFieldSpec categoryField = new InputFieldSpec();
-        categoryField.setDisplayName("Product Category");
-        categoryField.setDescription("Choose the product category");
-        categoryField.setDataType(DataType.STRING);
-        categoryField.setRequired(true);
-        categoryField.setExpectMultipleValues(false);
-        categoryField.setConstraints(Arrays.asList(categoryConstraint));
+        InputFieldSpec categoryField = InputFieldSpec.builder("Product Category", DataType.STRING)
+            .description("Choose the product category")
+            .required(true)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(categoryConstraint))
+            .build();
         
         // 3. Tags avec validation de nombre et format
         ConstraintDescriptor tagsCount = new ConstraintDescriptor("tags_count");
@@ -179,13 +174,12 @@ class ProtocolIntegrationTest {
         tagFormat.setPattern("^[a-z0-9-]+$");
         tagFormat.setErrorMessage("Tags must be lowercase, alphanumeric with hyphens only");
         
-        InputFieldSpec tagsField = new InputFieldSpec();
-        tagsField.setDisplayName("Product Tags");
-        tagsField.setDescription("Add relevant tags (1-5 tags, lowercase-with-hyphens)");
-        tagsField.setDataType(DataType.STRING);
-        tagsField.setRequired(true);
-        tagsField.setExpectMultipleValues(true);
-        tagsField.setConstraints(Arrays.asList(tagsCount, tagFormat));
+        InputFieldSpec tagsField = InputFieldSpec.builder("Product Tags", DataType.STRING)
+            .description("Add relevant tags (1-5 tags, lowercase-with-hyphens)")
+            .required(true)
+            .expectMultipleValues(true)
+            .constraints(Arrays.asList(tagsCount, tagFormat))
+            .build();
         
         // 4. Date de disponibilité avec contrainte temporelle
         ConstraintDescriptor availabilityDate = new ConstraintDescriptor("availability_date");
@@ -193,13 +187,12 @@ class ProtocolIntegrationTest {
         availabilityDate.setMin("2024-01-01"); // Date minimum
         availabilityDate.setErrorMessage("Availability date must be January 1, 2024 or later");
         
-        InputFieldSpec availabilityField = new InputFieldSpec();
-        availabilityField.setDisplayName("Availability Date");
-        availabilityField.setDescription("When will this product be available?");
-        availabilityField.setDataType(DataType.DATE);
-        availabilityField.setRequired(true);
-        availabilityField.setExpectMultipleValues(false);
-        availabilityField.setConstraints(Arrays.asList(availabilityDate));
+        InputFieldSpec availabilityField = InputFieldSpec.builder("Availability Date", DataType.DATE)
+            .description("When will this product be available?")
+            .required(true)
+            .expectMultipleValues(false)
+            .constraints(Arrays.asList(availabilityDate))
+            .build();
         
         // Test intégration complète
         List<InputFieldSpec> productForm = Arrays.asList(priceField, categoryField, tagsField, availabilityField);
@@ -265,25 +258,24 @@ class ProtocolIntegrationTest {
         ));
         
         // Endpoint avec toutes les propriétés
-        ResponseMapping completeMapping = new ResponseMapping();
-        completeMapping.setDataField("data");
+        ResponseMapping completeMapping = ResponseMapping.builder()
+            .dataField("data")
+            .build();
         
-        ValuesEndpoint completeEndpoint = new ValuesEndpoint();
-        completeEndpoint.setUri("/api/complete");
-        completeEndpoint.setResponseMapping(completeMapping);
-        completeEndpoint.setCacheStrategy(CacheStrategy.SHORT_TERM);
-        completeEndpoint.setPaginationStrategy(PaginationStrategy.PAGE_NUMBER);
+        ValuesEndpoint completeEndpoint = ValuesEndpoint.builder("/api/complete", completeMapping)
+            .cacheStrategy(CacheStrategy.SHORT_TERM)
+            .paginationStrategy(PaginationStrategy.PAGE_NUMBER)
+            .build();
         
         ConstraintDescriptor endpointConstraint = new ConstraintDescriptor("endpoint_validation");
         endpointConstraint.setValuesEndpoint(completeEndpoint);
         
-        InputFieldSpec completeField = new InputFieldSpec();
-        completeField.setDisplayName("Complete Protocol Field");
-        completeField.setDescription("Field testing all protocol features");
-        completeField.setDataType(DataType.STRING);
-        completeField.setRequired(true);
-        completeField.setExpectMultipleValues(true);
-        completeField.setConstraints(Arrays.asList(fullConstraint, endpointConstraint));
+        InputFieldSpec completeField = InputFieldSpec.builder("Complete Protocol Field", DataType.STRING)
+            .description("Field testing all protocol features")
+            .required(true)
+            .expectMultipleValues(true)
+            .constraints(Arrays.asList(fullConstraint, endpointConstraint))
+            .build();
         
         // Sérialisation/désérialisation complète
         String json = objectMapper.writeValueAsString(completeField);

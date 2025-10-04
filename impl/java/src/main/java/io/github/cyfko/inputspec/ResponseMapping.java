@@ -163,4 +163,120 @@ public class ResponseMapping {
                 ", hasNextField='" + hasNextField + '\'' +
                 '}';
     }
+    
+    /**
+     * Creates a builder for ResponseMapping with required dataField
+     * 
+     * @param dataField field containing the array of ValueAlias (required)
+     * @return a new builder instance
+     */
+    public static Builder builder(String dataField) {
+        return new Builder(dataField);
+    }
+    
+    /**
+     * Creates a builder for ResponseMapping without required fields
+     * (for cases where dataField is optional or will be set later)
+     * 
+     * @return a new builder instance
+     */
+    public static Builder builder() {
+        return new Builder();
+    }
+    
+    /**
+     * Builder class for ResponseMapping providing a fluent API
+     */
+    public static class Builder {
+        private String dataField;
+        private String pageField;
+        private String pageSizeField;
+        private String totalField;
+        private String hasNextField;
+        
+        /**
+         * Constructor with required dataField
+         * 
+         * @param dataField field containing the array of ValueAlias (required)
+         */
+        private Builder(String dataField) {
+            this.dataField = dataField;
+        }
+        
+        /**
+         * Constructor without required fields
+         */
+        private Builder() {
+        }
+        
+        /**
+         * Sets the field containing the array of ValueAlias
+         * 
+         * @param dataField the data field name
+         * @return this builder
+         */
+        public Builder dataField(String dataField) {
+            this.dataField = dataField;
+            return this;
+        }
+        
+        /**
+         * Sets the field containing current page number
+         * 
+         * @param pageField the page field name
+         * @return this builder
+         */
+        public Builder pageField(String pageField) {
+            this.pageField = pageField;
+            return this;
+        }
+        
+        /**
+         * Sets the field containing number of items in this page
+         * 
+         * @param pageSizeField the page size field name
+         * @return this builder
+         */
+        public Builder pageSizeField(String pageSizeField) {
+            this.pageSizeField = pageSizeField;
+            return this;
+        }
+        
+        /**
+         * Sets the field containing total count across all pages
+         * 
+         * @param totalField the total field name
+         * @return this builder
+         */
+        public Builder totalField(String totalField) {
+            this.totalField = totalField;
+            return this;
+        }
+        
+        /**
+         * Sets the field indicating if there's a next page
+         * 
+         * @param hasNextField the has next field name
+         * @return this builder
+         */
+        public Builder hasNextField(String hasNextField) {
+            this.hasNextField = hasNextField;
+            return this;
+        }
+        
+        /**
+         * Builds the ResponseMapping instance
+         * 
+         * @return a new ResponseMapping instance
+         */
+        public ResponseMapping build() {
+            ResponseMapping mapping = new ResponseMapping();
+            mapping.dataField = this.dataField;
+            mapping.pageField = this.pageField;
+            mapping.pageSizeField = this.pageSizeField;
+            mapping.totalField = this.totalField;
+            mapping.hasNextField = this.hasNextField;
+            return mapping;
+        }
+    }
 }

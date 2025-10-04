@@ -282,4 +282,156 @@ public class ValuesEndpoint {
                 ", minSearchLength=" + minSearchLength +
                 '}';
     }
+    
+    /**
+     * Creates a builder for ValuesEndpoint with required fields
+     * 
+     * @param uri the endpoint path or full URL (required)
+     * @param responseMapping configuration for parsing the response (required)
+     * @return a new builder instance
+     */
+    public static Builder builder(String uri, ResponseMapping responseMapping) {
+        return new Builder(uri, responseMapping);
+    }
+    
+    /**
+     * Builder class for ValuesEndpoint providing a fluent API
+     */
+    public static class Builder {
+        private final String uri;
+        private final ResponseMapping responseMapping;
+        private String protocol = "HTTP";
+        private String method = "GET";
+        private String searchField;
+        private PaginationStrategy paginationStrategy;
+        private RequestParams requestParams;
+        private CacheStrategy cacheStrategy;
+        private int debounceMs = 300;
+        private int minSearchLength = 0;
+        
+        /**
+         * Constructor with required fields
+         * 
+         * @param uri the endpoint path or full URL (required)
+         * @param responseMapping configuration for parsing the response (required)
+         */
+        private Builder(String uri, ResponseMapping responseMapping) {
+            if (uri == null || uri.trim().isEmpty()) {
+                throw new IllegalArgumentException("URI cannot be null or empty");
+            }
+            if (responseMapping == null) {
+                throw new IllegalArgumentException("ResponseMapping cannot be null");
+            }
+            this.uri = uri;
+            this.responseMapping = responseMapping;
+        }
+        
+        /**
+         * Sets the protocol to use
+         * 
+         * @param protocol the protocol (HTTP, HTTPS, GRPC)
+         * @return this builder
+         */
+        public Builder protocol(String protocol) {
+            this.protocol = protocol;
+            return this;
+        }
+        
+        /**
+         * Sets the HTTP method
+         * 
+         * @param method the method (GET, POST)
+         * @return this builder
+         */
+        public Builder method(String method) {
+            this.method = method;
+            return this;
+        }
+        
+        /**
+         * Sets the server-side field to search/filter on
+         * 
+         * @param searchField the search field
+         * @return this builder
+         */
+        public Builder searchField(String searchField) {
+            this.searchField = searchField;
+            return this;
+        }
+        
+        /**
+         * Sets the pagination strategy
+         * 
+         * @param paginationStrategy the pagination strategy
+         * @return this builder
+         */
+        public Builder paginationStrategy(PaginationStrategy paginationStrategy) {
+            this.paginationStrategy = paginationStrategy;
+            return this;
+        }
+        
+        /**
+         * Sets the request parameters configuration
+         * 
+         * @param requestParams the request params
+         * @return this builder
+         */
+        public Builder requestParams(RequestParams requestParams) {
+            this.requestParams = requestParams;
+            return this;
+        }
+        
+        /**
+         * Sets the cache strategy
+         * 
+         * @param cacheStrategy the cache strategy
+         * @return this builder
+         */
+        public Builder cacheStrategy(CacheStrategy cacheStrategy) {
+            this.cacheStrategy = cacheStrategy;
+            return this;
+        }
+        
+        /**
+         * Sets the debounce time in milliseconds
+         * 
+         * @param debounceMs the debounce time
+         * @return this builder
+         */
+        public Builder debounceMs(int debounceMs) {
+            this.debounceMs = debounceMs;
+            return this;
+        }
+        
+        /**
+         * Sets the minimum characters required before triggering search
+         * 
+         * @param minSearchLength the minimum search length
+         * @return this builder
+         */
+        public Builder minSearchLength(int minSearchLength) {
+            this.minSearchLength = minSearchLength;
+            return this;
+        }
+        
+        /**
+         * Builds the ValuesEndpoint instance
+         * 
+         * @return a new ValuesEndpoint instance
+         */
+        public ValuesEndpoint build() {
+            ValuesEndpoint endpoint = new ValuesEndpoint();
+            endpoint.uri = this.uri;
+            endpoint.responseMapping = this.responseMapping;
+            endpoint.protocol = this.protocol;
+            endpoint.method = this.method;
+            endpoint.searchField = this.searchField;
+            endpoint.paginationStrategy = this.paginationStrategy;
+            endpoint.requestParams = this.requestParams;
+            endpoint.cacheStrategy = this.cacheStrategy;
+            endpoint.debounceMs = this.debounceMs;
+            endpoint.minSearchLength = this.minSearchLength;
+            return endpoint;
+        }
+    }
 }

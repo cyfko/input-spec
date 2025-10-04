@@ -23,14 +23,12 @@ class InputFieldSpecTest {
             .errorMessage("Username must be 3-20 characters, alphanumeric with underscores")
             .build();
         
-        InputFieldSpec usernameField = new InputFieldSpec(
-            "Username",
-            DataType.STRING,
-            false, // expectMultipleValues
-            true,  // required
-            Arrays.asList(valueConstraint)
-        );
-        usernameField.setDescription("User's unique identifier");
+        InputFieldSpec usernameField = InputFieldSpec.builder("Username", DataType.STRING)
+            .description("User's unique identifier")
+            .expectMultipleValues(false)
+            .required(true)
+            .constraints(Arrays.asList(valueConstraint))
+            .build();
         
         // Verify field properties
         assertEquals("Username", usernameField.getDisplayName());
@@ -59,14 +57,12 @@ class InputFieldSpecTest {
             .defaultValue(0)
             .build();
         
-        InputFieldSpec priceField = new InputFieldSpec(
-            "Price",
-            DataType.NUMBER,
-            false, // expectMultipleValues
-            true,  // required
-            Arrays.asList(valueConstraint)
-        );
-        priceField.setDescription("Price filter range");
+        InputFieldSpec priceField = InputFieldSpec.builder("Price", DataType.NUMBER)
+            .description("Price filter range")
+            .expectMultipleValues(false)
+            .required(true)
+            .constraints(Arrays.asList(valueConstraint))
+            .build();
         
         // Verify field properties
         assertEquals("Price", priceField.getDisplayName());
@@ -86,14 +82,12 @@ class InputFieldSpecTest {
             .errorMessage("Please provide a valid email address")
             .build();
         
-        InputFieldSpec emailField = new InputFieldSpec(
-            "Email Address",
-            DataType.STRING,
-            false, // expectMultipleValues
-            true,  // required
-            Arrays.asList(valueConstraint)
-        );
-        emailField.setDescription("Contact email address");
+        InputFieldSpec emailField = InputFieldSpec.builder("Email Address", DataType.STRING)
+            .description("Contact email address")
+            .expectMultipleValues(false)
+            .required(true)
+            .constraints(Arrays.asList(valueConstraint))
+            .build();
         
         // Verify field properties
         assertEquals("Email Address", emailField.getDisplayName());
@@ -117,14 +111,12 @@ class InputFieldSpecTest {
             .enumValues(enumValues)
             .build();
         
-        InputFieldSpec statusField = new InputFieldSpec(
-            "Status",
-            DataType.STRING,
-            false, // expectMultipleValues
-            true,  // required
-            Arrays.asList(valueConstraint)
-        );
-        statusField.setDescription("Filter by status");
+        InputFieldSpec statusField = InputFieldSpec.builder("Status", DataType.STRING)
+            .description("Filter by status")
+            .expectMultipleValues(false)
+            .required(true)
+            .constraints(Arrays.asList(valueConstraint))
+            .build();
         
         // Verify field properties
         assertEquals("Status", statusField.getDisplayName());
@@ -137,18 +129,19 @@ class InputFieldSpecTest {
     @DisplayName("Should create multi-select field from protocol example 6")
     void testMultiSelectField() {
         // Example 6: Multi-Select Tags with Search from protocol
-        ResponseMapping responseMapping = new ResponseMapping("tags");
+        ResponseMapping responseMapping = ResponseMapping.builder("tags").build();
         
         RequestParams requestParams = new RequestParams();
         requestParams.setSearchParam("q");
         
-        ValuesEndpoint valuesEndpoint = new ValuesEndpoint("/api/tags", responseMapping);
-        valuesEndpoint.setSearchField("name");
-        valuesEndpoint.setPaginationStrategy(PaginationStrategy.NONE);
-        valuesEndpoint.setCacheStrategy(CacheStrategy.LONG_TERM);
-        valuesEndpoint.setDebounceMs(200);
-        valuesEndpoint.setMinSearchLength(1);
-        valuesEndpoint.setRequestParams(requestParams);
+        ValuesEndpoint valuesEndpoint = ValuesEndpoint.builder("/api/tags", responseMapping)
+            .searchField("name")
+            .paginationStrategy(PaginationStrategy.NONE)
+            .cacheStrategy(CacheStrategy.LONG_TERM)
+            .debounceMs(200)
+            .minSearchLength(1)
+            .requestParams(requestParams)
+            .build();
         
         ConstraintDescriptor valueConstraint = ConstraintDescriptor.builder("value")
             .min(1)
@@ -158,14 +151,12 @@ class InputFieldSpecTest {
             .valuesEndpoint(valuesEndpoint)
             .build();
         
-        InputFieldSpec tagsField = new InputFieldSpec(
-            "Tags",
-            DataType.STRING,
-            true, // expectMultipleValues = true for multi-select
-            true, // required
-            Arrays.asList(valueConstraint)
-        );
-        tagsField.setDescription("Select relevant tags for content");
+        InputFieldSpec tagsField = InputFieldSpec.builder("Tags", DataType.STRING)
+            .description("Select relevant tags for content")
+            .expectMultipleValues(true)
+            .required(true)
+            .constraints(Arrays.asList(valueConstraint))
+            .build();
         
         // Verify field properties
         assertEquals("Tags", tagsField.getDisplayName());
@@ -186,14 +177,12 @@ class InputFieldSpecTest {
             .errorMessage("Please provide a valid date")
             .build();
         
-        InputFieldSpec dateField = new InputFieldSpec(
-            "Created Date",
-            DataType.DATE,
-            false, // expectMultipleValues
-            false, // not required
-            Arrays.asList(valueConstraint)
-        );
-        dateField.setDescription("Filter by creation date");
+        InputFieldSpec dateField = InputFieldSpec.builder("Created Date", DataType.DATE)
+            .description("Filter by creation date")
+            .expectMultipleValues(false)
+            .required(false)
+            .constraints(Arrays.asList(valueConstraint))
+            .build();
         
         // Verify field properties
         assertEquals("Created Date", dateField.getDisplayName());

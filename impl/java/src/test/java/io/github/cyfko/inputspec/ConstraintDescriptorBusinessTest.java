@@ -96,14 +96,14 @@ class ConstraintDescriptorBusinessTest {
     @DisplayName("Should handle values endpoint constraint (dynamic values)")
     void testValuesEndpointConstraint() throws JsonProcessingException {
         // Scénario réel : sélection d'utilisateurs depuis une API
-        ResponseMapping mapping = new ResponseMapping();
-        mapping.setDataField("users");
+        ResponseMapping mapping = ResponseMapping.builder()
+            .dataField("users")
+            .build();
         
-        ValuesEndpoint endpoint = new ValuesEndpoint();
-        endpoint.setUri("/api/users");
-        endpoint.setResponseMapping(mapping);
-        endpoint.setCacheStrategy(CacheStrategy.SHORT_TERM);
-        endpoint.setPaginationStrategy(PaginationStrategy.PAGE_NUMBER);
+        ValuesEndpoint endpoint = ValuesEndpoint.builder("/api/users", mapping)
+            .cacheStrategy(CacheStrategy.SHORT_TERM)
+            .paginationStrategy(PaginationStrategy.PAGE_NUMBER)
+            .build();
         
         ConstraintDescriptor constraint = ConstraintDescriptor.builder("assignee")
             .valuesEndpoint(endpoint)

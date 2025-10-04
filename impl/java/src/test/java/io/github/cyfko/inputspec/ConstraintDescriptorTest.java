@@ -52,7 +52,7 @@ class ConstraintDescriptorTest {
             new ValueAlias("value2", "Label 2")
         );
         
-        ValuesEndpoint endpoint = new ValuesEndpoint("/api/values", new ResponseMapping("data"));
+        ValuesEndpoint endpoint = ValuesEndpoint.builder("/api/values", ResponseMapping.builder("data").build()).build();
         
         ConstraintDescriptor constraint = ConstraintDescriptor.builder("test")
             .min(5)
@@ -149,10 +149,11 @@ class ConstraintDescriptorTest {
     @Test
     @DisplayName("Should handle ValuesEndpoint in JSON serialization")
     void testValuesEndpointSerialization() throws JsonProcessingException {
-        ResponseMapping responseMapping = new ResponseMapping("data");
-        ValuesEndpoint endpoint = new ValuesEndpoint("/api/users", responseMapping);
-        endpoint.setPaginationStrategy(PaginationStrategy.PAGE_NUMBER);
-        endpoint.setCacheStrategy(CacheStrategy.SHORT_TERM);
+        ResponseMapping responseMapping = ResponseMapping.builder("data").build();
+        ValuesEndpoint endpoint = ValuesEndpoint.builder("/api/users", responseMapping)
+            .paginationStrategy(PaginationStrategy.PAGE_NUMBER)
+            .cacheStrategy(CacheStrategy.SHORT_TERM)
+            .build();
         
         ConstraintDescriptor constraint = ConstraintDescriptor.builder("assignee")
             .valuesEndpoint(endpoint)

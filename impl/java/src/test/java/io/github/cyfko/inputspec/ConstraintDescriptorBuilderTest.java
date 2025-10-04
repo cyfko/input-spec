@@ -41,14 +41,14 @@ class ConstraintDescriptorBuilderTest {
     @DisplayName("Should create complex constraint with builder")
     void testBuilderComplexConstraint() {
         // Configuration endpoint dynamique
-        ResponseMapping mapping = new ResponseMapping();
-        mapping.setDataField("users");
+        ResponseMapping mapping = ResponseMapping.builder()
+            .dataField("users")
+            .build();
         
-        ValuesEndpoint endpoint = new ValuesEndpoint();
-        endpoint.setUri("/api/users");
-        endpoint.setResponseMapping(mapping);
-        endpoint.setCacheStrategy(CacheStrategy.SHORT_TERM);
-        endpoint.setPaginationStrategy(PaginationStrategy.PAGE_NUMBER);
+        ValuesEndpoint endpoint = ValuesEndpoint.builder("/api/users", mapping)
+            .cacheStrategy(CacheStrategy.SHORT_TERM)
+            .paginationStrategy(PaginationStrategy.PAGE_NUMBER)
+            .build();
         
         // Contrainte complexe avec builder
         ConstraintDescriptor constraint = ConstraintDescriptor.builder("assignee")
