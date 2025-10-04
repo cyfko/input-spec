@@ -1,0 +1,19 @@
+main:
+  - title: "Overview"
+    url: /
+  - title: "Client"
+    children:
+      - title: "Overview"
+        url: /client/overview
+      - title: "Getting Started"
+        url: /client/getting-started
+      - title: "Advanced Usage"
+        url: /client/advanced
+  - title: "Server"
+    children:
+      - title: "Overview"
+        url: /server/overview
+      - title: "API Reference"
+        url: /server/api-reference
+      - title: "Deployment"
+        url: /server/deployment

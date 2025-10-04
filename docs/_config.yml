@@ -1,31 +1,26 @@
-title: "Project Name"
-description: "Short description"
-baseurl: ""       # set if repo page uses /repo-name
-url: "https://<your-user>.github.io" 
+title: "Protocol Documentation"
+description: "Comprehensive guide for both client and server implementations of the Protocol"
+remote_theme: just-the-docs/just-the-docs
+color_scheme: light
 
-# Build settings
+search_enabled: true
+aux_links:
+  "View on GitHub":
+    - "//github.com/USERNAME/REPO"
+
+plugins:
+  - jekyll-remote-theme
+  - jekyll-seo-tag
+
+# Mermaid support
 markdown: kramdown
 kramdown:
-  input: GFM
-highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: false
 
-permalink: /:path/
-
-# Exclude development files
-exclude:
-  - node_modules
-  - vendor
-
-# Defaults for docs pages
-defaults:
-  - scope:
-      path: ""
-      type: "pages"
-    values:
-      layout: "doc"
-
-# Optional: Algolia DocSearch (replace with keys if you have them)
-algolia:
-  application_id: ""
-  search_api_key: ""
-  index_name: ""
+# Navigation file
+nav_sort: case_sensitive
+nav_external_links:
+  - title: React Docs Style
+    url: https://react.dev/learn
