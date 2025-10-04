@@ -1,6 +1,14 @@
-// Mermaid init
-if (window.mermaid) {
-  mermaid.initialize({ startOnLoad: true, securityLevel: 'strict' });
+function transformMermaidCode() {
+  document.querySelectorAll('pre > code').forEach(code => {
+    const txt = code.textContent.trim();
+    if (txt.startsWith('graph ') || txt.startsWith('sequenceDiagram') || txt.startsWith('flowchart ')) {
+      const pre = code.parentElement;
+      const div = document.createElement('div');
+      div.className = 'mermaid';
+      div.textContent = txt;
+      pre.replaceWith(div);
+    }
+  });
 }
 
 function addCopyButtons() {
@@ -69,6 +77,10 @@ function updateThemeButton(btn, theme) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
+  transformMermaidCode();
+  if (window.mermaid) {
+    mermaid.initialize({ startOnLoad: true, securityLevel: 'strict' });
+  }
   addCopyButtons();
   applyActiveNav();
   const toggle = document.getElementById('themeToggle');

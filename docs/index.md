@@ -6,6 +6,20 @@ description: "Portail de navigation du Dynamic Input Field Specification Protoco
 permalink: /
 ---
 
+## Pourquoi ce protocole ?
+
+Les formulaires complexes souffrent souvent de duplication (front/back), d’incohérences de validation et de coûts d’évolution dès que les règles changent. Le **Dynamic Input Field Specification Protocol** vise à :
+
+- Centraliser la description des champs (types, contraintes, valeurs dynamiques) dans une représentation partagée.
+- Supprimer la divergence entre règles backend et logique frontend.
+- Permettre l’injection de sources de valeurs dynamiques (pagination, recherche) sans recoder la logique UI.
+- Réduire le couplage framework : une même spécification alimente plusieurs clients (web, mobile, CLI).
+- Accélérer la mise à jour métier (ajout d’une contrainte = propagation immédiate aux clients).
+
+Cas d’usage typiques : back‑offices modulaires, SaaS multi-tenant, formulaires hautement variables (RH, e‑commerce B2B, conformité), configurateurs dynamiques.
+
+> Objectif principal : déplacer la complexité de *comment valider / peupler* vers *quoi décrire* (spécification déclarative).
+
 # Documentation Complète - Input Field Specification Protocol
 
 Bienvenue dans la documentation complète du **Dynamic Input Field Specification Protocol** ! 

@@ -84,7 +84,7 @@ body {
 }
 
 /* Sidebar */
-nav.sidebar {
+.sidebar {
   position: fixed;
   inset: 0 auto 0 0;
   width: 250px;
@@ -96,14 +96,14 @@ nav.sidebar {
   scrollbar-color: var(--color-border) transparent;
   z-index: 300;
 }
-nav.sidebar::-webkit-scrollbar { width: 8px; }
-nav.sidebar::-webkit-scrollbar-thumb {
+.sidebar::-webkit-scrollbar { width: 8px; }
+.sidebar::-webkit-scrollbar-thumb {
   background: var(--color-border);
   border-radius: 4px;
 }
-nav.sidebar ul { list-style: none; padding: 0; margin: 0 0 1.2rem; }
-nav.sidebar li { margin: 0 0 0.55rem; }
-nav.sidebar a {
+.sidebar ul { list-style: none; padding: 0; margin: 0 0 1.2rem; }
+.sidebar li { margin: 0 0 0.55rem; }
+.sidebar a {
   display: block;
   padding: 0.45rem 0.75rem;
   border-radius: var(--radius-sm);
@@ -113,8 +113,8 @@ nav.sidebar a {
   font-weight: 500;
   transition: var(--transition);
 }
-nav.sidebar a:hover { color: var(--color-primary); background: var(--color-surface-alt); }
-nav.sidebar a.active { background: var(--color-primary); color: #fff; box-shadow: 0 2px 6px var(--color-shadow); }
+.sidebar a:hover { color: var(--color-primary); background: var(--color-surface-alt); }
+.sidebar a.active { background: var(--color-primary); color: #fff; box-shadow: 0 2px 6px var(--color-shadow); }
 
 .main-content {
   margin-left: 250px;
@@ -123,7 +123,7 @@ nav.sidebar a.active { background: var(--color-primary); color: #fff; box-shadow
 }
 
 @media (max-width: 980px) {
-  nav.sidebar { position: static; width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--color-border); }
+  .sidebar { position: static; width: 100%; height: auto; border-right: none; border-bottom: 1px solid var(--color-border); }
   .main-content { margin-left: 0; padding: 1.5rem 1.2rem; }
 }
 
