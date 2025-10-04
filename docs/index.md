@@ -1,8 +1,38 @@
+---
+layout: default
+title: "Accueil"
+nav_order: 1
+description: "Portail de navigation du Dynamic Input Field Specification Protocol"
+permalink: /
+---
+
 # Documentation Complète - Input Field Specification Protocol
 
 Bienvenue dans la documentation complète du **Dynamic Input Field Specification Protocol** ! 
 
 Ce site vous guidera à travers tous les aspects du protocole, depuis vos premiers pas jusqu'aux techniques avancées d'implémentation.
+
+> Note: Certaines sections avancées (optimisations extrêmes, plugins) sont marquées comme *Suggestion* lorsqu'elles ne sont pas encore implémentées dans le code présent du dépôt.
+
+## 🔍 Perspectives
+
+### Point de vue Client (C2)
+- Charge les spécifications (`InputFieldSpec`) depuis le serveur.
+- Applique validation locale (ordre pattern → min/max → format → enum/valuesEndpoint) sans inventer de logique.
+- Résout les valeurs via endpoint (TypeScript: `ValuesResolver`; Java: implémentation future → Suggestion).
+
+### Point de vue Serveur (C2)
+- Expose endpoints fournissant les specs et sources de valeurs paginées.
+- Centralise contraintes pour éliminer la duplication côté front.
+- Reste source de vérité; aucune logique métier n'est inférée côté client.
+
+### Interaction
+```
+Client -> GET /api/fields/<field>
+Client -> (facultatif selon saisie) GET /api/users?search=...&page=1
+Client -> Validation locale (FieldValidator)
+```
+Les appels sont minimisés (debounce + cache côté client quand disponible).
 
 ## 🧭 Navigation par objectif
 
@@ -99,6 +129,72 @@ graph TD
 | **React** | [Guide intermédiaire](./INTERMEDIATE_GUIDE.md#react) | [Formulaire e-commerce](./FAQ.md#scénario-1-e-commerce) |
 | **Vue.js** | [Guide intermédiaire](./INTERMEDIATE_GUIDE.md#vuejs) | [Application RH](./FAQ.md#scénario-2-application-rh) |
 | **Angular** | [Guide intermédiaire](./INTERMEDIATE_GUIDE.md#angular) | [Système tickets](./FAQ.md#scénario-3-système-de-tickets) |
+
+## 🧩 Diagrammes clés
+
+### Architecture globale
+```mermaid
+graph LR
+    subgraph Client
+        UI[UI Form]
+        VS[ValuesResolver]
+        FV[FieldValidator]
+        MC[(MemoryCache)]
+    end
+    subgraph Serveur
+        API[HTTP Endpoint /values]
+        SPEC[Endpoint /fields]
+        DB[(Data Store)]
+    end
+    UI --> VS
+    VS --> MC
+    VS --> API
+    API --> DB
+    SPEC --> UI
+    FV --> UI
+```
+
+### Séquence résolution de valeurs (TypeScript)
+```mermaid
+sequenceDiagram
+    participant UI
+    participant Resolver as ValuesResolver
+    participant Cache as MemoryCacheProvider
+    participant HTTP as FetchHttpClient
+    participant Backend
+
+    UI->>Resolver: resolveValues(endpoint, params)
+    Resolver->>Cache: get(key)
+    alt Hit
+        Cache-->>Resolver: cached result
+        Resolver-->>UI: return cached
+    else Miss
+        Resolver->>HTTP: fetch(url?query)
+        HTTP->>Backend: GET /values?search=...
+        Backend-->>HTTP: 200 JSON
+        HTTP-->>Resolver: values[]
+        Resolver->>Cache: set(key, values)
+        Resolver-->>UI: values[]
+    end
+```
+
+### Flux de validation d'un champ
+```mermaid
+flowchart TD
+    A[Entrée utilisateur] --> B{Required?}
+    B -- manquant --> E[Erreur required]
+    B -- ok --> C{Type conforme?}
+    C -- non --> F[Erreur type]
+    C -- oui --> D[Contraintes séquentielles]
+    D --> G[Pattern]
+    G --> H[Min/Max]
+    H --> I[Format]
+    I --> J[Enum statique]
+    J --> K[ValuesEndpoint]
+    K --> L{Erreurs?}
+    L -- oui --> M[Retour ValidationResult ko]
+    L -- non --> N[ValidationResult ok]
+```
 
 ## 📚 Ressources complémentaires
 

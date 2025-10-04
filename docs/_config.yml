@@ -1,0 +1,68 @@
+# Jekyll configuration for GitHub Pages
+baseurl: ""
+url: "https://cyfko.github.io/input-spec"
+theme: minima
+plugins:
+  - jekyll-seo-tag
+  - jekyll-feed
+  - jekyll-sitemap
+markdown: kramdown
+kramdown:
+  input: GFM
+  syntax_highlighter: rouge
+  syntax_highlighter_opts:
+    block:
+      line_numbers: true
+    span:
+      line_numbers: false
+collections:
+  guides:
+    output: true
+    permalink: /:collection/:name
+include:
+  - assets
+  - _layouts
+  - _includes
+exclude:
+  - node_modules
+  - vendor
+  - Gemfile
+  - Gemfile.lock
+  - package.json
+  - package-lock.json
+  - yarn.lock
+  - pnpm-lock.yaml
+  - README.md
+  - LICENSE
+  - .github
+  - .vscode
+  - .DS_Store
+  - .env
+  - .git
+  - .gitignore
+  - .gitattributes
+  - .idea
+  - .cache
+  - .jekyll-cache
+  - .sass-cache
+  - .bundle
+  - .ruby-version
+  - .ruby-gemset
+  - .history
+  - .log
+  - .tmp
+  - .test
+  - .coverage
+  - .nyc_output
+  - .tsbuildinfo
+  - dist
+  - coverage
+  - build
+  - out
+  - tmp
+  - test
+  - tests
+  - __tests__
+  - examples
+  - docs_generation_report.md
+  - DOCS_GENERATION_REPORT.md

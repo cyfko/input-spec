@@ -1,3 +1,12 @@
+---
+layout: default
+title: "Guide de contribution"
+nav_order: 90
+categories: [contribution]
+description: "Processus de contribution code, tests et documentation"
+permalink: /contribuer/
+---
+
 # 🤝 Guide de contribution
 
 *Comment participer au développement du Dynamic Input Field Specification Protocol*
@@ -592,6 +601,515 @@ bundle exec jekyll serve --livereload
 
 # 4. Validation
 # Vérifier liens, syntaxe, exemples
+```
+
+## ✍️ Contribution à la documentation
+
+### Front matter requis
+Chaque page Markdown dans `docs/` doit commencer par :
+```yaml
+---
+layout: default
+title: "Titre clair"
+nav_order: <ordre numérique>
+categories: [guide|faq|reference|exemples]
+description: "Résumé concis (≤140 caractères)"
+---
+```
+
+### Diagrammes Mermaid
+1. Vérifier qu'un diagramme reflète une réalité observable (classes, endpoints, flux dans code/tests).
+2. Placer dans une section explicite (`## Diagramme: <sujet>`).
+3. Ajouter commentaire juste après le bloc expliquant la source (ex: `<!-- Source: FieldValidator + ValuesResolver -->`).
+4. Si hypothétique ou roadmap → marquer `Suggestion`.
+
+### Checklist fidélité avant PR
+- [ ] Chaque exemple compilable/exécutable avec code existant.
+- [ ] Aucun nom de classe/fonction inventé.
+- [ ] Les diagrammes correspondent aux packages / modules présents.
+- [ ] Les suggestions sont préfixées par `Suggestion:` et isolées.
+- [ ] Liens relatifs testés localement avec `bundle exec jekyll serve`.
+- [ ] Boutons copier fonctionnels sur nouveaux snippets.
+- [ ] Pas de dépendance externe ajoutée sans justification.
+
+### Ajouter un nouvel exemple
+1. Localiser source existante (tests, `impl/typescript/src`, code Java).
+2. Extraire bloc minimal reproductible.
+3. Ajouter contexte (But, Préconditions, Résultat attendu).
+4. Ajouter section Perspectives (Client / Serveur / Interaction) si l'exemple illustre un échange.
+5. Mettre à jour `DOCS_GENERATION_REPORT.md` si structure modifiée.
+
+### Validation locale rapide
+```bash
+# Lancer site docs
+cd docs
+bundle exec jekyll serve --livereload
+# Vérifier liens internes cassés (grep simple)
+grep -R "(../impl" -n . | cut -d: -f1 | sort -u
+```
+
+### Politique de suppression
+- Supprimer uniquement contenu obsolète ET référencé nulle part.
+- Remplacer par avertissement de dépréciation si usage potentiel.
+
+---
+
+## 🚀 Démarrage rapide
+
+### 1. **Setup de l'environnement de développement**
+
+```bash
+# 1. Fork et clone
+git clone https://github.com/YOUR_USERNAME/input-spec.git
+cd input-spec
+
+# 2. Installation des dépendances - TypeScript
+cd impl/typescript
+npm install
+npm run build
+npm test
+
+# 3. Installation des dépendances - Java  
+cd ../java
+./mvnw clean install
+./mvnw test
+
+# 4. Vérification de la documentation
+cd ../../docs
+bundle install  # Jekyll pour GitHub Pages
+bundle exec jekyll serve
+```
+
+### 2. **Structure du projet**
+
+```
+input-spec/
+├── PROTOCOL_SPECIFICATION.md    # 📋 Spécification du protocole
+├── docs/                        # 📖 Documentation GitHub Pages
+│   ├── README.md                # Introduction générale
+│   ├── QUICK_START.md           # Guide débutant
+│   ├── INTERMEDIATE_GUIDE.md    # Guide intermédiaire
+│   ├── EXPERT_GUIDE.md          # Guide expert
+│   └── FAQ.md                   # Questions fréquentes
+├── impl/                        # 💻 Implémentations
+│   ├── typescript/              # Implémentation TypeScript
+│   │   ├── src/                 # Code source
+│   │   ├── examples/            # Exemples d'usage
+│   │   └── __tests__/           # Tests
+│   └── java/                    # Implémentation Java
+│       ├── src/main/java/       # Code source
+│       ├── src/test/java/       # Tests
+│       └── examples/            # Exemples d'usage
+└── tests/                       # 🧪 Tests de conformité
+    ├── protocol-compliance/     # Tests protocole
+    └── cross-language/          # Tests interopérabilité
+```
+
+### 3. **Conventions de développement**
+
+#### **Commits**
+Utilisez la convention [Conventional Commits](https://www.conventionalcommits.org/) :
+
+```bash
+# Nouveautés
+feat(typescript): add debouncing support to ValuesResolver
+
+# Corrections
+fix(java): handle null values in FieldValidator 
+
+# Documentation
+docs: improve getting started guide
+
+# Tests
+test(protocol): add conformance tests for date validation
+
+# Réusinage
+refactor(cache): optimize memory usage in CacheProvider
+```
+
+#### **Branches**
+```bash
+# Nouvelles fonctionnalités
+feature/typescript-react-adapter
+feature/java-spring-integration
+
+# Corrections de bugs
+bugfix/validation-edge-cases
+bugfix/cache-memory-leak
+
+# Documentation
+docs/api-reference-update
+docs/french-translation
+
+# Hotfixes
+hotfix/security-vulnerability
+```
+
+## 📝 Guide de contribution par type
+
+### 🔧 **Contribuer au protocole (spécification)**
+
+#### Quand modifier le protocole ?
+- ✅ Ajouter de nouveaux types de contraintes
+- ✅ Étendre les capacités de pagination
+- ✅ Améliorer l'interopérabilité cross-language
+- ❌ Changes breaking (sauf version majeure)
+- ❌ Fonctionnalités spécifiques à un langage
+
+#### Processus RFC (Request for Comments)
+
+1. **Créer une issue RFC**
+```markdown
+# RFC: Nouvelle contrainte `credit_card_validation`
+
+## Problème
+Besoin de validation native des numéros de carte de crédit avec algorithme de Luhn.
+
+## Solution proposée
+Ajouter une contrainte `credit_card_validation` avec support des types de cartes.
+
+## Spécification technique
+```json
+{
+  "name": "credit_card_validation",
+  "acceptedTypes": ["visa", "mastercard", "amex"],
+  "errorMessage": "Numéro de carte invalide"
+}
+```
+
+## Tests de conformité
+- [ ] Validation Visa valide
+- [ ] Validation Mastercard valide  
+- [ ] Rejet numéro invalide
+- [ ] Support types multiples
+
+## Rétrocompatibilité
+✅ Totalement rétrocompatible
+
+## Implémentations requises
+- [ ] TypeScript
+- [ ] Java
+```
+
+2. **Discussion communautaire**
+   - Collecte des retours pendant 1-2 semaines
+   - Itération sur la proposition
+   - Consensus sur l'approche
+
+3. **Implémentation de référence**
+   - Prototype dans un langage (TypeScript recommandé)
+   - Tests de conformité complets
+   - Documentation d'usage
+
+4. **Validation cross-language**
+   - Implémentation dans tous les langages supportés
+   - Tests d'interopérabilité
+   - Validation par la communauté
+
+### 💻 **Contribuer aux implémentations**
+
+#### **TypeScript**
+
+```bash
+# Setup développement
+cd impl/typescript
+npm install
+npm run dev # Mode watch
+
+# Tests
+npm test              # Tests unitaires
+npm run test:coverage # Avec couverture
+npm run test:e2e      # Tests d'intégration
+
+# Quality
+npm run lint          # ESLint
+npm run format        # Prettier  
+npm run type-check    # TypeScript
+```
+
+**Standards de code :**
+- **Style** : Prettier + ESLint configuration fournie
+- **Types** : TypeScript strict mode obligatoire
+- **Tests** : Jest, couverture minimale 85%
+- **Documentation** : JSDoc pour toutes les APIs publiques
+
+**Exemple de contribution TypeScript :**
+
+```typescript
+// src/constraints/CreditCardProcessor.ts
+import { ConstraintProcessor, ProcessingResult } from '../types';
+
+/**
+ * Processor for credit card validation using Luhn algorithm
+ * @see https://en.wikipedia.org/wiki/Luhn_algorithm
+ */
+export class CreditCardProcessor implements ConstraintProcessor {
+  canProcess(constraint: ConstraintDescriptor): boolean {
+    return constraint.name === 'credit_card_validation';
+  }
+  
+  async process(
+    constraint: ConstraintDescriptor,
+    value: any,
+    fieldSpec: InputFieldSpec,
+    context: ValidationContext
+  ): Promise<ProcessingResult> {
+    // Implémentation avec tests exhaustifs
+    if (typeof value !== 'string') {
+      return this.createError('Credit card number must be a string');
+    }
+    
+    const cleanNumber = this.cleanCardNumber(value);
+    
+    if (!this.validateLuhn(cleanNumber)) {
+      return this.createError('Invalid credit card number');
+    }
+    
+    if (constraint.acceptedTypes) {
+      const cardType = this.detectCardType(cleanNumber);
+      if (!constraint.acceptedTypes.includes(cardType)) {
+        return this.createError(`${cardType} cards not accepted`);
+      }
+    }
+    
+    return { isValid: true, errors: [] };
+  }
+  
+  private validateLuhn(number: string): boolean {
+    // Implémentation algorithme de Luhn
+    // ... (voir exemple dans guide expert)
+  }
+  
+  private detectCardType(number: string): string {
+    // Détection du type de carte
+    // ... 
+  }
+}
+```
+
+**Tests correspondants :**
+
+```typescript
+// __tests__/constraints/CreditCardProcessor.test.ts
+import { CreditCardProcessor } from '../../src/constraints/CreditCardProcessor';
+
+describe('CreditCardProcessor', () => {
+  let processor: CreditCardProcessor;
+  
+  beforeEach(() => {
+    processor = new CreditCardProcessor();
+  });
+  
+  describe('Visa cards', () => {
+    it('should validate valid Visa number', async () => {
+      const constraint = {
+        name: 'credit_card_validation',
+        acceptedTypes: ['visa']
+      };
+      
+      const result = await processor.process(constraint, '4111111111111111', mockFieldSpec, mockContext);
+      
+      expect(result.isValid).toBe(true);
+    });
+    
+    it('should reject invalid Visa number', async () => {
+      // Test avec numéro invalide
+    });
+  });
+  
+  // Tests pour tous les cas d'edge
+  describe('edge cases', () => {
+    it('should handle non-string input', async () => {
+      // ...
+    });
+    
+    it('should handle empty string', async () => {
+      // ...
+    });
+  });
+});
+```
+
+#### **Java**
+
+```bash
+# Setup développement  
+cd impl/java
+./mvnw clean install
+./mvnw spring-boot:run # Si app de demo
+
+# Tests
+./mvnw test                    # Tests unitaires
+./mvnw verify                  # Tests + intégration
+./mvnw jacoco:report          # Couverture
+
+# Quality
+./mvnw checkstyle:check       # Style
+./mvnw spotbugs:check         # Analyse statique
+./mvnw pmd:check              # Qualité code
+```
+
+**Standards de code :**
+- **Style** : Google Java Style Guide
+- **Build** : Maven avec profils de qualité
+- **Tests** : JUnit 5 + Mockito, couverture minimale 85%
+- **Documentation** : Javadoc complète pour APIs publiques
+
+**Exemple de contribution Java :**
+
+```java
+// src/main/java/io/github/cyfko/inputspec/constraints/CreditCardProcessor.java
+package io.github.cyfko.inputspec.constraints;
+
+import io.github.cyfko.inputspec.validation.ConstraintProcessor;
+import io.github.cyfko.inputspec.validation.ProcessingResult;
+import io.github.cyfko.inputspec.validation.ValidationError;
+
+/**
+ * Processes credit card validation constraints using the Luhn algorithm.
+ * 
+ * <p>Supports validation of major credit card types including Visa, MasterCard, 
+ * American Express, and Discover. Can be configured to accept only specific 
+ * card types through the {@code acceptedTypes} parameter.
+ * 
+ * <p>Example usage:
+ * <pre>{@code
+ * ConstraintDescriptor constraint = ConstraintDescriptor.builder()
+ *     .name("credit_card_validation")
+ *     .acceptedTypes(Arrays.asList("visa", "mastercard"))
+ *     .errorMessage("Please enter a valid Visa or MasterCard number")
+ *     .build();
+ * }</pre>
+ * 
+ * @since 1.1.0
+ * @see <a href="https://en.wikipedia.org/wiki/Luhn_algorithm">Luhn Algorithm</a>
+ */
+@Component
+public class CreditCardProcessor implements ConstraintProcessor {
+    
+    private static final Logger logger = LoggerFactory.getLogger(CreditCardProcessor.class);
+    
+    @Override
+    public boolean canProcess(ConstraintDescriptor constraint) {
+        return "credit_card_validation".equals(constraint.getName());
+    }
+    
+    @Override
+    public ProcessingResult process(
+            ConstraintDescriptor constraint,
+            Object value,
+            InputFieldSpec fieldSpec,
+            ValidationContext context) {
+        
+        if (!(value instanceof String)) {
+            return ProcessingResult.invalid(
+                new ValidationError(constraint.getName(), 
+                    "Credit card number must be a string", value)
+            );
+        }
+        
+        String cardNumber = (String) value;
+        String cleanNumber = cleanCardNumber(cardNumber);
+        
+        // Validate format
+        if (!isValidFormat(cleanNumber)) {
+            return ProcessingResult.invalid(
+                new ValidationError(constraint.getName(),
+                    constraint.getErrorMessage() != null ? 
+                        constraint.getErrorMessage() : 
+                        "Invalid credit card format", 
+                    value)
+            );
+        }
+        
+        // Validate using Luhn algorithm
+        if (!validateLuhn(cleanNumber)) {
+            return ProcessingResult.invalid(
+                new ValidationError(constraint.getName(),
+                    constraint.getErrorMessage() != null ? 
+                        constraint.getErrorMessage() : 
+                        "Invalid credit card number", 
+                    value)
+            );
+        }
+        
+        // Validate accepted types if specified
+        List<String> acceptedTypes = constraint.getAcceptedTypes();
+        if (acceptedTypes != null && !acceptedTypes.isEmpty()) {
+            String cardType = detectCardType(cleanNumber);
+            if (!acceptedTypes.contains(cardType)) {
+                return ProcessingResult.invalid(
+                    new ValidationError(constraint.getName(),
+                        String.format("%s cards are not accepted", 
+                            cardType.toUpperCase()), 
+                        value)
+                );
+            }
+        }
+        
+        logger.debug("Credit card validation successful for type: {}", 
+            detectCardType(cleanNumber));
+        
+        return ProcessingResult.valid();
+    }
+    
+    /**
+     * Removes all non-digit characters from card number.
+     * 
+     * @param cardNumber the raw card number input
+     * @return cleaned numeric string
+     */
+    private String cleanCardNumber(String cardNumber) {
+        return cardNumber.replaceAll("[^0-9]", "");
+    }
+    
+    /**
+     * Validates card number format (13-19 digits).
+     */
+    private boolean isValidFormat(String cleanNumber) {
+        return cleanNumber.matches("^\\d{13,19}$");
+    }
+    
+    /**
+     * Validates card number using Luhn algorithm.
+     */
+    private boolean validateLuhn(String number) {
+        int sum = 0;
+        boolean isEven = false;
+        
+        for (int i = number.length() - 1; i >= 0; i--) {
+            int digit = Character.getNumericValue(number.charAt(i));
+            
+            if (isEven) {
+                digit *= 2;
+                if (digit > 9) {
+                    digit -= 9;
+                }
+            }
+            
+            sum += digit;
+            isEven = !isEven;
+        }
+        
+        return sum % 10 == 0;
+    }
+    
+    /**
+     * Detects credit card type based on number pattern.
+     */
+    private String detectCardType(String number) {
+        if (number.startsWith("4")) {
+            return "visa";
+        } else if (number.matches("^5[1-5].*")) {
+            return "mastercard";
+        } else if (number.matches("^3[47].*")) {
+            return "amex";
+        } else if (number.startsWith("6")) {
+            return "discover";
+        }
+        return "unknown";
+    }
+}
 ```
 
 ## 🧪 Tests et validation

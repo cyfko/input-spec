@@ -1,3 +1,12 @@
+---
+layout: default
+title: "Guide expert"
+nav_order: 30
+categories: [guide, expert]
+description: "Architecture interne, optimisation et extensions du protocole"
+permalink: /guide-expert/
+---
+
 # 🎓 Guide expert
 
 *Architecture interne, optimisations avancées et contributions au protocole*
@@ -1582,3 +1591,24 @@ Ce guide expert a couvert :
 ---
 
 *Temps estimé : 2-4 heures • Difficulté : Expert*
+
+## 🔍 Perspectives
+
+### Point de vue Client (C2)
+- Consomme `InputFieldSpec` et applique `FieldValidator` / `ValuesResolver`.
+- Optimisations locales (cache, compilation validation, worker pool) pour réduire la latence.
+- Peut brancher des plugins (i18n, business logic) avant d'afficher les résultats.
+
+### Point de vue Serveur (C2)
+- Fournit des endpoints stables pour specs et valeurs (structure prévisible via `ResponseMapping`).
+- Gère logique d'unicité, permissions, pagination réelle des données.
+- Peut implémenter des extensions futures (validation batch, synchronisation temps réel) — actuellement suggéré, non présent dans code.
+
+### Interaction
+- Client charge la spec, exécute validations localement et interroge endpoints distants seulement pour valeurs.
+- Le serveur reste source de vérité pour options dynamiques et règles complexes.
+- Extensions proposées (plugins côté client) n'affectent pas la surface protocole tant qu'elles ne modifient pas le format de spec.
+
+## 🧭 Suite
+
+...existing code...

@@ -1,3 +1,15 @@
+---
+layout: default
+title: "Démarrage rapide"
+nav_order: 10
+categories: [guide, debutant]
+description: "Guide de démarrage rapide pour le Dynamic Input Field Specification Protocol"
+permalink: /quick-start/
+# Distinctions de perspective ajoutées plus bas
+---
+
+<!-- Perspectives: Client (C2) / Serveur (C2) -->
+
 # 🚀 Guide de démarrage rapide
 
 *De zéro à votre premier champ intelligent en 5 minutes*
@@ -323,6 +335,23 @@ const AssigneeSelector: React.FC = () => {
   );
 };
 ```
+
+## 🔍 Perspectives
+
+### Point de vue Client (C2)
+- Consomme la spécification via requête `/api/fields/assignee`.
+- Déclenche des recherches debouncées sur l'endpoint valeurs (`/api/users`).
+- Valide localement selon l'ordre des contraintes implémenté (pattern → min/max → format → valeurs).
+
+### Point de vue Serveur (C2)
+- Expose endpoint de spécification (`/api/fields/assignee`).
+- Fournit endpoint de valeurs paginées conforme au mapping (`users`, `total`, `hasNext`).
+- Garantit cohérence des clés (`page`, `limit`, `search`).
+
+### Interaction
+- Client charge la spec puis résout dynamiquement les valeurs.
+- La sélection validée localement réduit les allers-retours.
+- Pagination pilotée par paramètres fournis dans `RequestParams` côté spec.
 
 ## 🎭 Démonstration du flux complet
 

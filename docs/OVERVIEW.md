@@ -1,3 +1,12 @@
+---
+layout: default
+title: "Vue d'ensemble"
+nav_order: 5
+categories: [overview]
+description: "Présentation du problème, valeur ajoutée et positionnement du protocole"
+permalink: /overview/
+---
+
 # Dynamic Input Field Specification Protocol
 
 *Un protocole moderne pour les champs de formulaire intelligents et adaptatifs*
@@ -130,6 +139,22 @@ sequenceDiagram
     U->>C: Sélectionne utilisateur
     C->>C: Valide: usr_123 ✅
 ```
+
+## 🔍 Perspectives
+
+### Point de vue Client (C2)
+- Reçoit `InputFieldSpec` et construit UI dynamique (recherche, pagination, validation locale).
+- Réduit la duplication logique (plus besoin dupliquer regex / min / max / mapping).
+- Utilise cache local pour limiter appels `ValuesEndpoint`.
+
+### Point de vue Serveur (C2)
+- Expose les spécifications (source unique), garantit cohérence inter-clients.
+- Implémente endpoints de valeurs structurés (mapping stable) et pagination.
+- Évolue sans casser clients si contrat spec maintenu.
+
+### Interaction
+- Chargement initial de la spec → résolution de valeurs (recherche + pagination) → validation locale selon contraintes.
+- Le serveur reste arbitre des données dynamiques; le client n'infère pas de logique non définie.
 
 ## 🚀 Pour qui est-ce fait ?
 

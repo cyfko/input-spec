@@ -1,3 +1,12 @@
+---
+layout: default
+title: "Guide intermédiaire"
+nav_order: 20
+categories: [guide, intermediaire]
+description: "Formulaires complexes, dépendances et optimisation"
+permalink: /guide-intermediaire/
+---
+
 # 🎓 Guide intermédiaire
 
 *Maîtriser le protocole pour des cas d'usage avancés*
@@ -622,6 +631,23 @@ const ProjectForm: React.FC<{
 };
 ```
 
+## 🔍 Perspectives
+
+### Point de vue Client (C2)
+- Orchestration locale des dépendances entre champs (rechargement specs via endpoints `/api/fields/*`).
+- Validation locale avant envoi complet du formulaire (réduction latence).
+- Résolution des valeurs avec cache et debouncing.
+
+### Point de vue Serveur (C2)
+- Fournit des specs dépendantes du contexte (ex: `team-members` dépend de `projectType`).
+- Centralise la logique métier (unicité nom, permissions) via endpoints dédiés.
+- Expose structures de données cohérentes avec `responseMapping` du protocole.
+
+### Interaction
+- Cycle: Client met à jour valeur → si champ pivot, recharge specs dépendantes.
+- Résolution de valeurs paginées via `ValuesEndpoint` → mapping & pagination appliqués.
+- Validation batch possible (optimisation réseau) — suggestion si non encore présente dans code Java.
+
 ## ⚡ Optimisations de performance
 
 ### 1. Stratégies de cache avancées
@@ -859,7 +885,8 @@ public class SecureFieldValidator {
     private List<ValidationError> validateSecurityLimits(Object value, InputFieldSpec fieldSpec) {
         List<ValidationError> errors = new ArrayList<>();
         
-        if (fieldSpec.getDataType() == DataType.STRING && value instanceof String) {
+        if (fieldSpec.getDataType() == DataType.STRING && 
+            value instanceof String) {
             String str = (String) value;
             if (str.length() > MAX_STRING_LENGTH) {
                 errors.add(new ValidationError("security", 

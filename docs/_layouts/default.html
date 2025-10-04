@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{{ page.title | default: site.title }}</title>
+  <link rel="stylesheet" href="{{ '/assets/main.css' | relative_url }}">
+  <script src="https://cdn.jsdelivr.net/npm/mermaid@10.9.0/dist/mermaid.min.js"></script>
+  <script src="{{ '/assets/main.js' | relative_url }}"></script>
+  {% seo %}
+</head>
+<body>
+  <a class="skip-link" href="#main" tabindex="0">Aller au contenu</a>
+  <header class="header" role="banner">
+    <span>Dynamic Input Field Specification Protocol</span>
+  </header>
+  <nav aria-label="Navigation latérale principale">
+    {% include sidebar.html %}
+  </nav>
+  <main id="main" class="main-content" role="main">
+    {{ content }}
+  </main>
+  <footer class="footer" role="contentinfo">
+    Documentation générée — <a href="https://github.com/cyfko/input-spec">cyfko/input-spec</a> — MIT License
+  </footer>
+</body>
+</html>
