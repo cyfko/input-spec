@@ -1,6 +1,7 @@
 ---
 layout: default
 title: "Référence Java"
+permalink: /reference-java/
 ---
 
 # Référence Java

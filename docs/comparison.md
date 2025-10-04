@@ -1,6 +1,7 @@
 ---
 layout: default
 title: "Comparaison des alternatives"
+permalink: /comparison/
 ---
 
 # Comparaison des alternatives

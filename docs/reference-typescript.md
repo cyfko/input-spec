@@ -1,6 +1,7 @@
 ---
 layout: default
 title: "Référence TypeScript"
+permalink: /reference-typescript/
 ---
 
 # Référence TypeScript
