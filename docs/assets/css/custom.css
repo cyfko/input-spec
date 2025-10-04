@@ -62,6 +62,96 @@ code {
   border-radius: 4px;
   padding: 0.2em 0.4em;
 }
+/* Modern code block styling with language-specific border */
+pre.highlight {
+  position: relative;
+  background: #f8fafc;
+  color: #222;
+  border-radius: 8px;
+  border-left: 6px solid #3b82f6; /* Default: blue */
+  padding: 1em 1em 1em 2em;
+  margin-bottom: 2em;
+  overflow: auto;
+  font-size: 1em;
+  font-family: 'JetBrains Mono', 'Fira Mono', 'Consolas', 'Monaco', monospace;
+  box-shadow: 0 2px 8px rgba(60,60,60,0.06);
+}
+pre.highlight[data-lang="typescript"] { border-left-color: #3178c6; }
+pre.highlight[data-lang="js"], pre.highlight[data-lang="javascript"] { border-left-color: #facc15; }
+pre.highlight[data-lang="java"] { border-left-color: #ea580c; }
+pre.highlight[data-lang="python"] { border-left-color: #22d3ee; }
+pre.highlight[data-lang="json"] { border-left-color: #10b981; }
+pre.highlight[data-lang="bash"] { border-left-color: #64748b; }
+pre.highlight[data-lang="html"] { border-left-color: #e11d48; }
+pre.highlight[data-lang="css"] { border-left-color: #0ea5e9; }
+pre.highlight[data-lang="yaml"] { border-left-color: #f59e42; }
+
+pre.highlight code {
+  background: none;
+  color: inherit;
+  font-size: inherit;
+  font-family: inherit;
+  padding: 0;
+}
+
+/* Language label */
+pre.highlight[data-lang]:before {
+  content: attr(data-lang);
+  position: absolute;
+  top: 8px;
+  right: 60px;
+  background: #3b82f6;
+  color: #fff;
+  font-size: 0.8em;
+  padding: 2px 10px;
+  border-radius: 4px;
+  opacity: 0.9;
+  z-index: 2;
+  font-family: 'Inter', 'Arial', sans-serif;
+  letter-spacing: 0.5px;
+}
+pre.highlight[data-lang="typescript"]:before { background: #3178c6; }
+pre.highlight[data-lang="js"]:before, pre.highlight[data-lang="javascript"]:before { background: #facc15; color: #222; }
+pre.highlight[data-lang="java"]:before { background: #ea580c; }
+pre.highlight[data-lang="python"]:before { background: #22d3ee; color: #222; }
+pre.highlight[data-lang="json"]:before { background: #10b981; }
+pre.highlight[data-lang="bash"]:before { background: #64748b; }
+pre.highlight[data-lang="html"]:before { background: #e11d48; }
+pre.highlight[data-lang="css"]:before { background: #0ea5e9; }
+pre.highlight[data-lang="yaml"]:before { background: #f59e42; color: #222; }
+
+/* Copy button */
+.copy-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  background: #e5e7eb;
+  color: #222;
+  border: none;
+  border-radius: 4px;
+  padding: 2px 10px;
+  font-size: 0.8em;
+  cursor: pointer;
+  z-index: 3;
+  transition: background 0.2s;
+  font-family: 'Inter', 'Arial', sans-serif;
+}
+.copy-btn:hover {
+  background: #3b82f6;
+  color: #fff;
+}
+
+/* Syntax highlighting (rouge/minima) tweaks */
+.highlight .k { color: #2563eb; font-weight: bold; } /* keyword */
+.highlight .s { color: #16a34a; } /* string */
+.highlight .c { color: #64748b; font-style: italic; } /* comment */
+.highlight .n { color: #222; } /* name */
+.highlight .o { color: #d97706; } /* operator */
+.highlight .mi { color: #db2777; } /* number */
+.highlight .p { color: #222; } /* punctuation */
+.highlight .nc { color: #0ea5e9; font-weight: bold; } /* class name */
+.highlight .nf { color: #7c3aed; } /* function name */
+.highlight .err { color: #dc2626; background: #fee2e2; }
 @media (max-width: 700px) {
   .sidebar {
     display: none;
