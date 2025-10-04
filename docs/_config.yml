@@ -3,6 +3,12 @@ description: "Comprehensive guide for both client and server implementations of 
 remote_theme: just-the-docs/just-the-docs
 color_scheme: light
 
+# ✅ Mermaid support via CDN
+# (GitHub Pages n'autorise pas les plugins Ruby non whitelistés, donc on l’injecte via script)
+includes_dir: _includes
+layouts_dir: _layouts
+
+# Enable search and GitHub link
 search_enabled: true
 aux_links:
   "View on GitHub":
@@ -12,15 +18,18 @@ plugins:
   - jekyll-remote-theme
   - jekyll-seo-tag
 
-# Mermaid support
+# Markdown & highlighting
 markdown: kramdown
 kramdown:
-  syntax_highlighter_opts:
-    block:
-      line_numbers: false
+  input: GFM
+  syntax_highlighter: rouge
+  hard_wrap: false
 
-# Navigation file
-nav_sort: case_sensitive
-nav_external_links:
-  - title: React Docs Style
-    url: https://react.dev/learn
+# Navigation data
+collections:
+  docs:
+    output: true
+    permalink: /:path/
+
+# Add a footer
+footer_content: "© 2025 Protocol Documentation. Built with Just the Docs."
