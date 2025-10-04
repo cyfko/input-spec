@@ -6,17 +6,20 @@ import java.util.Objects;
 /**
  * Configuration for fetching values dynamically from a remote source with search capabilities
  * as defined in the protocol specification.
+ * 
+ * The protocol field serves as a hint to client implementations about which communication
+ * protocol the endpoint expects, but does not enforce transport security.
  */
 public class ValuesEndpoint {
     
     @JsonProperty("protocol")
-    private String protocol = "HTTP"; // Default: HTTP
+    private Protocol protocol = Protocol.HTTPS; // Default: HTTPS (recommended)
     
     @JsonProperty("uri")
     private String uri;
     
     @JsonProperty("method")
-    private String method = "GET"; // Default: GET
+    private HttpMethod method = HttpMethod.GET; // Default: GET
     
     @JsonProperty("searchField")
     private String searchField;
@@ -57,21 +60,21 @@ public class ValuesEndpoint {
     }
     
     /**
-     * Gets the protocol to use.
-     * Supported: HTTP, HTTPS, GRPC
+     * Gets the protocol hint for client communication.
+     * Supported: HTTPS, HTTP, GRPC
      * 
-     * @return the protocol (default: HTTP)
+     * @return the protocol hint (default: HTTPS)
      */
-    public String getProtocol() {
+    public Protocol getProtocol() {
         return protocol;
     }
     
     /**
-     * Sets the protocol to use
+     * Sets the protocol hint for client communication
      * 
-     * @param protocol the protocol (HTTP, HTTPS, GRPC)
+     * @param protocol the protocol hint (HTTPS, HTTP, GRPC)
      */
-    public void setProtocol(String protocol) {
+    public void setProtocol(Protocol protocol) {
         this.protocol = protocol;
     }
     
@@ -100,7 +103,7 @@ public class ValuesEndpoint {
      * 
      * @return the method (default: GET)
      */
-    public String getMethod() {
+    public HttpMethod getMethod() {
         return method;
     }
     
@@ -109,7 +112,7 @@ public class ValuesEndpoint {
      * 
      * @param method the method (GET, POST)
      */
-    public void setMethod(String method) {
+    public void setMethod(HttpMethod method) {
         this.method = method;
     }
     
@@ -300,8 +303,8 @@ public class ValuesEndpoint {
     public static class Builder {
         private final String uri;
         private final ResponseMapping responseMapping;
-        private String protocol = "HTTP";
-        private String method = "GET";
+        private Protocol protocol = Protocol.HTTPS;
+        private HttpMethod method = HttpMethod.GET;
         private String searchField;
         private PaginationStrategy paginationStrategy;
         private RequestParams requestParams;
@@ -327,12 +330,12 @@ public class ValuesEndpoint {
         }
         
         /**
-         * Sets the protocol to use
+         * Sets the protocol hint for client communication
          * 
-         * @param protocol the protocol (HTTP, HTTPS, GRPC)
+         * @param protocol the protocol hint (HTTPS, HTTP, GRPC)
          * @return this builder
          */
-        public Builder protocol(String protocol) {
+        public Builder protocol(Protocol protocol) {
             this.protocol = protocol;
             return this;
         }
@@ -343,7 +346,7 @@ public class ValuesEndpoint {
          * @param method the method (GET, POST)
          * @return this builder
          */
-        public Builder method(String method) {
+        public Builder method(HttpMethod method) {
             this.method = method;
             return this;
         }

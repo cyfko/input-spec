@@ -6,6 +6,10 @@
 // Core Data Types
 export type DataType = 'STRING' | 'NUMBER' | 'DATE' | 'BOOLEAN';
 
+// Protocol hints for client implementations
+export type Protocol = 'HTTPS' | 'HTTP' | 'GRPC';
+export type HttpMethod = 'GET' | 'POST';
+
 // Pagination Strategies
 export type PaginationStrategy = 'NONE' | 'PAGE_NUMBER';
 
@@ -37,16 +41,16 @@ export interface ResponseMapping {
 
 // Values Endpoint Configuration
 export interface ValuesEndpoint {
-  protocol?: string; // Default: 'HTTP'
+  protocol?: Protocol; // Default: 'HTTPS' (client protocol hint)
   uri: string;
-  method: string; // Default: 'GET'
+  method?: HttpMethod; // Default: 'GET'
   searchField?: string;
   paginationStrategy?: PaginationStrategy;
   responseMapping: ResponseMapping;
   requestParams?: RequestParams;
   cacheStrategy?: CacheStrategy;
-  debounceMs: number; // Default: 300
-  minSearchLength: number; // Default: 0
+  debounceMs?: number; // Default: 300
+  minSearchLength?: number; // Default: 0
 }
 
 // Constraint Descriptor - Règles de validation pour un champ
@@ -149,11 +153,11 @@ export function isValueAlias(obj: any): obj is ValueAlias {
 }
 
 /**
- * Helper function pour créer des defaults
+ * Helper function to create ValuesEndpoint with recommended defaults
  */
 export function createDefaultValuesEndpoint(uri: string): ValuesEndpoint {
   return {
-    protocol: 'HTTP',
+    protocol: 'HTTPS', // Recommended default
     uri,
     method: 'GET',
     debounceMs: 300,

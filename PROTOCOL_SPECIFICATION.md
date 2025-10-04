@@ -48,7 +48,7 @@ Represents a smart input field with constraints and value sources.
       "description": "User identifier validation",
       "errorMessage": "Please select a valid user",
       "valuesEndpoint": {
-        "protocol": "HTTP",
+        "protocol": "HTTPS",
         "uri": "/api/users",
         "searchField": "name",
         "paginationStrategy": "PAGE_NUMBER",
@@ -220,7 +220,7 @@ The semantics of `min` and `max` depend on the field's `dataType` and `expectMul
       "description": "Assigned user",
       "errorMessage": "Invalid user selected",
       "valuesEndpoint": {
-        "protocol": "HTTP",
+        "protocol": "HTTPS",
         "uri": "/api/users",
         "paginationStrategy": "PAGE_NUMBER",
         "responseMapping": {
@@ -261,7 +261,7 @@ Configuration for fetching values dynamically from a remote source with search c
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
-| `protocol` | string | | Protocol to use: `HTTP`, `HTTPS`, `GRPC` (default: `HTTP`) |
+| `protocol` | string | | Protocol indicator for client: `HTTPS`, `HTTP`, `GRPC` (default: `HTTPS`) |
 | `uri` | string | ✓ | Endpoint path or full URL |
 | `method` | string | | HTTP method: `GET`, `POST` (default: `GET`) |
 | `searchField` | string | | Server-side field to search/filter on |
@@ -419,7 +419,7 @@ Represents a single value option.
       "description": "User to assign task to",
       "errorMessage": "Please select a user",
       "valuesEndpoint": {
-        "protocol": "HTTP",
+        "protocol": "HTTPS",
         "uri": "/api/users",
         "method": "GET",
         "searchField": "name",
@@ -462,7 +462,7 @@ Represents a single value option.
       "description": "Select 1 to 5 relevant tags",
       "errorMessage": "You must select between 1 and 5 tags",
       "valuesEndpoint": {
-        "protocol": "HTTP",
+        "protocol": "HTTPS",
         "uri": "/api/tags",
         "searchField": "name",
         "paginationStrategy": "NONE",
@@ -871,7 +871,7 @@ GET /api/fields/assignee
         "name": "value",
         "errorMessage": "Please select a user",
         "valuesEndpoint": {
-          "protocol": "HTTP",
+          "protocol": "HTTPS",
           "uri": "/api/users",
           "searchField": "name",
           "paginationStrategy": "PAGE_NUMBER",
@@ -921,6 +921,68 @@ GET /api/users?page=1&limit=50&search=john
 ```
 
 **Step 7:** Server validates and processes input
+
+---
+
+## Protocol Specification Scope
+
+### What This Protocol Defines
+
+This protocol specification focuses on **data structure and client guidance**:
+
+- ✅ **Field metadata format** - How to describe input fields dynamically
+- ✅ **Constraint specification** - Validation rules and their semantics  
+- ✅ **Value source configuration** - How to indicate where clients can fetch data
+- ✅ **Client protocol hints** - Suggesting `HTTPS`/`HTTP`/`GRPC` for data endpoints
+- ✅ **Response structure** - Expected data format from value endpoints
+
+### What This Protocol Does NOT Define
+
+This protocol **does not handle**:
+
+- ❌ **Transport security** - TLS/SSL configuration is implementation-specific
+- ❌ **Authentication** - Client credentials and auth mechanisms  
+- ❌ **Network infrastructure** - Load balancers, proxies, CDNs
+- ❌ **Server implementation** - How endpoints actually fetch/process data
+
+### Protocol Field Semantics
+
+**`protocol` field**: Acts as a **client hint** indicating which communication protocol the endpoint expects. This is **metadata for the client application**, not a security enforcement mechanism.
+
+- **`HTTPS`**: Suggests secure HTTP communication (recommended for production)
+- **`HTTP`**: Suggests standard HTTP communication (typically development/internal)  
+- **`GRPC`**: Suggests gRPC binary protocol communication
+
+**Security responsibility**: The actual transport security (TLS certificates, encryption, authentication) is handled at the **application/infrastructure level**, not by this protocol specification.
+
+---
+
+## Security Considerations
+
+### Protocol Security
+
+**HTTPS by Default:** The protocol specification uses `HTTPS` as the default protocol hint for all `ValuesEndpoint` configurations. This encourages:
+
+- ✅ **Modern security practices** in client implementations
+- ✅ **Secure-by-default** endpoint configuration  
+- ✅ **Best practice adoption** across different implementations
+- ✅ **Clear intent** when using less secure protocols
+
+**Protocol Selection Guidelines:**
+- **`HTTPS`**: Recommended default for production environments
+- **`HTTP`**: Should be explicit choice for development/testing or secure internal networks
+- **`GRPC`**: For high-performance scenarios requiring binary protocol
+
+### Implementation Security
+
+When implementing this protocol:
+
+1. **Validate all user inputs** on both client and server sides
+2. **Sanitize search queries** to prevent injection attacks
+3. **Implement proper authentication/authorization** for value endpoints
+4. **Use rate limiting** to prevent abuse of search endpoints
+5. **Validate constraint adherence** on the server before processing
+6. **Honor protocol hints** but implement proper transport security independently
 
 ---
 

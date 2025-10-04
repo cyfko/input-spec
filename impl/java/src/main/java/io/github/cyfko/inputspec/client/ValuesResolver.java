@@ -127,7 +127,7 @@ public class ValuesResolver {
                 Map<String, Object> params = buildRequestParams(endpoint, options);
                 
                 // 4. Make HTTP request
-                String responseBody = httpClient.request(endpoint.getUri(), endpoint.getMethod(), params, null);
+                String responseBody = httpClient.request(endpoint.getUri(), endpoint.getMethod().name(), params, null);
                 
                 // 5. Parse response according to response mapping
                 FetchValuesResult result = parseResponse(responseBody, endpoint);

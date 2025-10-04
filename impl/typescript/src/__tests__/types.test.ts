@@ -2,6 +2,8 @@ import {
   InputFieldSpec,
   ConstraintDescriptor,
   DataType,
+  Protocol,
+  HttpMethod,
   ValuesEndpoint,
   ValidationResult,
   isInputFieldSpec,
@@ -82,7 +84,7 @@ describe('Types Module', () => {
         const endpoint = createDefaultValuesEndpoint('https://api.example.com/data');
 
         expect(endpoint).toEqual({
-          protocol: 'HTTP',
+          protocol: 'HTTPS',
           uri: 'https://api.example.com/data',
           method: 'GET',
           debounceMs: 300,
@@ -103,6 +105,32 @@ describe('Types Module', () => {
   });
 
   describe('Type Compatibility', () => {
+    it('should allow valid Protocol values', () => {
+      const validProtocols: Protocol[] = ['HTTPS', 'HTTP', 'GRPC'];
+      
+      validProtocols.forEach(protocol => {
+        const endpoint: ValuesEndpoint = {
+          protocol,
+          uri: '/api/test',
+          responseMapping: { dataField: 'data' }
+        };
+        expect(endpoint.protocol).toBe(protocol);
+      });
+    });
+
+    it('should allow valid HttpMethod values', () => {
+      const validMethods: HttpMethod[] = ['GET', 'POST'];
+      
+      validMethods.forEach(method => {
+        const endpoint: ValuesEndpoint = {
+          method,
+          uri: '/api/test',
+          responseMapping: { dataField: 'data' }
+        };
+        expect(endpoint.method).toBe(method);
+      });
+    });
+
     it('should allow valid DataType values', () => {
       const validTypes: DataType[] = ['STRING', 'NUMBER', 'DATE', 'BOOLEAN'];
       
