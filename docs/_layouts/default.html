@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>{{ page.title }} | {{ site.title }}</title>
+  <link rel="stylesheet" href="{{ '/assets/css/custom.css' | relative_url }}">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Inter:400,700&display=swap">
+</head>
+<body>
+  <div class="site-wrapper">
+    <nav class="sidebar">
+      {% include sidebar.html %}
+    </nav>
+    <main class="main-content">
+      {{ content }}
+    </main>
+  </div>
+
+  <!-- Mermaid.js integration -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>
+    mermaid.initialize({ startOnLoad: true });
+    // Render all mermaid code blocks
+    document.addEventListener('DOMContentLoaded', function() {
+      document.querySelectorAll('pre code.language-mermaid').forEach(function(block) {
+        const pre = block.parentElement;
+        const container = document.createElement('div');
+        container.className = 'mermaid';
+        container.textContent = block.textContent;
+        pre.parentElement.replaceChild(container, pre);
+      });
+    });
+  </script>
+</body>
+</html>

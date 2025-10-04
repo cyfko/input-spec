@@ -1,0 +1,18 @@
+title: "Input Spec Documentation"
+description: "Documentation technique et guides d'intégration"
+baseurl: "/input-spec"
+url: "https://cyfko.github.io"
+theme: minima
+markdown: kramdown
+highlighter: rouge
+plugins:
+  - jekyll-feed
+  - jekyll-seo-tag
+  - jekyll-sitemap
+
+# Mermaid support (via JS injection)
+exclude:
+  - Gemfile
+  - Gemfile.lock
+  - node_modules
+  - vendor/

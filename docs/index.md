@@ -1,3 +1,20 @@
+---
+layout: default
+title: Documentation d'accueil
+---
+
+# Bienvenue sur la documentation Input Spec
+
+Retrouvez tous les guides et références dans la barre latérale.
+
+> Les diagrammes Mermaid sont supportés :
+
+```mermaid
+graph TD
+    A[Client] -->|requête| B[Serveur]
+    B -->|réponse| A
+```
+
 # Documentation Complète - Input Field Specification Protocol
 
 Bienvenue dans la documentation complète du **Dynamic Input Field Specification Protocol** ! 
