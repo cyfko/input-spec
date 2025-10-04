@@ -2,6 +2,8 @@
 layout: default
 title: "Comparaison des alternatives"
 permalink: /comparison/
+redirect_from:
+	- /comparison.html
 ---
 
 # Comparaison des alternatives

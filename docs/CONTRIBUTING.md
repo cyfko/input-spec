@@ -5,6 +5,8 @@ nav_order: 90
 categories: [contribution]
 description: "Processus de contribution code, tests et documentation"
 permalink: /contribuer/
+redirect_from:
+  - /CONTRIBUTING.html
 ---
 
 # 🤝 Guide de contribution

@@ -5,6 +5,8 @@ nav_order: 10
 categories: [guide, debutant]
 description: "Guide de démarrage rapide pour le Dynamic Input Field Specification Protocol"
 permalink: /quick-start/
+redirect_from:
+  - /QUICK_START.html
 # Distinctions de perspective ajoutées plus bas
 ---
 

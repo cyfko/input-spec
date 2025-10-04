@@ -5,6 +5,8 @@ nav_order: 20
 categories: [guide, intermediaire]
 description: "Formulaires complexes, dépendances et optimisation"
 permalink: /guide-intermediaire/
+redirect_from:
+  - /INTERMEDIATE_GUIDE.html
 ---
 
 # 🎓 Guide intermédiaire

@@ -5,6 +5,8 @@ nav_order: 30
 categories: [guide, expert]
 description: "Architecture interne, optimisation et extensions du protocole"
 permalink: /guide-expert/
+redirect_from:
+  - /EXPERT_GUIDE.html
 ---
 
 # 🎓 Guide expert

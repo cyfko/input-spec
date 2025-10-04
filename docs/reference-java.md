@@ -2,6 +2,9 @@
 layout: default
 title: "Référence Java"
 permalink: /reference-java/
+redirect_from:
+  - /reference-java.html
+  - /REFERENCE-JAVA.html
 ---
 
 # Référence Java

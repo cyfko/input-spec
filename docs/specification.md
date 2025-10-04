@@ -2,6 +2,8 @@
 layout: default
 title: "Spécification protocole"
 permalink: /specification/
+redirect_from:
+	- /PROTOCOL_SPECIFICATION.html
 nav_order: 95
 description: "Copie rendue navigable de PROTOCOL_SPECIFICATION.md pour éviter les 404"
 ---

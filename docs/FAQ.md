@@ -5,6 +5,8 @@ nav_order: 40
 categories: [faq]
 description: "Questions fréquentes et scénarios réels d'utilisation du protocole"
 permalink: /faq/
+redirect_from:
+  - /FAQ.html
 ---
 
 # ❓ FAQ et Scénarios réels

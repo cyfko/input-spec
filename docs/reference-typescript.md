@@ -2,6 +2,9 @@
 layout: default
 title: "Référence TypeScript"
 permalink: /reference-typescript/
+redirect_from:
+  - /reference-typescript.html
+  - /REFERENCE-TYPESCRIPT.html
 ---
 
 # Référence TypeScript
