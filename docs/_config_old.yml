@@ -30,6 +30,25 @@ theme: minima
 # SEO and meta
 lang: fr-FR
 
+# Navigation structure
+navigation:
+  - title: "🏠 Accueil"
+    url: "/input-spec/"
+  - title: "� Vue d'ensemble"
+    url: "/input-spec/docs/OVERVIEW"
+  - title: "�🚀 Démarrage rapide"
+    url: "/input-spec/docs/QUICK_START"
+  - title: "🎓 Guide intermédiaire"
+    url: "/input-spec/docs/INTERMEDIATE_GUIDE"
+  - title: "🔧 Guide expert"
+    url: "/input-spec/docs/EXPERT_GUIDE"
+  - title: "❓ FAQ"
+    url: "/input-spec/docs/FAQ"
+  - title: "📋 Spécification"
+    url: "/input-spec/PROTOCOL_SPECIFICATION"
+  - title: "🤝 Contribuer"
+    url: "/input-spec/docs/CONTRIBUTING"
+
 # Social links
 social_links:
   github: "cyfko/input-spec"
