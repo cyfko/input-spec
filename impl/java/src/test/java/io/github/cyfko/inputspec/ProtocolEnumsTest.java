@@ -85,12 +85,11 @@ class ProtocolEnumsTest {
             .max(10)
             .build();
         
-        InputFieldSpec field = new InputFieldSpec();
-        field.setDisplayName("Test Field");
-        field.setDataType(DataType.STRING);
-        field.setExpectMultipleValues(false);
-        field.setRequired(true);
-        field.setConstraints(java.util.Arrays.asList(constraint));
+        InputFieldSpec field = InputFieldSpec.builder("Test Field", DataType.STRING)
+            .expectMultipleValues(false)
+            .required(true)
+            .constraints(java.util.Arrays.asList(constraint))
+            .build();
         
         // Test serialization
         String json = objectMapper.writeValueAsString(field);

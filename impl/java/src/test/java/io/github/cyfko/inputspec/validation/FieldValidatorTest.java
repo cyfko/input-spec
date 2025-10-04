@@ -25,13 +25,11 @@ class FieldValidatorTest {
     void testRequiredFieldValidation() {
         // Create a required field
         ConstraintDescriptor constraint = ConstraintDescriptor.builder("value").build();
-        InputFieldSpec field = new InputFieldSpec(
-            "Test Field",
-            DataType.STRING,
-            false,
-            true, // required
-            Arrays.asList(constraint)
-        );
+        InputFieldSpec field = InputFieldSpec.builder("Test Field", DataType.STRING)
+            .expectMultipleValues(false)
+            .required(true)
+            .constraints(Arrays.asList(constraint))
+            .build();
         
         // Test with null value
         ValidationResult result = validator.validate(field, null);
@@ -58,13 +56,11 @@ class FieldValidatorTest {
         constraint.setMax(10); // maximum 10 characters
         constraint.setErrorMessage("Length must be between 3 and 10 characters");
         
-        InputFieldSpec field = new InputFieldSpec(
-            "Username",
-            DataType.STRING,
-            false, // single value
-            true,
-            Arrays.asList(constraint)
-        );
+        InputFieldSpec field = InputFieldSpec.builder("Username", DataType.STRING)
+            .expectMultipleValues(false)
+            .required(true)
+            .constraints(Arrays.asList(constraint))
+            .build();
         
         // Test too short
         ValidationResult result = validator.validate(field, "ab");
@@ -90,13 +86,11 @@ class FieldValidatorTest {
         constraint.setMax(150); // maximum value 150
         constraint.setErrorMessage("Value must be between 0 and 150");
         
-        InputFieldSpec field = new InputFieldSpec(
-            "Age",
-            DataType.NUMBER,
-            false, // single value
-            true,
-            Arrays.asList(constraint)
-        );
+        InputFieldSpec field = InputFieldSpec.builder("Age", DataType.NUMBER)
+            .expectMultipleValues(false)
+            .required(true)
+            .constraints(Arrays.asList(constraint))
+            .build();
         
         // Test below minimum
         ValidationResult result = validator.validate(field, -5);
@@ -122,13 +116,11 @@ class FieldValidatorTest {
         constraint.setMax(5); // maximum 5 elements
         constraint.setErrorMessage("Must select between 1 and 5 items");
         
-        InputFieldSpec field = new InputFieldSpec(
-            "Tags",
-            DataType.STRING,
-            true, // multiple values
-            false, // NOT required for this test
-            Arrays.asList(constraint)
-        );
+        InputFieldSpec field = InputFieldSpec.builder("Tags", DataType.STRING)
+            .expectMultipleValues(true)
+            .required(false)
+            .constraints(Arrays.asList(constraint))
+            .build();
         
         // Test empty array
         ValidationResult result = validator.validate(field, Arrays.asList());
@@ -153,13 +145,11 @@ class FieldValidatorTest {
         constraint.setPattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
         constraint.setErrorMessage("Invalid email format");
         
-        InputFieldSpec field = new InputFieldSpec(
-            "Email",
-            DataType.STRING,
-            false,
-            true,
-            Arrays.asList(constraint)
-        );
+        InputFieldSpec field = InputFieldSpec.builder("Email", DataType.STRING)
+            .expectMultipleValues(false)
+            .required(true)
+            .constraints(Arrays.asList(constraint))
+            .build();
         
         // Test invalid email
         ValidationResult result = validator.validate(field, "invalid-email");
@@ -185,13 +175,11 @@ class FieldValidatorTest {
         constraint.setEnumValues(enumValues);
         constraint.setErrorMessage("Invalid status selected");
         
-        InputFieldSpec field = new InputFieldSpec(
-            "Status",
-            DataType.STRING,
-            false,
-            true,
-            Arrays.asList(constraint)
-        );
+        InputFieldSpec field = InputFieldSpec.builder("Status", DataType.STRING)
+            .expectMultipleValues(false)
+            .required(true)
+            .constraints(Arrays.asList(constraint))
+            .build();
         
         // Test invalid value
         ValidationResult result = validator.validate(field, "invalid-status");
@@ -216,13 +204,11 @@ class FieldValidatorTest {
         patternConstraint.setPattern("^[a-zA-Z]+$");
         patternConstraint.setErrorMessage("Only letters allowed");
         
-        InputFieldSpec field = new InputFieldSpec(
-            "Name",
-            DataType.STRING,
-            false,
-            true,
-            Arrays.asList(lengthConstraint, patternConstraint) // Order matters
-        );
+        InputFieldSpec field = InputFieldSpec.builder("Name", DataType.STRING)
+            .expectMultipleValues(false)
+            .required(true)
+            .constraints(Arrays.asList(lengthConstraint, patternConstraint))
+            .build();
         
         // Test value that fails first constraint
         ValidationResult result = validator.validate(field, "ab");
@@ -248,13 +234,11 @@ class FieldValidatorTest {
         ConstraintDescriptor constraint = new ConstraintDescriptor("value");
         constraint.setPattern("^[0-9]+$");
         
-        InputFieldSpec field = new InputFieldSpec(
-            "Optional Number",
-            DataType.STRING,
-            false,
-            false, // not required
-            Arrays.asList(constraint)
-        );
+        InputFieldSpec field = InputFieldSpec.builder("Optional Number", DataType.STRING)
+            .expectMultipleValues(false)
+            .required(false)
+            .constraints(Arrays.asList(constraint))
+            .build();
         
         // Test with null value (should be valid since not required)
         ValidationResult result = validator.validate(field, null);

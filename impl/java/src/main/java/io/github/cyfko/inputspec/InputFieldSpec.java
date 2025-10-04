@@ -175,6 +175,110 @@ public class InputFieldSpec {
         this.constraints = constraints;
     }
     
+    /**
+     * Creates a new Builder for InputFieldSpec with required fields.
+     * 
+     * @param displayName human-readable field label (required)
+     * @param dataType data type of the field (required)
+     * @return a new Builder instance
+     */
+    public static Builder builder(String displayName, DataType dataType) {
+        return new Builder(displayName, dataType);
+    }
+    
+    /**
+     * Builder pattern for fluent InputFieldSpec creation.
+     * 
+     * Example usage:
+     * <pre>
+     * InputFieldSpec field = InputFieldSpec.builder("Username", DataType.STRING)
+     *     .description("Enter your username")
+     *     .required(true)
+     *     .expectMultipleValues(false)
+     *     .constraints(Arrays.asList(constraint))
+     *     .build();
+     * </pre>
+     */
+    public static class Builder {
+        private final InputFieldSpec field;
+        
+        /**
+         * Creates a new Builder with required fields.
+         * 
+         * @param displayName human-readable field label (required)
+         * @param dataType data type of the field (required)
+         */
+        public Builder(String displayName, DataType dataType) {
+            if (displayName == null || displayName.trim().isEmpty()) {
+                throw new IllegalArgumentException("Display name cannot be null or empty");
+            }
+            if (dataType == null) {
+                throw new IllegalArgumentException("Data type cannot be null");
+            }
+            
+            this.field = new InputFieldSpec();
+            this.field.setDisplayName(displayName);
+            this.field.setDataType(dataType);
+            // Set sensible defaults
+            this.field.setExpectMultipleValues(false);
+            this.field.setRequired(false);
+        }
+        
+        /**
+         * Sets the detailed explanation of field purpose.
+         * 
+         * @param description the description
+         * @return this builder for chaining
+         */
+        public Builder description(String description) {
+            field.setDescription(description);
+            return this;
+        }
+        
+        /**
+         * Sets whether field accepts array of values.
+         * 
+         * @param expectMultipleValues true if field accepts multiple values
+         * @return this builder for chaining
+         */
+        public Builder expectMultipleValues(boolean expectMultipleValues) {
+            field.setExpectMultipleValues(expectMultipleValues);
+            return this;
+        }
+        
+        /**
+         * Sets whether this field is required.
+         * 
+         * @param required true if field is required
+         * @return this builder for chaining
+         */
+        public Builder required(boolean required) {
+            field.setRequired(required);
+            return this;
+        }
+        
+        /**
+         * Sets the array of constraints with ordered execution.
+         * 
+         * @param constraints the constraints list
+         * @return this builder for chaining
+         */
+        public Builder constraints(List<ConstraintDescriptor> constraints) {
+            field.setConstraints(constraints);
+            return this;
+        }
+        
+        /**
+         * Builds and returns the configured InputFieldSpec.
+         * 
+         * @return the constructed InputFieldSpec
+         */
+        public InputFieldSpec build() {
+            // Additional validation could be added here if needed
+            return field;
+        }
+    }
+    
     @Override
     public boolean equals(Object obj) {
         if (this == obj) {
