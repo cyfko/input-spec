@@ -1,80 +1,31 @@
-# Configuration GitHub Pages pour Input Field Specification Protocol
-title: "Dynamic Input Field Specification Protocol"
-description: "Un protocole moderne et agnostique pour des champs de formulaire intelligents et adaptatifs"
-
-# Site settings
-url: "https://cyfko.github.io"
-baseurl: "/input-spec"
-repository: "cyfko/input-spec"
-author: "Équipe Input-Spec"
-email: "contact@cyfko.io"
+title: "Project Name"
+description: "Short description"
+baseurl: ""       # set if repo page uses /repo-name
+url: "https://<your-user>.github.io" 
 
 # Build settings
 markdown: kramdown
 kramdown:
   input: GFM
-  syntax_highlighter: rouge
-  syntax_highlighter_opts:
-    css_class: 'highlight'
+highlighter: rouge
 
-# Plugins
-plugins:
-  - jekyll-feed
-  - jekyll-sitemap
-  - jekyll-seo-tag
-  - jekyll-github-metadata
+permalink: /:path/
 
-# Theme
-theme: minima
-
-# SEO and meta
-lang: fr-FR
-
-# Navigation structure
-navigation:
-  - title: "🏠 Accueil"
-    url: "/input-spec/"
-  - title: "� Vue d'ensemble"
-    url: "/input-spec/docs/OVERVIEW"
-  - title: "�🚀 Démarrage rapide"
-    url: "/input-spec/docs/QUICK_START"
-  - title: "🎓 Guide intermédiaire"
-    url: "/input-spec/docs/INTERMEDIATE_GUIDE"
-  - title: "🔧 Guide expert"
-    url: "/input-spec/docs/EXPERT_GUIDE"
-  - title: "❓ FAQ"
-    url: "/input-spec/docs/FAQ"
-  - title: "📋 Spécification"
-    url: "/input-spec/PROTOCOL_SPECIFICATION"
-  - title: "🤝 Contribuer"
-    url: "/input-spec/docs/CONTRIBUTING"
-
-# Social links
-social_links:
-  github: "cyfko/input-spec"
-
-# GitHub metadata
-github:
-  repository_url: https://github.com/cyfko/input-spec
-
-# Include additional files
-include:
-  - docs
-  - README.md
-
-# Exclude from build
+# Exclude development files
 exclude:
-  - vendor
-  - .bundle
-  - .sass-cache
-  - .jekyll-cache
-  - Gemfile
-  - Gemfile.lock
   - node_modules
-  - package.json
-  - package-lock.json
-  - "*.gemspec"
-  - impl/
-  - tests/
-  - .gitignore
-  - .git
+  - vendor
+
+# Defaults for docs pages
+defaults:
+  - scope:
+      path: ""
+      type: "pages"
+    values:
+      layout: "doc"
+
+# Optional: Algolia DocSearch (replace with keys if you have them)
+algolia:
+  application_id: ""
+  search_api_key: ""
+  index_name: ""

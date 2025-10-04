@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>{{ page.title | default: site.title }}</title>
+  <meta name="description" content="{{ page.excerpt | default: site.description }}">
+
+  <link rel="stylesheet" href="{{ '/assets/css/style.css' | relative_url }}">
+  <!-- Mermaid -->
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
+  <script>mermaid.initialize({startOnLoad:true});</script>
+
+  <!-- Optional Algolia config -->
+  {% if site.algolia.application_id and site.algolia.search_api_key %}
+  <script src="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.js"></script>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsearch.js@2/dist/cdn/docsearch.min.css" />
+  {% endif %}
+</head>
+<body>
+  <div class="site-grid">
+    <aside class="sidebar">
+      <header class="brand">
+        <a href="{{ site.baseurl | prepend: site.url }}">{{ site.title }}</a>
+      </header>
+      <nav class="nav">
+        {% include sidebar.html %}
+      </nav>
+      <footer class="sidebar-footer">
+        <a href="{{ site.github.repository_url }}">Source</a>
+      </footer>
+    </aside>
+
+    <main class="content">
+      <div class="top-bar">
+        <div class="search">
+          {% if site.algolia.application_id and site.algolia.search_api_key %}
+            <input id="docsearch" placeholder="Search the docs">
+          {% else %}
+            <input id="client-search" placeholder="Search (local)">
+          {% endif %}
+        </div>
+        <div class="repo-links">
+          <a href="{{ site.github.repository_url }}">GitHub</a>
+        </div>
+      </div>
+
+      <article class="doc-body">
+        <h1>{{ page.title }}</h1>
+        {{ content }}
+      </article>
+
+      <div class="page-footer">
+        <small>Last updated: {{ page.date | date: "%Y-%m-%d" }}</small>
+      </div>
+    </main>
+  </div>
+
+  <script src="{{ '/assets/js/copy.js' | relative_url }}"></script>
+  <script src="{{ '/assets/js/search-lunr.js' | relative_url }}"></script>
+
+  {% if site.algolia.application_id and site.algolia.search_api_key %}
+  <script>
+    docsearch({
+      apiKey: '{{ site.algolia.search_api_key }}',
+      indexName: '{{ site.algolia.index_name }}',
+      appId: '{{ site.algolia.application_id }}',
+      inputSelector: '#docsearch'
+    });
+  </script>
+  {% endif %}
+</body>
+</html>
