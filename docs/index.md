@@ -9,7 +9,8 @@ Ce site vous guidera à travers tous les aspects du protocole, depuis vos premie
 ### 💡 Découvrir le protocole
 **Pour comprendre l'intérêt et les possibilités**
 
-- [📖 README principal](../README.md) - Vue d'ensemble et exemple rapide
+- [📖 Vue d'ensemble du protocole](./OVERVIEW.md) - Philosophie et abstraction du protocole
+- [📋 README principal](../README.md) - Introduction et exemples rapides
 - [❓ FAQ](./FAQ.md) - Questions fréquentes avec scénarios concrets
 
 ### 🚀 Commencer rapidement  

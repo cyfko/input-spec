@@ -34,7 +34,9 @@ lang: fr-FR
 navigation:
   - title: "🏠 Accueil"
     url: "/input-spec/"
-  - title: "🚀 Démarrage rapide"
+  - title: "� Vue d'ensemble"
+    url: "/input-spec/docs/OVERVIEW"
+  - title: "�🚀 Démarrage rapide"
     url: "/input-spec/docs/QUICK_START"
   - title: "🎓 Guide intermédiaire"
     url: "/input-spec/docs/INTERMEDIATE_GUIDE"
