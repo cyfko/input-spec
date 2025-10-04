@@ -299,15 +299,15 @@ const SmartSelectField: React.FC<{
     <Controller
       name={name}
       control={control}
-      rules={{
+      rules={`{
         required: fieldSpec.required ? 'Ce champ est obligatoire' : false,
         validate: async (value) => {
           const validator = new FieldValidator();
           const result = await validator.validate(fieldSpec, value);
           return result.isValid || result.errors[0]?.message;
         }
-      }}
-      render={({ field, fieldState }) => (
+      }`}
+      render={`{ field, fieldState }) => (`}
         <div className="smart-select-field">
           <label>{fieldSpec.displayName}</label>
           <input
