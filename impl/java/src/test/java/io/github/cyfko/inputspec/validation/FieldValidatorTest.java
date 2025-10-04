@@ -24,7 +24,7 @@ class FieldValidatorTest {
     @DisplayName("Should validate required field correctly")
     void testRequiredFieldValidation() {
         // Create a required field
-        ConstraintDescriptor constraint = new ConstraintDescriptor("value");
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("value").build();
         InputFieldSpec field = new InputFieldSpec(
             "Test Field",
             DataType.STRING,

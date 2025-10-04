@@ -51,11 +51,12 @@ class ConstraintDescriptorBusinessTest {
     @Test
     @DisplayName("Should handle email validation constraint with format (protocol compliance)")
     void testEmailConstraintWithFormat() throws JsonProcessingException {
-        ConstraintDescriptor constraint = new ConstraintDescriptor("email");
-        constraint.setFormat("email");
-        constraint.setPattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
-        constraint.setDescription("Valid email address required");
-        constraint.setErrorMessage("Please enter a valid email address");
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("email")
+            .format("email")
+            .pattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
+            .description("Valid email address required")
+            .errorMessage("Please enter a valid email address")
+            .build();
         
         String json = objectMapper.writeValueAsString(constraint);
         ConstraintDescriptor deserialized = objectMapper.readValue(json, ConstraintDescriptor.class);
@@ -73,11 +74,12 @@ class ConstraintDescriptorBusinessTest {
     @DisplayName("Should handle numeric range constraint (min/max semantics)")
     void testNumericRangeConstraint() throws JsonProcessingException {
         // Scénario : âge entre 18 et 65 ans
-        ConstraintDescriptor constraint = new ConstraintDescriptor("age");
-        constraint.setMin(18);
-        constraint.setMax(65);
-        constraint.setDescription("Age must be between 18 and 65");
-        constraint.setErrorMessage("Age must be between 18 and 65 years");
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("age")
+            .min(18)
+            .max(65)
+            .description("Age must be between 18 and 65")
+            .errorMessage("Age must be between 18 and 65 years")
+            .build();
         
         String json = objectMapper.writeValueAsString(constraint);
         ConstraintDescriptor deserialized = objectMapper.readValue(json, ConstraintDescriptor.class);
@@ -103,10 +105,11 @@ class ConstraintDescriptorBusinessTest {
         endpoint.setCacheStrategy(CacheStrategy.SHORT_TERM);
         endpoint.setPaginationStrategy(PaginationStrategy.PAGE_NUMBER);
         
-        ConstraintDescriptor constraint = new ConstraintDescriptor("assignee");
-        constraint.setValuesEndpoint(endpoint);
-        constraint.setDescription("Select user to assign task");
-        constraint.setErrorMessage("Please select a valid user");
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("assignee")
+            .valuesEndpoint(endpoint)
+            .description("Select user to assign task")
+            .errorMessage("Please select a valid user")
+            .build();
         
         String json = objectMapper.writeValueAsString(constraint);
         ConstraintDescriptor deserialized = objectMapper.readValue(json, ConstraintDescriptor.class);
@@ -133,10 +136,11 @@ class ConstraintDescriptorBusinessTest {
             new ValueAlias("cancelled", "Cancelled")
         );
         
-        ConstraintDescriptor constraint = new ConstraintDescriptor("status");
-        constraint.setEnumValues(enumValues);
-        constraint.setDescription("Task status selection");
-        constraint.setErrorMessage("Please select a valid status");
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("status")
+            .enumValues(enumValues)
+            .description("Task status selection")
+            .errorMessage("Please select a valid status")
+            .build();
         
         String json = objectMapper.writeValueAsString(constraint);
         ConstraintDescriptor deserialized = objectMapper.readValue(json, ConstraintDescriptor.class);
@@ -158,16 +162,18 @@ class ConstraintDescriptorBusinessTest {
     @DisplayName("Should handle multiple constraints combination (protocol ordering)")
     void testMultipleConstraintsCombination() throws JsonProcessingException {
         // Scénario complexe : mot de passe avec plusieurs contraintes
-        ConstraintDescriptor lengthConstraint = new ConstraintDescriptor("length");
-        lengthConstraint.setMin(8);
-        lengthConstraint.setMax(128);
-        lengthConstraint.setDescription("Password length");
-        lengthConstraint.setErrorMessage("Password must be 8-128 characters");
+        ConstraintDescriptor lengthConstraint = ConstraintDescriptor.builder("length")
+            .min(8)
+            .max(128)
+            .description("Password length")
+            .errorMessage("Password must be 8-128 characters")
+            .build();
         
-        ConstraintDescriptor complexityConstraint = new ConstraintDescriptor("complexity");
-        complexityConstraint.setPattern("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]");
-        complexityConstraint.setDescription("Password complexity");
-        complexityConstraint.setErrorMessage("Password must contain uppercase, lowercase, number and special character");
+        ConstraintDescriptor complexityConstraint = ConstraintDescriptor.builder("complexity")
+            .pattern("^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]")
+            .description("Password complexity")
+            .errorMessage("Password must contain uppercase, lowercase, number and special character")
+            .build();
         
         // Test que chaque contrainte garde son identité
         assertNotEquals(lengthConstraint.getName(), complexityConstraint.getName());

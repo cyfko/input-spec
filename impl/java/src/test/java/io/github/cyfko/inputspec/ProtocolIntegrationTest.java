@@ -22,14 +22,16 @@ class ProtocolIntegrationTest {
         // Scénario intégration complète : formulaire de profil utilisateur
         
         // 1. Champ nom complet avec validation complexe
-        ConstraintDescriptor nameLength = new ConstraintDescriptor("name_length");
-        nameLength.setMin(2);
-        nameLength.setMax(50);
-        nameLength.setErrorMessage("Name must be 2-50 characters");
+        ConstraintDescriptor nameLength = ConstraintDescriptor.builder("name_length")
+            .min(2)
+            .max(50)
+            .errorMessage("Name must be 2-50 characters")
+            .build();
         
-        ConstraintDescriptor namePattern = new ConstraintDescriptor("name_pattern");
-        namePattern.setPattern("^[a-zA-ZÀ-ÿ\\s'-]+$");
-        namePattern.setErrorMessage("Name can only contain letters, spaces, apostrophes and hyphens");
+        ConstraintDescriptor namePattern = ConstraintDescriptor.builder("name_pattern")
+            .pattern("^[a-zA-ZÀ-ÿ\\s'-]+$")
+            .errorMessage("Name can only contain letters, spaces, apostrophes and hyphens")
+            .build();
         
         InputFieldSpec fullNameField = new InputFieldSpec();
         fullNameField.setDisplayName("Full Name");

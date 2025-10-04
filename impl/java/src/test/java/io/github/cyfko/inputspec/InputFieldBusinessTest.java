@@ -22,11 +22,12 @@ class InputFieldBusinessTest {
         // Scénario métier : formulaire d'inscription complet
         
         // 1. Champ username avec validation
-        ConstraintDescriptor usernameConstraint = new ConstraintDescriptor("username_validation");
-        usernameConstraint.setMin(3);
-        usernameConstraint.setMax(20);
-        usernameConstraint.setPattern("^[a-zA-Z0-9_]+$");
-        usernameConstraint.setErrorMessage("Username must be 3-20 characters, alphanumeric only");
+        ConstraintDescriptor usernameConstraint = ConstraintDescriptor.builder("username_validation")
+            .min(3)
+            .max(20)
+            .pattern("^[a-zA-Z0-9_]+$")
+            .errorMessage("Username must be 3-20 characters, alphanumeric only")
+            .build();
         
         InputFieldSpec username = new InputFieldSpec();
         username.setDisplayName("Username");
@@ -37,10 +38,11 @@ class InputFieldBusinessTest {
         username.setConstraints(Arrays.asList(usernameConstraint));
         
         // 2. Champ email
-        ConstraintDescriptor emailConstraint = new ConstraintDescriptor("email_format");
-        emailConstraint.setFormat("email");
-        emailConstraint.setPattern("^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$");
-        emailConstraint.setErrorMessage("Please enter a valid email address");
+        ConstraintDescriptor emailConstraint = ConstraintDescriptor.builder("email_format")
+            .format("email")
+            .pattern("^[\\w\\.-]+@[\\w\\.-]+\\.[a-zA-Z]{2,}$")
+            .errorMessage("Please enter a valid email address")
+            .build();
         
         InputFieldSpec email = new InputFieldSpec();
         email.setDisplayName("Email Address");

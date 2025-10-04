@@ -22,7 +22,7 @@ class ConstraintDescriptorTest {
     @Test
     @DisplayName("Should create ConstraintDescriptor with required name")
     void testConstraintCreation() {
-        ConstraintDescriptor constraint = new ConstraintDescriptor("test-constraint");
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("test-constraint").build();
         
         assertEquals("test-constraint", constraint.getName());
         assertNull(constraint.getMin());
@@ -54,16 +54,17 @@ class ConstraintDescriptorTest {
         
         ValuesEndpoint endpoint = new ValuesEndpoint("/api/values", new ResponseMapping("data"));
         
-        ConstraintDescriptor constraint = new ConstraintDescriptor("test");
-        constraint.setMin(5);
-        constraint.setMax(100);
-        constraint.setPattern("^[a-zA-Z]+$");
-        constraint.setFormat("email");
-        constraint.setDescription("Test constraint description");
-        constraint.setErrorMessage("Custom error message");
-        constraint.setDefaultValue("default");
-        constraint.setEnumValues(enumValues);
-        constraint.setValuesEndpoint(endpoint);
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("test")
+            .min(5)
+            .max(100)
+            .pattern("^[a-zA-Z]+$")
+            .format("email")
+            .description("Test constraint description")
+            .errorMessage("Custom error message")
+            .defaultValue("default")
+            .enumValues(enumValues)
+            .valuesEndpoint(endpoint)
+            .build();
         
         assertEquals(5, constraint.getMin());
         assertEquals(100, constraint.getMax());
@@ -79,12 +80,13 @@ class ConstraintDescriptorTest {
     @Test
     @DisplayName("Should serialize to JSON correctly according to protocol")
     void testJsonSerialization() throws JsonProcessingException {
-        ConstraintDescriptor constraint = new ConstraintDescriptor("value");
-        constraint.setMin(3);
-        constraint.setMax(20);
-        constraint.setPattern("^[a-zA-Z0-9_]+$");
-        constraint.setDescription("Username validation");
-        constraint.setErrorMessage("Invalid username format");
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("value")
+            .min(3)
+            .max(20)
+            .pattern("^[a-zA-Z0-9_]+$")
+            .description("Username validation")
+            .errorMessage("Invalid username format")
+            .build();
         
         String json = objectMapper.writeValueAsString(constraint);
         
@@ -131,8 +133,9 @@ class ConstraintDescriptorTest {
             new ValueAlias("inactive", "Inactive")
         );
         
-        ConstraintDescriptor constraint = new ConstraintDescriptor("status");
-        constraint.setEnumValues(enumValues);
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("status")
+            .enumValues(enumValues)
+            .build();
         
         String json = objectMapper.writeValueAsString(constraint);
         ConstraintDescriptor deserialized = objectMapper.readValue(json, ConstraintDescriptor.class);
@@ -151,8 +154,9 @@ class ConstraintDescriptorTest {
         endpoint.setPaginationStrategy(PaginationStrategy.PAGE_NUMBER);
         endpoint.setCacheStrategy(CacheStrategy.SHORT_TERM);
         
-        ConstraintDescriptor constraint = new ConstraintDescriptor("assignee");
-        constraint.setValuesEndpoint(endpoint);
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("assignee")
+            .valuesEndpoint(endpoint)
+            .build();
         
         String json = objectMapper.writeValueAsString(constraint);
         ConstraintDescriptor deserialized = objectMapper.readValue(json, ConstraintDescriptor.class);
@@ -167,7 +171,7 @@ class ConstraintDescriptorTest {
     @ValueSource(strings = {"email", "url", "phone", "date", "time", "datetime"})
     @DisplayName("Should accept valid format values")
     void testValidFormats(String format) {
-        ConstraintDescriptor constraint = new ConstraintDescriptor("test");
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("test").build();
         assertDoesNotThrow(() -> constraint.setFormat(format));
         assertEquals(format, constraint.getFormat());
     }
@@ -175,7 +179,7 @@ class ConstraintDescriptorTest {
     @Test
     @DisplayName("Should support numeric constraints for different data types")
     void testNumericConstraints() {
-        ConstraintDescriptor constraint = new ConstraintDescriptor("numeric");
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("numeric").build();
         
         // Test integer constraints
         constraint.setMin(0);
@@ -194,9 +198,9 @@ class ConstraintDescriptorTest {
     @DisplayName("Should maintain constraint order for protocol compliance")
     void testConstraintOrdering() {
         // Create multiple constraints to test ordering
-        ConstraintDescriptor constraint1 = new ConstraintDescriptor("first");
-        ConstraintDescriptor constraint2 = new ConstraintDescriptor("second"); 
-        ConstraintDescriptor constraint3 = new ConstraintDescriptor("third");
+        ConstraintDescriptor constraint1 = ConstraintDescriptor.builder("first").build();
+        ConstraintDescriptor constraint2 = ConstraintDescriptor.builder("second").build(); 
+        ConstraintDescriptor constraint3 = ConstraintDescriptor.builder("third").build();
         
         List<ConstraintDescriptor> constraints = Arrays.asList(constraint1, constraint2, constraint3);
         
@@ -209,7 +213,7 @@ class ConstraintDescriptorTest {
     @Test
     @DisplayName("Should handle edge cases for min/max values")
     void testMinMaxEdgeCases() {
-        ConstraintDescriptor constraint = new ConstraintDescriptor("edge-test");
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("edge-test").build();
         
         // Test zero values
         constraint.setMin(0);
@@ -233,7 +237,7 @@ class ConstraintDescriptorTest {
     @Test
     @DisplayName("Should validate regex patterns")
     void testPatternValidation() {
-        ConstraintDescriptor constraint = new ConstraintDescriptor("pattern-test");
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("pattern-test").build();
         
         // Test valid patterns
         assertDoesNotThrow(() -> constraint.setPattern("^[a-zA-Z]+$"));

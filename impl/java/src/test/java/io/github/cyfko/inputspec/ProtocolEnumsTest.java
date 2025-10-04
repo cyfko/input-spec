@@ -80,9 +80,10 @@ class ProtocolEnumsTest {
     @DisplayName("Should handle enums in complex objects")
     void testEnumsInComplexObjects() throws JsonProcessingException {
         // Create a constraint with enum values
-        ConstraintDescriptor constraint = new ConstraintDescriptor("test");
-        constraint.setMin(1);
-        constraint.setMax(10);
+        ConstraintDescriptor constraint = ConstraintDescriptor.builder("test")
+            .min(1)
+            .max(10)
+            .build();
         
         InputFieldSpec field = new InputFieldSpec();
         field.setDisplayName("Test Field");

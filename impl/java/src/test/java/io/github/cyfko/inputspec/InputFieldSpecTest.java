@@ -15,12 +15,13 @@ class InputFieldSpecTest {
     @DisplayName("Should create simple text input field from protocol example 1")
     void testSimpleTextInput() {
         // Example 1: Simple Text Input from protocol
-        ConstraintDescriptor valueConstraint = new ConstraintDescriptor("value");
-        valueConstraint.setMin(3);
-        valueConstraint.setMax(20);
-        valueConstraint.setPattern("^[a-zA-Z0-9_]+$");
-        valueConstraint.setDescription("Username (3-20 alphanumeric characters)");
-        valueConstraint.setErrorMessage("Username must be 3-20 characters, alphanumeric with underscores");
+        ConstraintDescriptor valueConstraint = ConstraintDescriptor.builder("value")
+            .min(3)
+            .max(20)
+            .pattern("^[a-zA-Z0-9_]+$")
+            .description("Username (3-20 alphanumeric characters)")
+            .errorMessage("Username must be 3-20 characters, alphanumeric with underscores")
+            .build();
         
         InputFieldSpec usernameField = new InputFieldSpec(
             "Username",
@@ -51,11 +52,12 @@ class InputFieldSpecTest {
     @DisplayName("Should create numeric range input from protocol example 2")
     void testNumericRangeInput() {
         // Example 2: Numeric Range Input from protocol
-        ConstraintDescriptor valueConstraint = new ConstraintDescriptor("value");
-        valueConstraint.setMin(0);
-        valueConstraint.setDescription("Price value");
-        valueConstraint.setErrorMessage("Price must be greater than 0");
-        valueConstraint.setDefaultValue(0);
+        ConstraintDescriptor valueConstraint = ConstraintDescriptor.builder("value")
+            .min(0)
+            .description("Price value")
+            .errorMessage("Price must be greater than 0")
+            .defaultValue(0)
+            .build();
         
         InputFieldSpec priceField = new InputFieldSpec(
             "Price",
@@ -77,11 +79,12 @@ class InputFieldSpecTest {
     @DisplayName("Should create email input with pattern from protocol example 3")
     void testEmailInput() {
         // Example 3: Email Input with Pattern from protocol
-        ConstraintDescriptor valueConstraint = new ConstraintDescriptor("value");
-        valueConstraint.setPattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$");
-        valueConstraint.setFormat("email");
-        valueConstraint.setDescription("Valid email address");
-        valueConstraint.setErrorMessage("Please provide a valid email address");
+        ConstraintDescriptor valueConstraint = ConstraintDescriptor.builder("value")
+            .pattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$")
+            .format("email")
+            .description("Valid email address")
+            .errorMessage("Please provide a valid email address")
+            .build();
         
         InputFieldSpec emailField = new InputFieldSpec(
             "Email Address",
@@ -108,10 +111,11 @@ class InputFieldSpecTest {
             new ValueAlias("pending", "Pending")
         );
         
-        ConstraintDescriptor valueConstraint = new ConstraintDescriptor("value");
-        valueConstraint.setDescription("Item status");
-        valueConstraint.setErrorMessage("Please select a status");
-        valueConstraint.setEnumValues(enumValues);
+        ConstraintDescriptor valueConstraint = ConstraintDescriptor.builder("value")
+            .description("Item status")
+            .errorMessage("Please select a status")
+            .enumValues(enumValues)
+            .build();
         
         InputFieldSpec statusField = new InputFieldSpec(
             "Status",
@@ -146,12 +150,13 @@ class InputFieldSpecTest {
         valuesEndpoint.setMinSearchLength(1);
         valuesEndpoint.setRequestParams(requestParams);
         
-        ConstraintDescriptor valueConstraint = new ConstraintDescriptor("value");
-        valueConstraint.setMin(1);
-        valueConstraint.setMax(5);
-        valueConstraint.setDescription("Select 1 to 5 relevant tags");
-        valueConstraint.setErrorMessage("You must select between 1 and 5 tags");
-        valueConstraint.setValuesEndpoint(valuesEndpoint);
+        ConstraintDescriptor valueConstraint = ConstraintDescriptor.builder("value")
+            .min(1)
+            .max(5)
+            .description("Select 1 to 5 relevant tags")
+            .errorMessage("You must select between 1 and 5 tags")
+            .valuesEndpoint(valuesEndpoint)
+            .build();
         
         InputFieldSpec tagsField = new InputFieldSpec(
             "Tags",
@@ -175,10 +180,11 @@ class InputFieldSpecTest {
     @DisplayName("Should create date input from protocol example 7")
     void testDateInput() {
         // Example 7: Date Range Input from protocol
-        ConstraintDescriptor valueConstraint = new ConstraintDescriptor("value");
-        valueConstraint.setFormat("iso8601");
-        valueConstraint.setDescription("Creation date");
-        valueConstraint.setErrorMessage("Please provide a valid date");
+        ConstraintDescriptor valueConstraint = ConstraintDescriptor.builder("value")
+            .format("iso8601")
+            .description("Creation date")
+            .errorMessage("Please provide a valid date")
+            .build();
         
         InputFieldSpec dateField = new InputFieldSpec(
             "Created Date",
