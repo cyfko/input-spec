@@ -32,27 +32,31 @@
       });
         // Ajout du bouton copier et affichage du langage
         document.querySelectorAll('pre.highlight').forEach(function(pre) {
-          var lang = pre.className.match(/highlight\s+(\w+)/);
-          if (lang && lang[1]) {
-            pre.setAttribute('data-lang', lang[1]);
-          }
-          if (!pre.querySelector('.copy-btn')) {
-            var btn = document.createElement('button');
-            btn.className = 'copy-btn';
-            btn.textContent = 'Copier';
-            btn.onclick = function() {
-              var code = pre.querySelector('code');
-              if (code) {
-                var text = code.innerText;
-                navigator.clipboard.writeText(text).then(function() {
-                  btn.textContent = 'Copié!';
-                  setTimeout(function() { btn.textContent = 'Copier'; }, 1200);
-                });
+            var code = pre.querySelector('code');
+            var lang = '';
+            if (code) {
+              var match = code.className.match(/language-(\w+)/);
+              if (match && match[1]) {
+                lang = match[1];
+                pre.setAttribute('data-lang', lang);
               }
-            };
-            pre.appendChild(btn);
-          }
-        });
+            }
+            if (!pre.querySelector('.copy-btn')) {
+              var btn = document.createElement('button');
+              btn.className = 'copy-btn';
+              btn.textContent = 'Copier';
+              btn.onclick = function() {
+                if (code) {
+                  var text = code.innerText;
+                  navigator.clipboard.writeText(text).then(function() {
+                    btn.textContent = 'Copié!';
+                    setTimeout(function() { btn.textContent = 'Copier'; }, 1200);
+                  });
+                }
+              };
+              pre.appendChild(btn);
+            }
+          });
     });
   </script>
 </body>
