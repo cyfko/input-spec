@@ -3,7 +3,7 @@ layout: default
 title: "Spécification protocole"
 permalink: /specification/
 redirect_from:
-	- /PROTOCOL_SPECIFICATION.html
+  - /PROTOCOL_SPECIFICATION.html
 nav_order: 95
 description: "Copie rendue navigable de PROTOCOL_SPECIFICATION.md pour éviter les 404"
 ---
@@ -14,7 +14,6 @@ Cette page référence le contenu de `PROTOCOL_SPECIFICATION.md` situé à la ra
 
 > Source unique de vérité : le fichier racine `PROTOCOL_SPECIFICATION.md`. En cas de divergence, ce dernier prévaut. Mettez les deux à jour dans une même PR.
 
-{% capture spec_content %}
-{% include_relative ../PROTOCOL_SPECIFICATION.md %}
-{% endcapture %}
-{{ spec_content }}
+> (Note) Pour la version complète et toujours à jour, consultez le fichier racine `PROTOCOL_SPECIFICATION.md` dans le dépôt.
+
+Le contenu n'est pas inclus automatiquement ici afin d'éviter des erreurs de build GitHub Pages liées aux limitations `include_relative` (chemins parents). Vous pouvez dupliquer manuellement des sections clés si nécessaire.

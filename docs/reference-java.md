@@ -90,6 +90,7 @@ InputFieldSpec username = new InputFieldSpec(
 );
 ValidationResult result = new FieldValidator().validate(username, "john_doe");
 ```
+{% raw %}
 
 ```java
 ConstraintDescriptor enumConstraint = new ConstraintDescriptor("status");
@@ -101,6 +102,7 @@ InputFieldSpec status = new InputFieldSpec(
   "Status", DataType.STRING, false, true, List.of(enumConstraint)
 );
 ```
+{% endraw %}
 
 ## ♻️ Multi‑valeurs
 
