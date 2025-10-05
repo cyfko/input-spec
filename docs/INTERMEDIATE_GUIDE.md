@@ -1,3 +1,9 @@
+---
+layout: default
+title: Intermediate Guide
+nav_order: 4
+description: "Fonctionnalités intermédiaires, configuration et scénarios concrets."
+---
 # 🎓 Guide intermédiaire
 
 *Maîtriser le protocole pour des cas d'usage avancés*

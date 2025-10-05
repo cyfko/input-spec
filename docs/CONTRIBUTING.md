@@ -1,3 +1,9 @@
+---
+layout: default
+title: Contributing
+nav_order: 7
+description: "Guide de contribution pour les développeurs et intégrateurs du projet."
+---
 # 🤝 Guide de contribution
 
 *Comment participer au développement du Dynamic Input Field Specification Protocol*

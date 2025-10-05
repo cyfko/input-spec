@@ -1,6 +1,12 @@
+---
+layout: default
+title: Home
+nav_order: 1
+description: "Documentation du protocole – vue d’ensemble, guides et comparaisons client/serveur."
+---
 # Documentation Complète - Input Field Specification Protocol
 
-Bienvenue dans la documentation complète du **Dynamic Input Field Specification Protocol** ! 
+Bienvenue dans la documentation officielle du projet **Dynamic Input Field Specification Protocol** ! 
 
 Ce site vous guidera à travers tous les aspects du protocole, depuis vos premiers pas jusqu'aux techniques avancées d'implémentation.
 

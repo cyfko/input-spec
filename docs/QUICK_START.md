@@ -1,3 +1,9 @@
+---
+layout: default
+title: Quick Start
+nav_order: 3
+description: "Commencez rapidement à utiliser le protocole côté client et serveur."
+---
 # 🚀 Guide de démarrage rapide
 
 *De zéro à votre premier champ intelligent en 5 minutes*

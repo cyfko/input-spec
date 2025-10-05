@@ -1,3 +1,9 @@
+---
+layout: default
+title: FAQ
+nav_order: 6
+description: "Questions fréquemment posées sur le protocole et ses implémentations."
+---
 # ❓ FAQ et Scénarios réels
 
 *Réponses aux questions fréquentes avec exemples concrets côté client et serveur*

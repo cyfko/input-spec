@@ -1,3 +1,9 @@
+---
+layout: default
+title: Overview
+nav_order: 2
+description: "Présentation du protocole, objectifs et comparaisons avec les solutions existantes."
+---
 # Dynamic Input Field Specification Protocol
 
 *Un protocole moderne pour les champs de formulaire intelligents et adaptatifs*

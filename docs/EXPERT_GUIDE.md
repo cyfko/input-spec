@@ -1,3 +1,9 @@
+---
+layout: default
+title: Expert Guide
+nav_order: 5
+description: "Cas avancés, optimisations et implémentations spécifiques au protocole."
+---
 # 🎓 Guide expert
 
 *Architecture interne, optimisations avancées et contributions au protocole*
