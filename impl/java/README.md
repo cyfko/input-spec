@@ -18,7 +18,7 @@ Cette bibliothèque Java implémente le protocole de spécification de champs d'
 ```xml
 <dependency>
     <groupId>io.github.cyfko</groupId>
-    <artifactId>input-field-spec-java</artifactId>
+    <artifactId>input-spec</artifactId>
     <version>1.0.0</version>
 </dependency>
 ```
