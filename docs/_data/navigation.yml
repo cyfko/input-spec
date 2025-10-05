@@ -1,19 +1,13 @@
-main:
-  - title: "Overview"
-    url: /
-  - title: "Client"
-    children:
-      - title: "Overview"
-        url: /client/overview
-      - title: "Getting Started"
-        url: /client/getting-started
-      - title: "Advanced Usage"
-        url: /client/advanced
-  - title: "Server"
-    children:
-      - title: "Overview"
-        url: /server/overview
-      - title: "API Reference"
-        url: /server/api-reference
-      - title: "Deployment"
-        url: /server/deployment
+- title: "Overview"
+  url: /OVERVIEW
+- title: "Quick Start"
+  url: /QUICK_START
+- title: "Intermediate Guide"
+  url: /INTERMEDIATE_GUIDE
+- title: "Expert Guide"
+  url: /EXPERT_GUIDE
+- title: "FAQ"
+  url: /FAQ
+- title: "Contributing"
+  url: /CONTRIBUTING
+
