@@ -16,20 +16,6 @@ API utilisées :
 ---
 ## 1. Schéma de validation partagé
 
-```typescript
-import { FieldValidator, InputFieldSpec, validateAllConstraints } from 'input-spec';
-
-const validator = new FieldValidator();
-
-export async function validerValeur(spec: InputFieldSpec, value: any) {
-  return validator.validate(spec, value); // toutes les contraintes
-}
-
-export async function validerValeurStateless(spec: InputFieldSpec, value: any) {
-  return validateAllConstraints(spec, value); // helper stateless
-}
-```
-
 Exemple de spécification de champ (username) :
 ```typescript
 const usernameSpec: InputFieldSpec = {
