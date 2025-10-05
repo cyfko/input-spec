@@ -31,7 +31,7 @@ export const LIBRARY_VERSION = "1.0.0";
  *   FetchHttpClient, 
  *   MemoryCacheProvider,
  *   createDefaultValuesEndpoint 
- * } from 'input-field-spec-ts';
+ * } from 'input-spec';
  * 
  * // Setup
  * const resolver = new ValuesResolver(

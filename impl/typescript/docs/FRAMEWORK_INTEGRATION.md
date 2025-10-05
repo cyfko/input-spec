@@ -58,7 +58,7 @@ import {
   MemoryCacheProvider,
   HttpClientFactory,
   InputFieldSpec 
-} from 'input-field-spec-ts';
+} from 'input-spec';
 
 @Injectable({
   providedIn: 'root'
@@ -137,7 +137,7 @@ export class AppModule { }
 // user-form.component.ts
 import { Component } from '@angular/core';
 import { FieldValidationService } from './field-validation.service';
-import { InputFieldSpec } from 'input-field-spec-ts';
+import { InputFieldSpec } from 'input-spec';
 
 @Component({
   selector: 'app-user-form',
@@ -207,7 +207,7 @@ export class UserFormComponent {
 ```typescript
 // http-client.ts
 import axios, { AxiosInstance } from 'axios';
-import { HttpClientFactory, MemoryCacheProvider } from 'input-field-spec-ts';
+import { HttpClientFactory, MemoryCacheProvider } from 'input-spec';
 
 // ✅ Create Axios instance with your custom configuration
 const axiosInstance: AxiosInstance = axios.create({
@@ -244,7 +244,7 @@ export const cacheProvider = new MemoryCacheProvider();
 ```typescript
 // field-validation.hook.ts
 import { useCallback, useMemo } from 'react';
-import { FieldValidator, ValuesResolver } from 'input-field-spec-ts';
+import { FieldValidator, ValuesResolver } from 'input-spec';
 import { httpClient, cacheProvider } from './http-client';
 
 export function useFieldValidation() {
@@ -276,7 +276,7 @@ export function useFieldValidation() {
 // UserForm.tsx
 import React, { useState, useEffect } from 'react';
 import { useFieldValidation } from './field-validation.hook';
-import { InputFieldSpec, ValueAlias } from 'input-field-spec-ts';
+import { InputFieldSpec, ValueAlias } from 'input-spec';
 
 const UserForm: React.FC = () => {
   const [email, setEmail] = useState('');
@@ -360,7 +360,7 @@ import {
   ClientOptions,
   RequestInterceptor,
   ErrorHandler
-} from 'input-field-spec-ts';
+} from 'input-spec';
 
 // ✅ Create HTTP client with custom interceptors
 const httpClient = new ConfigurableFetchHttpClient(
@@ -433,7 +433,7 @@ export default {
 
 <script setup lang="ts">
 import { ref, inject } from 'vue';
-import type { FieldValidator, ValuesResolver, InputFieldSpec, ValueAlias } from 'input-field-spec-ts';
+import type { FieldValidator, ValuesResolver, InputFieldSpec, ValueAlias } from 'input-spec';
 
 const fieldValidator = inject<FieldValidator>('fieldValidator')!;
 const valuesResolver = inject<ValuesResolver>('valuesResolver')!;
@@ -488,7 +488,7 @@ import {
   ValuesResolver, 
   HttpClientFactory,
   MemoryCacheProvider 
-} from 'input-field-spec-ts';
+} from 'input-spec';
 
 class FieldValidationManager {
   constructor() {

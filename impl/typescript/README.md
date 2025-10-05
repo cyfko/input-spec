@@ -1,156 +1,186 @@
-# TypeScript Implementation - Moved# Stop Hardcoding Forms! TypeScript Implementation
+<div align="center">
 
+# input-spec (TypeScript SDK)
 
+Declarative, backend-owned field & validation specifications for frontends.
 
-**📍 This documentation has moved!****Let your backend de    constra    constraints.push({ 
+<strong>FR:</strong> Définissez les champs et règles côté serveur et consommez-les côté client sans duplication.
 
-      name: "maxLength", 
+Zero runtime dependencies • Fully typed • Framework agnostic
 
-The TypeScript implementation documentation is now available at:      max: 50,
+[Docs](https://cyfko.github.io/input-spec/typescript/) · [API](https://cyfko.github.io/input-spec/typescript/API) · [Intégration](https://cyfko.github.io/input-spec/typescript/FRAMEWORK_INTEGRATION) · [Architecture](https://cyfko.github.io/input-spec/typescript/ARCHITECTURE)
 
-**[https://cyfko.github.io/input-spec/typescript/](https://cyfko.github.io/input-spec/typescript/)**      errorMessage: "Email too long (basic: max 50 chars)" 
+</div>
 
-    });ush({ 
+---
 
-## Quick Links      name: "maxLength", 
-
-      max: 200,
-
-- 🚀 [**Getting Started**](https://cyfko.github.io/input-spec/typescript/) - Main documentation      errorMessage: "Email too long (premium: max 200 chars)" 
-
-- 📚 [**API Reference**](https://cyfko.github.io/input-spec/typescript/API) - Complete API docs    });orm fields and validation rules. Your frontend just renders them.**
-
-- ⚙️ [**Framework Integration**](https://cyfko.github.io/input-spec/typescript/FRAMEWORK_INTEGRATION) - Angular, React, Vue
-
-- 📊 [**Performance Guide**](https://cyfko.github.io/input-spec/typescript/PERFORMANCE) - Optimization tips## The Two Sides of Dynamic Forms
-
-- 🏗️ [**Architecture**](https://cyfko.github.io/input-spec/typescript/ARCHITECTURE) - Design decisions
-
-### 🎯 Frontend Developer? You Consume Field Specs
-
-## InstallationYour backend sends you complete field definitions. No more hardcoded validation!
-
-
-
-```bash```typescript
-
-npm install input-field-spec-ts// Instead of hardcoding validation rules...
-
-```const emailValidation = { required: true, pattern: /email-regex/ }; // 😤
-
-
-
-## Quick Start// Your backend sends you the complete field specification!
-
-const emailFieldSpec = await fetch('/api/form-fields/email').then(r => r.json());
-
-```typescript// Returns: { displayName: "Email", required: true, constraints: [...] }
-
-import { InputFieldSpec, FieldValidator } from 'input-field-spec-ts';```
-
-
-
-const fieldSpec: InputFieldSpec = {### ⚙️ Backend Developer? You Generate Field Specs  
-
-  displayName: "Email",You control all validation logic and form behavior from your API.
-
-  dataType: "STRING",
-
-  required: true,```typescript
-
-  constraints: [// In your API endpoint
-
-    { name: "email", pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", errorMessage: "Invalid email" }app.get('/api/form-fields/email', (req, res) => {
-
-  ]  const emailFieldSpec: InputFieldSpec = {
-
-};    displayName: "Email Address",
-
-    dataType: "STRING", 
-
-const validator = new FieldValidator();    required: true,
-
-const result = validator.validate("user@example.com", fieldSpec);    constraints: [
-
-```      { name: "email", pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", errorMessage: "Please enter a valid email" },
-
-      { name: "maxLength", max: 100, errorMessage: "Email too long (max 100 chars)" }
-
----    ]
-
-  };
-
-**Please update your bookmarks to the new location: [https://cyfko.github.io/input-spec/typescript/](https://cyfko.github.io/input-spec/typescript/)**  res.json(emailFieldSpec);
-});
-```
-
-## 🚀 Installation & Quick Start
-
+## 1. Install
 ```bash
-npm install input-field-spec-ts
+npm install input-spec
 ```
+Node >= 16. No runtime deps.
 
-### Frontend Usage: Consume Field Specs
+---
 
+## 2. Frontend Quick Start
 ```typescript
-import { FieldValidator, InputFieldSpec } from 'input-field-spec-ts';
+import { FieldValidator, InputFieldSpec } from 'input-spec';
 
-// 1. Get field definition from YOUR backend
-const fieldSpec: InputFieldSpec = await fetch('/api/form-fields/email')
-  .then(r => r.json());
-
-// 2. Validate user input using backend rules  
+const spec: InputFieldSpec = await fetch('/api/form-fields/email').then(r => r.json());
 const validator = new FieldValidator();
-const result = validator.validate(userInput, fieldSpec);
-
-// 3. Display validation errors from backend-defined messages
-if (!result.isValid) {
-  console.log(result.errors); // Backend-controlled error messages
-}
+const result = await validator.validate(spec, 'user@example.com', 'email');
+if (!result.isValid) console.log(result.errors.map(e => e.message));
 ```
 
-### Backend Usage: Generate Field Specs
-
+## 3. Backend Generation
 ```typescript
-import { InputFieldSpec, ConstraintDescriptor } from 'input-field-spec-ts';
+import { InputFieldSpec, ConstraintDescriptor } from 'input-spec';
 
-// Generate field specs based on your business logic
-function createEmailField(userTier: 'basic' | 'premium'): InputFieldSpec {
+function buildEmail(tier: 'basic' | 'premium'): InputFieldSpec {
   const constraints: ConstraintDescriptor[] = [
-    { name: "email", pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", errorMessage: "Please enter a valid email" }
+    { name: 'email', pattern: '^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$', errorMessage: 'Invalid email' }
   ];
-  
-  // Premium users get longer email addresses
-  if (userTier === 'premium') {
-    constraints.push({ 
-      name: "maxLength", 
-      type: "maxLength", 
-      value: 200, 
-      message: "Email too long (max 200 chars)" 
-    });
-  } else {
-    constraints.push({ 
-      name: "maxLength", 
-      type: "maxLength", 
-      value: 50, 
-      message: "Email too long (max 50 chars)" 
-    });
-  }
-
+  constraints.push({
+    name: 'maxLength',
+    max: tier === 'premium' ? 200 : 50,
+    errorMessage: `Email too long (max ${tier === 'premium' ? 200 : 50} chars)`
+  });
   return {
-    displayName: "Email Address",
-    dataType: "STRING",
+    displayName: 'Email Address',
+    dataType: 'STRING',
+    expectMultipleValues: false,
     required: true,
     constraints
   };
 }
-
-// In your API
-app.get('/api/form-fields/email', (req, res) => {
-  const userTier = req.user.tier; // From your auth system
-  const fieldSpec = createEmailField(userTier);
-});
 ```
+
+---
+
+## 4. Dynamic Values (Autocomplete)
+```typescript
+import { ValuesResolver, FetchHttpClient, MemoryCacheProvider, createDefaultValuesEndpoint } from 'input-spec';
+const resolver = new ValuesResolver(new FetchHttpClient(), new MemoryCacheProvider());
+const endpoint = createDefaultValuesEndpoint('https://api.example.com/countries');
+const result = await resolver.resolveValues(endpoint, { search: 'fr', page: 1, limit: 10 });
+console.log(result.values);
+```
+
+---
+
+## 5. Core Concepts
+| Name | Description |
+|------|-------------|
+| InputFieldSpec | Full declarative field specification |
+| ConstraintDescriptor | Ordered validation rule descriptor |
+| ValuesEndpoint | Dynamic values contract (search + pagination) |
+| FieldValidator | Executes validation (single constraint or all) |
+| ValuesResolver | Fetch + cache orchestration for dynamic values |
+| MemoryCacheProvider | In‑memory TTL cache |
+
+---
+
+## 6. API Snapshot
+```typescript
+interface InputFieldSpec {
+  displayName: string;
+  description?: string;
+  dataType: 'STRING' | 'NUMBER' | 'DATE' | 'BOOLEAN';
+  expectMultipleValues: boolean;
+  required: boolean;
+  constraints: ConstraintDescriptor[];
+  valuesEndpoint?: ValuesEndpoint;
+}
+```
+Full reference: `./docs/API.md`.
+
+---
+
+## 7. Example Patterns
+Validate specific constraint:
+```typescript
+await validator.validate(spec, 'bad@', 'email');
+```
+Validate all:
+```typescript
+await validator.validate(spec, 'good@example.com');
+```
+Array field:
+```typescript
+await validator.validate(arraySpec, ['a','b']);
+```
+
+---
+
+## 8. Design Principles
+1. Backend is source of truth
+2. Ordered constraint execution
+3. Zero runtime dependencies
+4. Extensible via injected HTTP/cache
+5. Serializable specs for testing
+
+---
+
+## 9. Project Layout
+```
+src/
+  types/        # Interfaces & type guards
+  validation/   # Validation engine
+  client/       # HTTP + cache + resolver
+  __tests__/    # Jest tests
+```
+
+---
+
+## 10. Scripts
+| Task | Command |
+|------|---------|
+| Build | `npm run build` |
+| Test  | `npm test` |
+| Lint  | `npm run lint` |
+| Types | `npm run type-check` |
+
+---
+
+## 11. Publishing (Maintainers)
+```bash
+npm run build && npm test
+npm publish --dry-run
+npm publish --access public
+```
+
+---
+
+## 12. Contributing
+1. Fork & branch
+2. Add tests
+3. Ensure green build
+4. Open PR
+
+---
+
+## 13. License
+MIT (see `LICENSE`).
+
+---
+
+## 14. Integrity
+| Item | Value |
+|------|-------|
+| Package | input-spec |
+| Protocol constant | PROTOCOL_VERSION |
+| Library constant | LIBRARY_VERSION |
+| Runtime deps | 0 |
+
+---
+
+## 15. Resources
+- Protocol Specification: `../../PROTOCOL_SPECIFICATION.md`
+- Root README: `../../README.md`
+- Docs: `./docs/`
+
+---
+
 
 ## 🌐 Real-World Scenarios
 
@@ -159,6 +189,8 @@ app.get('/api/form-fields/email', (req, res) => {
 **Frontend Team**: Different validation rules per client, all handled automatically!
 
 ```typescript
+---
+
 // Your component automatically adapts to each client's rules
 const loadUserForm = async (clientId: string) => {
   const fields = await fetch(`/api/clients/${clientId}/form-fields/user`)
@@ -345,6 +377,8 @@ app.get('/api/forms/registration', async (req, res) => {
 });
 ```
 
+---
+
 ## 🎯 Key Features
 
 ### ✨ **Zero Dependencies**
@@ -364,29 +398,10 @@ app.get('/api/forms/registration', async (req, res) => {
 - **Custom HTTP Clients**: Configurable fetch-based client with interceptors and error handling
 - **Zero Breaking Changes**: Existing HTTP infrastructure remains intact
 
-### �🔄 **Migration from v1.x**
-```typescript
-// Before (v1.x)
-const oldSpec = {
-  constraints: {
-    myConstraint: { required: true, pattern: "..." }
-  }
-};
 
-// After (v2.0)  
-const newSpec = {
-  required: true,  // Moved to top-level
-  constraints: [   // Now an array
-    { name: 'myConstraint', pattern: "..." }
-  ]
-};
+---
 
-// Framework Integration (NEW!)
-const httpClient = HttpClientFactory.createAngularAdapter(angularHttpClient);
-const valuesResolver = new ValuesResolver(httpClient, cache);
-```
-
-## 📦 Features
+## 📦 Feature Summary
 
 - **Zero Runtime Dependencies**: Pure TypeScript implementation
 - **Framework Integration**: Angular, React, Vue, Vanilla JS support
@@ -396,6 +411,8 @@ const valuesResolver = new ValuesResolver(httpClient, cache);
 - **HTTP Client**: Pluggable HTTP client with caching
 - **Dependency Injection**: Clean architecture with IoC
 - **Extensive Testing**: 58 tests with 96%+ coverage
+
+---
 
 ## 🏗️ Architecture
 
@@ -416,66 +433,9 @@ src/
 - **Factory Pattern**: Simplified object creation
 - **Template Method**: Validation algorithms
 
-## 🔧 Usage Examples
+---
 
-### Basic Validation
 
-```typescript
-import { FieldValidator, InputFieldSpec } from './src';
-
-const fieldSpec: InputFieldSpec = {
-  displayName: 'Email',
-  dataType: 'STRING',
-  expectMultipleValues: false,
-  required: true,  // ✨ Top-level required field
-  constraints: [   // ✨ Array with ordered execution
-    {
-      name: 'email',
-      pattern: '^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$',
-      errorMessage: 'Please enter a valid email address'
-    }
-  ]
-};
-
-const validator = new FieldValidator();
-const result = await validator.validate(fieldSpec, 'test@example.com', 'email');
-console.log(result.isValid); // true
-```
-
-### Multiple Constraints with Ordered Execution
-
-```typescript
-const passwordSpec: InputFieldSpec = {
-  displayName: 'Password',
-  dataType: 'STRING',
-  expectMultipleValues: false,
-  required: true,
-  constraints: [  // Executed in order: length → strength → special
-    {
-      name: 'length',
-      min: 8,
-      max: 50,
-      errorMessage: 'Password must be 8-50 characters'
-    },
-    {
-      name: 'strength',
-      pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)',
-      errorMessage: 'Must contain lowercase, uppercase, and digit'
-    },
-    {
-      name: 'special',
-      pattern: '.*[!@#$%^&*]',
-      errorMessage: 'Must contain special character'
-    }
-  ]
-};
-
-// Validate specific constraint
-const lengthResult = await validator.validate(passwordSpec, 'weak', 'length');
-
-// Validate all constraints in order
-const allResult = await validator.validate(passwordSpec, 'StrongPass123!');
-```
 
 ### Dynamic Values Resolution
 
@@ -514,6 +474,8 @@ const cache = new MemoryCacheProvider();    // Uses native Map
 const client = new FetchHttpClient();       // Uses native fetch
 ```
 
+---
+
 ## 🧪 Testing
 
 ### Run Tests
@@ -536,6 +498,8 @@ npm run test:coverage
 - **Validation Module**: 96% coverage  
 - **Client Module**: 86% coverage
 - **Integration Tests**: End-to-end scenarios with new v2.0 structure
+
+---
 
 ## 🔨 Build & Development
 
@@ -560,7 +524,9 @@ dist/
 └── index.d.mts       # TypeScript declarations (ESM)
 ```
 
-## 📋 API Reference
+---
+
+## 📋 API Reference (Snapshot)
 
 ### Core Types
 
@@ -581,6 +547,8 @@ dist/
 - `HttpClient` - HTTP client abstraction
 - `CacheProvider` - Cache provider abstraction
 
+---
+
 ## 🎯 Design Principles
 
 ### Zero Dependencies
@@ -598,6 +566,8 @@ dist/
 - **Interface Segregation**: Focused, testable interfaces
 - **Pure Functions**: Predictable, testable logic
 
+---
+
 ## 📚 Documentation
 
 - [Usage Guide](./docs/USAGE_GUIDE.md) - Getting started and common patterns
@@ -607,6 +577,8 @@ dist/
 - [Architecture Guide](./docs/ARCHITECTURE.md) - Design decisions and patterns
 - [Migration Guide](./MIGRATION.md) - Migrating from v1.x to v2.0
 - [Release Notes](./RELEASE_NOTES.md) - What's new in v2.0
+
+---
 
 ## 🤝 Contributing
 
@@ -618,11 +590,43 @@ dist/
 6. Push to the branch (`git push origin feature/amazing-feature`)
 7. Open a Pull Request
 
+---
+
 ## 📄 License
 
 MIT License - see LICENSE file for details.
 
+---
+
 ## 🔗 Related
+
+---
+
+## 📦 Publishing (Maintainers)
+
+```bash
+# Build & test
+npm run build && npm test
+
+# Dry run publish
+npm publish --dry-run
+
+# Publish (ensure version not already published)
+npm publish --access public
+```
+
+---
+
+## ✅ Integrity Notes
+
+- Package name: `input-spec`
+- Protocol version constant exported as `PROTOCOL_VERSION`
+- Library version exported as `LIBRARY_VERSION`
+- No runtime dependencies; only dev tooling (TypeScript, Jest, tsup)
+
+---
+
+If something is unclear or you need a French version complète du README, ouvrez une issue. 🙌
 
 - [Protocol Specification](../../PROTOCOL_SPECIFICATION.md)
 - [Project Root](../../README.md)

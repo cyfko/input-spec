@@ -60,7 +60,8 @@ export class ValuesResolver {
     options: FetchValuesOptions = {}
   ): Promise<FetchValuesResult> {
     // Debouncing pour les recherches
-    if (options.search !== undefined && endpoint.debounceMs > 0) {
+  const debounceMs = endpoint.debounceMs ?? 0;
+  if (options.search !== undefined && debounceMs > 0) {
       return this.debouncedResolve(endpoint, options);
     }
 
@@ -90,7 +91,7 @@ export class ValuesResolver {
     // 2. Validation search length
     if (
       options.search !== undefined &&
-      options.search.length < endpoint.minSearchLength
+  options.search.length < (endpoint.minSearchLength ?? 0)
     ) {
       return {
         values: [],

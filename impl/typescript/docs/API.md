@@ -8,7 +8,7 @@
 ### Quick Start for Frontend Teams
 
 ```typescript
-import { FieldValidator, InputFieldSpec } from 'input-field-spec-ts';
+import { FieldValidator, InputFieldSpec } from 'input-spec';
 
 // 1. Get field definition from YOUR backend API
 const emailFieldSpec: InputFieldSpec = await fetch('/api/form-fields/email')
@@ -30,7 +30,7 @@ if (!result.isValid) {
 ### Quick Start for Backend Teams
 
 ```typescript
-import { InputFieldSpec, ConstraintDescriptor } from 'input-field-spec-ts';
+import { InputFieldSpec, ConstraintDescriptor } from 'input-spec';
 
 // Generate field specs in your API endpoints
 app.get('/api/form-fields/email', (req, res) => {

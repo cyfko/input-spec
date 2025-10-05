@@ -7,7 +7,7 @@
 Let's start with a simple email field validation - the most common use case.
 
 ```typescript
-import { FieldValidator, InputFieldSpec } from 'input-field-spec-ts';
+import { FieldValidator, InputFieldSpec } from 'input-spec';
 
 // 1. Define your field specification
 const emailFieldSpec: InputFieldSpec = {
@@ -60,7 +60,7 @@ import {
   FetchHttpClient, 
   MemoryCacheProvider,
   ValuesEndpoint 
-} from 'input-field-spec-ts';
+} from 'input-spec';
 
 // 1. Configure your HTTP client and cache
 const httpClient = new FetchHttpClient(10000); // 10s timeout
@@ -273,7 +273,7 @@ Here's how to integrate with a real React form:
 
 ```typescript
 import React, { useState, useCallback } from 'react';
-import { FieldValidator, ValuesResolver } from 'input-field-spec-ts';
+import { FieldValidator, ValuesResolver } from 'input-spec';
 
 const UserForm: React.FC = () => {
   const [formData, setFormData] = useState({
@@ -375,7 +375,7 @@ import {
   FetchHttpClient, 
   MemoryCacheProvider,
   InputFieldSpec 
-} from 'input-field-spec-ts';
+} from 'input-spec';
 
 @Component({
   selector: 'app-user-form',
