@@ -7,8 +7,6 @@ API utilisées :
 - `FieldValidator` (ou les helpers `validateField`, `validateAllConstraints`)
 - `createDefaultValuesEndpoint`, `ValuesEndpoint`, `ValuesResolver` (pour les valeurs dynamiques)
 
-> Note de fidélité : Seuls les champs réellement présents dans `InputFieldSpec` sont utilisés (`displayName`, `description`, `dataType`, `expectMultipleValues`, `required`, `constraints`). Les règles de longueur / motif / enum sont exprimées via les entrées `ConstraintDescriptor` (`min`, `max`, `pattern`, `enumValues`). Aucune propriété inventée n'est introduite.
-
 ---
 ## 1. Schéma de validation partagé
 
