@@ -2,6 +2,8 @@
   url: /OVERVIEW
 - title: "Quick Start"
   url: /QUICK_START
+- title: "Frontend Integration"
+  url: /FRONTEND_INTEGRATION
 - title: "Intermediate Guide"
   url: /INTERMEDIATE_GUIDE
 - title: "Expert Guide"
