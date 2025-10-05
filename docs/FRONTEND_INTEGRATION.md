@@ -1,3 +1,9 @@
+---
+layout: default
+title: Frontend Integration
+nav_order: 6
+description: "Intégration Frontend (Angular · React · Vue · Svelte)."
+---
 # Intégration Frontend (Angular · React · Vue · Svelte)
 
 Ce guide montre comment consommer le protocole **input-spec** côté client sans imposer de design visuel. Tous les exemples s'appuient uniquement sur les API publiques exportées.
