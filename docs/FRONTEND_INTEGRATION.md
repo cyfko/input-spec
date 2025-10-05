@@ -171,7 +171,7 @@ export function useInputSpec(spec: InputFieldSpec) {
 }
 ```
 Template :
-```vue
+```html
 <input @input="e => validate(e.target.value)" />
 <div v-if="!valid">
   <div v-for="(msgs, key) in errors" :key="key">
@@ -212,7 +212,7 @@ export function createInputSpecValidator(spec: InputFieldSpec) {
 }
 ```
 Utilisation :
-```svelte
+```html
 <script lang="ts">
   import { createInputSpecValidator } from './inputSpecStore';
   import type { InputFieldSpec } from 'input-spec';
