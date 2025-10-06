@@ -1,264 +1,126 @@
-# Dynamic Input Field Specification Protocol - Java Implementation
+## Dynamic Input Field Specification Protocol – Java (v2.0)
 
-Une implémentation Java fidèle au protocole **Dynamic Input Field Specification Protocol v1.0**.
+Implémentation Java strictement conforme à **Dynamic Input Field Specification Protocol v2.0**.
 
-## 📋 Vue d'ensemble
+### ✅ Points clés v2
+- Contraintes atomiques (`ConstraintDescriptor`) : un type unique (`pattern`, `minLength`, `maxValue`, `range`, `minDate`, etc.)
+- `valuesEndpoint` (INLINE / remote) + modes `CLOSED` ou `SUGGESTIONS`
+- Pipeline : REQUIRED → TYPE → MEMBERSHIP → CONSTRAINTS
+- `InputSpec` expose `protocolVersion`
+- `minLength` / `maxLength` = taille collection (jamais longueur string)
+- `range` accepte `step` (numérique)
+- `ValidationOptions.shortCircuit()` pour arrêter au premier échec
+- Types inconnus & `custom` ignorés (forward compatibility)
 
-Cette bibliothèque Java implémente le protocole de spécification de champs d'entrée dynamiques, permettant de :
-- Définir des spécifications de champs d'entrée à l'exécution
-- Comprendre les contraintes et sources de valeurs sans codage en dur
-- Activer les champs de formulaire intelligents avec auto-complétion et validation
-- Supporter la sélection de valeurs recherchables et paginées
-- Maintenir l'interopérabilité entre langages
-
-## 🚀 Installation
-
-### Maven
-
+### Installation (snapshot)
+Maven:
 ```xml
 <dependency>
     <groupId>io.github.cyfko</groupId>
     <artifactId>input-spec</artifactId>
-    <version>1.0.0</version>
+    <version>2.0.0-SNAPSHOT</version>
 </dependency>
 ```
 
-### Gradle
-
-```gradle
-implementation 'io.github.cyfko:input-field-spec-java:1.0.0'
-```
-
-## 📖 Guide d'utilisation
-
-### Exemple 1: Champ texte simple
-
-Basé sur l'exemple 1 de la spécification du protocole :
-
+### Conteneur racine
 ```java
-import io.github.cyfko.inputspec.*;
-import io.github.cyfko.inputspec.validation.*;
-import java.util.Arrays;
-
-// Créer une contrainte de validation
-ConstraintDescriptor valueConstraint = new ConstraintDescriptor("value");
-valueConstraint.setMin(3);
-valueConstraint.setMax(20);
-valueConstraint.setPattern("^[a-zA-Z0-9_]+$");
-valueConstraint.setDescription("Username (3-20 alphanumeric characters)");
-valueConstraint.setErrorMessage("Username must be 3-20 characters, alphanumeric with underscores");
-
-// Créer la spécification du champ
-InputFieldSpec usernameField = new InputFieldSpec(
-    "Username",                    // displayName
-    DataType.STRING,              // dataType
-    false,                        // expectMultipleValues
-    true,                         // required
-    Arrays.asList(valueConstraint) // constraints
-);
-usernameField.setDescription("User's unique identifier");
-
-// Valider une valeur
-FieldValidator validator = new FieldValidator();
-ValidationResult result = validator.validate(usernameField, "john_doe");
-
-if (result.isValid()) {
-    System.out.println("Validation réussie !");
-} else {
-    result.getErrors().forEach(error -> 
-        System.out.println("Erreur: " + error.getMessage())
-    );
-}
+InputSpec spec = InputSpec.builder()
+    .addField(InputFieldSpec.builder()
+            .displayName("Age")
+            .dataType(DataType.NUMBER)
+            .required(false)
+            .expectMultipleValues(false)
+            .build())
+    .build();
 ```
 
-### Exemple 2: Champ numérique avec plage
-
-Basé sur l'exemple 2 de la spécification :
-
+### Contrainte pattern
 ```java
-// Contrainte pour un champ numérique
-ConstraintDescriptor valueConstraint = new ConstraintDescriptor("value");
-valueConstraint.setMin(0);
-valueConstraint.setDescription("Price value");
-valueConstraint.setErrorMessage("Price must be greater than 0");
-valueConstraint.setDefaultValue(0);
+ConstraintDescriptor pattern = ConstraintDescriptor.builder()
+    .name("usernamePattern")
+    .type(ConstraintType.PATTERN)
+    .params(Map.of("regex","^[a-zA-Z0-9_]{3,20}$"))
+    .errorMessage("3-20 alphanum + underscore")
+    .build();
 
-InputFieldSpec priceField = new InputFieldSpec(
-    "Price",
-    DataType.NUMBER,
-    false,
-    true,
-    Arrays.asList(valueConstraint)
-);
-priceField.setDescription("Price filter range");
-
-// Validation
-ValidationResult result = validator.validate(priceField, 25.99);
+InputFieldSpec username = InputFieldSpec.builder()
+    .displayName("Username")
+    .dataType(DataType.STRING)
+    .required(true)
+    .constraints(List.of(pattern))
+    .build();
 ```
 
-### Exemple 3: Champ email avec pattern
-
-Basé sur l'exemple 3 de la spécification :
-
+### Longueur sur collections
 ```java
-// Contrainte avec pattern regex et format
-ConstraintDescriptor valueConstraint = new ConstraintDescriptor("value");
-valueConstraint.setPattern("^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\\\.[a-zA-Z]{2,}$");
-valueConstraint.setFormat("email");
-valueConstraint.setDescription("Valid email address");
-valueConstraint.setErrorMessage("Please provide a valid email address");
+ConstraintDescriptor minLen = ConstraintDescriptor.builder()
+    .name("minLen")
+    .type(ConstraintType.MIN_LENGTH)
+    .params(Map.of("value",2))
+    .build();
 
-InputFieldSpec emailField = new InputFieldSpec(
-    "Email Address",
-    DataType.STRING,
-    false,
-    true,
-    Arrays.asList(valueConstraint)
-);
-emailField.setDescription("Contact email address");
-
-// Validation
-ValidationResult result = validator.validate(emailField, "user@example.com");
+InputFieldSpec tags = InputFieldSpec.builder()
+    .displayName("Tags")
+    .dataType(DataType.STRING)
+    .expectMultipleValues(true)
+    .constraints(List.of(minLen))
+    .build();
 ```
 
-### Exemple 4: Champ de sélection statique
-
-Basé sur l'exemple 4 de la spécification :
-
+### Domaine fermé INLINE
 ```java
-import java.util.Arrays;
-
-// Créer les valeurs d'énumération
-List<ValueAlias> enumValues = Arrays.asList(
-    new ValueAlias("active", "Active"),
-    new ValueAlias("inactive", "Inactive"),
-    new ValueAlias("pending", "Pending")
-);
-
-ConstraintDescriptor valueConstraint = new ConstraintDescriptor("value");
-valueConstraint.setDescription("Item status");
-valueConstraint.setErrorMessage("Please select a status");
-valueConstraint.setEnumValues(enumValues);
-
-InputFieldSpec statusField = new InputFieldSpec(
-    "Status",
-    DataType.STRING,
-    false,
-    true,
-    Arrays.asList(valueConstraint)
-);
-statusField.setDescription("Filter by status");
-
-// Validation
-ValidationResult result = validator.validate(statusField, "active");
+ValuesEndpoint domain = ValuesEndpoint.builder()
+    .protocol(ValuesEndpoint.Protocol.INLINE)
+    .mode(ValuesEndpoint.Mode.CLOSED)
+    .items(List.of(new ValueAlias("A","Label A")))
+    .build();
 ```
 
-### Exemple 5: Champ de sélection avec endpoint recherchable
-
-Basé sur l'exemple 5 de la spécification :
-
+### Plage avec step
 ```java
-// Configuration du mapping de réponse
-ResponseMapping responseMapping = new ResponseMapping("data");
-responseMapping.setPageField("page");
-responseMapping.setPageSizeField("pageSize");
-responseMapping.setTotalField("total");
-responseMapping.setHasNextField("hasNext");
-
-// Configuration des paramètres de requête
-RequestParams requestParams = new RequestParams();
-requestParams.setPageParam("page");
-requestParams.setLimitParam("limit");
-requestParams.setSearchParam("search");
-requestParams.setDefaultLimit(50);
-
-// Configuration de l'endpoint
-ValuesEndpoint valuesEndpoint = new ValuesEndpoint("/api/users", responseMapping);
-valuesEndpoint.setMethod("GET");
-valuesEndpoint.setSearchField("name");
-valuesEndpoint.setPaginationStrategy(PaginationStrategy.PAGE_NUMBER);
-valuesEndpoint.setCacheStrategy(CacheStrategy.SHORT_TERM);
-valuesEndpoint.setDebounceMs(300);
-valuesEndpoint.setMinSearchLength(2);
-valuesEndpoint.setRequestParams(requestParams);
-
-ConstraintDescriptor valueConstraint = new ConstraintDescriptor("value");
-valueConstraint.setDescription("User to assign task to");
-valueConstraint.setErrorMessage("Please select a user");
-valueConstraint.setValuesEndpoint(valuesEndpoint);
-
-InputFieldSpec assigneeField = new InputFieldSpec(
-    "Assigned To",
-    DataType.STRING,
-    false,
-    true,
-    Arrays.asList(valueConstraint)
-);
-assigneeField.setDescription("Assign task to user");
+ConstraintDescriptor range = ConstraintDescriptor.builder()
+    .name("evenRange")
+    .type(ConstraintType.RANGE)
+    .params(Map.of("min",0,"max",10,"step",2))
+    .build();
 ```
 
-### Exemple 6: Multi-sélection avec recherche
-
-Basé sur l'exemple 6 de la spécification :
-
+### Short-circuit
 ```java
-// Configuration pour endpoint sans pagination
-ResponseMapping responseMapping = new ResponseMapping("tags");
-
-RequestParams requestParams = new RequestParams();
-requestParams.setSearchParam("q");
-
-ValuesEndpoint valuesEndpoint = new ValuesEndpoint("/api/tags", responseMapping);
-valuesEndpoint.setSearchField("name");
-valuesEndpoint.setPaginationStrategy(PaginationStrategy.NONE);
-valuesEndpoint.setCacheStrategy(CacheStrategy.LONG_TERM);
-valuesEndpoint.setDebounceMs(200);
-valuesEndpoint.setMinSearchLength(1);
-valuesEndpoint.setRequestParams(requestParams);
-
-ConstraintDescriptor valueConstraint = new ConstraintDescriptor("value");
-valueConstraint.setMin(1); // minimum 1 élément dans le tableau
-valueConstraint.setMax(5); // maximum 5 éléments dans le tableau
-valueConstraint.setDescription("Select 1 to 5 relevant tags");
-valueConstraint.setErrorMessage("You must select between 1 and 5 tags");
-valueConstraint.setValuesEndpoint(valuesEndpoint);
-
-InputFieldSpec tagsField = new InputFieldSpec(
-    "Tags",
-    DataType.STRING,
-    true, // expectMultipleValues = true pour multi-sélection
-    true,
-    Arrays.asList(valueConstraint)
-);
-tagsField.setDescription("Select relevant tags for content");
-
-// Validation d'un tableau de valeurs
-List<String> selectedTags = Arrays.asList("java", "spring", "rest");
-ValidationResult result = validator.validate(tagsField, selectedTags);
+ValidationResult res = new FieldValidator().validate(username, "%%%", ValidationOptions.shortCircuit());
 ```
 
-### Exemple 7: Champ de date
+### Pipeline de validation
+| Étape | Description |
+|-------|-------------|
+| 1 REQUIRED | Présence si `required=true` |
+| 2 TYPE | Typage de base + multiplicité |
+| 3 MEMBERSHIP | Appartenance (mode CLOSED) |
+| 4 CONSTRAINTS | Application séquentielle |
 
-Basé sur l'exemple 7 de la spécification :
+### Conformité protocole
+| Aspect | Statut |
+|--------|--------|
+| `protocolVersion` dans `InputSpec` | ✅ |
+| Pipeline ordonné | ✅ |
+| Domaines INLINE fermés / suggestions | ✅ |
+| Longueur uniquement collections | ✅ |
+| `range` + `step` | ✅ |
+| Short‑circuit | ✅ |
+| Inconnus / custom ignorés | ✅ |
 
-```java
-ConstraintDescriptor valueConstraint = new ConstraintDescriptor("value");
-valueConstraint.setFormat("iso8601");
-valueConstraint.setDescription("Creation date");
-valueConstraint.setErrorMessage("Please provide a valid date");
-
-InputFieldSpec dateField = new InputFieldSpec(
-    "Created Date",
-    DataType.DATE,
-    false,
-    false, // champ optionnel
-    Arrays.asList(valueConstraint)
-);
-dateField.setDescription("Filter by creation date");
-
-// Validation avec date ISO 8601
-ValidationResult result = validator.validate(dateField, "2025-10-04T10:30:00Z");
+### Tests
 ```
+./mvnw test
+```
+
+### Contribution
+1. Respecter la spécification
+2. Ajouter des tests
+3. Documenter les changements
+
+---
+**Version lib** : 2.0.0-SNAPSHOT | **Protocole** : v2.0 | Mise à jour : Octobre 2025
 
 ## 🏗️ Architecture
 

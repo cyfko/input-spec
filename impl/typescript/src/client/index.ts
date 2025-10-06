@@ -81,8 +81,22 @@ export class ValuesResolver {
     endpoint: ValuesEndpoint,
     options: FetchValuesOptions
   ): Promise<FetchValuesResult> {
+    // INLINE endpoints are resolved locally with no HTTP call
+    if (endpoint.protocol === 'INLINE') {
+      const items = endpoint.items || [];
+      return {
+        values: items,
+        hasNext: false,
+        total: items.length,
+        page: 1
+      };
+    }
+
+    if (!endpoint.uri) {
+      throw new Error('ValuesEndpoint uri is required for remote protocols');
+    }
     // 1. Check cache
-    const cacheKey = this.buildCacheKey(endpoint, options);
+  const cacheKey = this.buildCacheKey(endpoint, options);
     const cached = this.getFromCache(cacheKey, endpoint.cacheStrategy);
     if (cached) {
       return cached;
@@ -167,20 +181,19 @@ export class ValuesResolver {
     data: any,
     endpoint: ValuesEndpoint
   ): FetchValuesResult {
-    const mapping = endpoint.responseMapping;
+    const mapping = endpoint.responseMapping || { dataField: 'data' };
 
-    // Extract values
-    let values: ValueAlias[];
-    if (mapping.dataField) {
+    // Extract values (fallback to array response)
+    let values: ValueAlias[] = [];
+    if (mapping.dataField && data && typeof data === 'object' && data[mapping.dataField] !== undefined) {
       values = data[mapping.dataField] || [];
-    } else {
-      values = Array.isArray(data) ? data : [];
+    } else if (Array.isArray(data)) {
+      values = data;
     }
 
-    // Extract pagination info
-    const hasNext = mapping.hasNextField ? Boolean(data[mapping.hasNextField]) : false;
-    const total = mapping.totalField ? data[mapping.totalField] : undefined;
-    const page = mapping.pageField ? data[mapping.pageField] : undefined;
+    const hasNext = mapping.hasNextField && data ? Boolean(data[mapping.hasNextField]) : false;
+    const total = mapping.totalField && data ? data[mapping.totalField] : undefined;
+    const page = mapping.pageField && data ? data[mapping.pageField] : undefined;
 
     return {
       values,

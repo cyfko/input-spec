@@ -6,7 +6,7 @@
 
     <groupId>io.github.cyfko</groupId>
     <artifactId>input-spec</artifactId>
-    <version>1.0.0</version>
+    <version>3.0.0</version>
     <packaging>jar</packaging>
 
     <name>Dynamic Input Field Specification Protocol - Java Implementation</name>
@@ -39,9 +39,7 @@
         <maven.compiler.target>11</maven.compiler.target>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <junit.version>5.10.0</junit.version>
-        <mockito.version>5.5.0</mockito.version>
-        <jackson.version>2.15.2</jackson.version>
-        <slf4j.version>2.0.7</slf4j.version>
+    <jackson.version>2.17.2</jackson.version>
     </properties>
 
     <dependencies>
@@ -62,44 +60,11 @@
             <version>${jackson.version}</version>
         </dependency>
 
-        <!-- Logging -->
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-api</artifactId>
-            <version>${slf4j.version}</version>
-        </dependency>
-
-        <!-- HTTP Client (Optional - for default implementation) -->
-        <dependency>
-            <groupId>org.apache.httpcomponents.client5</groupId>
-            <artifactId>httpclient5</artifactId>
-            <version>5.2.1</version>
-            <optional>true</optional>
-        </dependency>
-
-        <!-- Test Dependencies -->
+        <!-- Test Dependency -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-core</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.mockito</groupId>
-            <artifactId>mockito-junit-jupiter</artifactId>
-            <version>${mockito.version}</version>
-            <scope>test</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.slf4j</groupId>
-            <artifactId>slf4j-simple</artifactId>
-            <version>${slf4j.version}</version>
             <scope>test</scope>
         </dependency>
     </dependencies>

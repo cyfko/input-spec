@@ -1,50 +1,27 @@
 package io.github.cyfko.inputspec.validation;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
-import java.util.ArrayList;
 
-/**
- * Represents a validation result with status and errors
- */
-public class ValidationResult {
-    
-    private final boolean valid;
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public final class ValidationResult {
+    private final boolean isValid;
     private final List<ValidationError> errors;
-    
-    /**
-     * Constructor for validation result
-     * 
-     * @param valid true if validation passed
-     * @param errors list of validation errors (empty if valid)
-     */
-    public ValidationResult(boolean valid, List<ValidationError> errors) {
-        this.valid = valid;
-        this.errors = errors != null ? errors : new ArrayList<>();
+
+    @JsonCreator
+    public ValidationResult(
+            @JsonProperty("isValid") boolean isValid,
+            @JsonProperty("errors") List<ValidationError> errors) {
+        this.isValid = isValid;
+        this.errors = errors;
     }
-    
-    /**
-     * Gets whether validation passed
-     * 
-     * @return true if valid
-     */
-    public boolean isValid() {
-        return valid;
-    }
-    
-    /**
-     * Gets the list of validation errors
-     * 
-     * @return list of errors (empty if valid)
-     */
+
+    @JsonProperty("isValid")
+    public boolean isValid() { return isValid; }
+
     public List<ValidationError> getErrors() {
         return errors;
-    }
-    
-    @Override
-    public String toString() {
-        return "ValidationResult{" +
-                "valid=" + valid +
-                ", errors=" + errors +
-                '}';
     }
 }

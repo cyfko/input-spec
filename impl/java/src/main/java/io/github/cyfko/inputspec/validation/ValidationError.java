@@ -1,91 +1,51 @@
 package io.github.cyfko.inputspec.validation;
 
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonInclude;
+import com.fasterxml.jackson.annotation.JsonProperty;
 
-/**
- * Represents a validation error with constraint name and message
- */
-public class ValidationError {
-    
-    private final String constraintName;
-    private final String message;
-    private final Object value;
-    
-    /**
-     * Constructor for validation error
-     * 
-     * @param constraintName name of the constraint that failed
-     * @param message error message
-     * @param value the value that failed validation
-     */
-    public ValidationError(String constraintName, String message, Object value) {
+@JsonInclude(JsonInclude.Include.NON_NULL)
+public final class ValidationError {
+    private final String constraintName; // required
+    private final String message; // required
+    private final Object value; // offending value (optional)
+    private final Integer index; // present for multi-value element errors
+
+    private ValidationError(Builder b) {
+        this.constraintName = b.constraintName;
+        this.message = b.message;
+        this.value = b.value;
+        this.index = b.index;
+    }
+
+    @JsonCreator
+    public ValidationError(
+            @JsonProperty(value = "constraintName", required = true) String constraintName,
+            @JsonProperty(value = "message", required = true) String message,
+            @JsonProperty("value") Object value,
+            @JsonProperty("index") Integer index) {
         this.constraintName = constraintName;
         this.message = message;
         this.value = value;
+        this.index = index;
     }
-    
-    /**
-     * Constructor for validation error without value
-     * 
-     * @param constraintName name of the constraint that failed
-     * @param message error message
-     */
-    public ValidationError(String constraintName, String message) {
-        this(constraintName, message, null);
-    }
-    
-    /**
-     * Gets the name of the constraint that failed
-     * 
-     * @return constraint name
-     */
-    public String getConstraintName() {
-        return constraintName;
-    }
-    
-    /**
-     * Gets the error message
-     * 
-     * @return error message
-     */
-    public String getMessage() {
-        return message;
-    }
-    
-    /**
-     * Gets the value that failed validation
-     * 
-     * @return the value (may be null)
-     */
-    public Object getValue() {
-        return value;
-    }
-    
-    @Override
-    public boolean equals(Object obj) {
-        if (this == obj) {
-            return true;
-        }
-        if (obj == null || getClass() != obj.getClass()) {
-            return false;
-        }
-        ValidationError that = (ValidationError) obj;
-        return Objects.equals(constraintName, that.constraintName) &&
-               Objects.equals(message, that.message) &&
-               Objects.equals(value, that.value);
-    }
-    
-    @Override
-    public int hashCode() {
-        return Objects.hash(constraintName, message, value);
-    }
-    
-    @Override
-    public String toString() {
-        return "ValidationError{" +
-                "constraintName='" + constraintName + '\'' +
-                ", message='" + message + '\'' +
-                ", value=" + value +
-                '}';
+
+    public String getConstraintName() { return constraintName; }
+    public String getMessage() { return message; }
+    public Object getValue() { return value; }
+    public Integer getIndex() { return index; }
+
+    public static Builder builder() { return new Builder(); }
+
+    public static final class Builder {
+        private String constraintName;
+        private String message;
+        private Object value;
+        private Integer index;
+        public Builder constraintName(String c) { this.constraintName = c; return this; }
+        public Builder message(String m) { this.message = m; return this; }
+        public Builder value(Object v) { this.value = v; return this; }
+        public Builder index(Integer i) { this.index = i; return this; }
+        public ValidationError build() { return new ValidationError(this); }
     }
 }
