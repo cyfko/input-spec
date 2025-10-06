@@ -127,7 +127,7 @@ public class FieldValidator {
                     break;
             }
         } else {
-            // For single-value fields MIN_LENGTH / MAX_LENGTH do not apply (string length not validated here per user rule)
+            // For single-value fields MIN_LENGTH / MAX_LENGTH do not apply (string length not validated here per spec semantics Option A)
             if (t == ConstraintType.MIN_LENGTH || t == ConstraintType.MAX_LENGTH) {
                 return; // ignore silently
             }

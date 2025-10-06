@@ -37,18 +37,22 @@ public class ConstraintValidationTest {
     @Test
     void minMaxLength() {
         var spec = InputFieldSpec.builder()
-                .displayName("Code")
+                .displayName("Codes")
                 .dataType(DataType.STRING)
-                .expectMultipleValues(false)
+                .expectMultipleValues(true)
                 .required(true)
                 .constraints(List.of(
                         ConstraintDescriptor.builder().name("minL").type(ConstraintType.MIN_LENGTH).params(Map.of("value", 3)).build(),
                         ConstraintDescriptor.builder().name("maxL").type(ConstraintType.MAX_LENGTH).params(Map.of("value", 5)).build()
                 )).build();
-        assertFalse(validator.validate(spec, "ab").isValid());
-        assertTrue(validator.validate(spec, "abc").isValid());
-        assertTrue(validator.validate(spec, "abcd").isValid());
-        assertFalse(validator.validate(spec, "abcdef").isValid());
+        // size 2 -> too short
+        assertFalse(validator.validate(spec, List.of("a","b")).isValid());
+        // size 3 -> ok
+        assertTrue(validator.validate(spec, List.of("a","b","c")).isValid());
+        // size 4 -> ok
+        assertTrue(validator.validate(spec, List.of("a","b","c","d")).isValid());
+        // size 6 -> too long
+        assertFalse(validator.validate(spec, List.of("a","b","c","d","e","f")).isValid());
     }
 
     @Test
