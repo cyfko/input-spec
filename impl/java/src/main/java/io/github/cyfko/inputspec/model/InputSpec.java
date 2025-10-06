@@ -10,11 +10,14 @@ import java.util.List;
 import java.util.Objects;
 
 /**
- * Top-level specification container.
- * <p>
- * Holds the protocol version and the list of defined input field specifications.
- * The {@link #protocolVersion} defaults to {@link #CURRENT_PROTOCOL_VERSION} when built
- * unless explicitly overridden.
+ * Top-level immutable specification container for a collection of input field definitions.
+ * <p>Encapsulates the protocol version (defaulting to {@link #CURRENT_PROTOCOL_VERSION}) and
+ * an ordered list of {@link InputFieldSpec} entries. The version enables future evolution while
+ * allowing clients to validate compatibility early.</p>
+ * <p>Instances are thread-safe and may be freely cached or shared. The {@code fields} list is
+ * defensively copied and wrapped unmodifiable on construction.</p>
+ *
+ * @since 2.0.0
  */
 @JsonInclude(JsonInclude.Include.NON_NULL)
 public final class InputSpec {
@@ -33,39 +36,59 @@ public final class InputSpec {
         this.fields = fields == null ? Collections.emptyList() : Collections.unmodifiableList(new ArrayList<>(fields));
     }
 
-    public String getProtocolVersion() {
-        return protocolVersion;
-    }
+    /**
+     * @return the declared protocol version string (never null)
+     * @since 2.0.0
+     */
+    public String getProtocolVersion() { return protocolVersion; }
 
-    public List<InputFieldSpec> getFields() {
-        return fields;
-    }
+    /**
+     * @return unmodifiable ordered list of field specifications (never null)
+     * @since 2.0.0
+     */
+    public List<InputFieldSpec> getFields() { return fields; }
 
     public static Builder builder() {
         return new Builder();
     }
 
+    /**
+     * Fluent builder for {@link InputSpec}. Not thread-safe.
+     * @since 2.0.0
+     */
     public static final class Builder {
         private String protocolVersion = CURRENT_PROTOCOL_VERSION;
         private final List<InputFieldSpec> fields = new ArrayList<>();
 
         private Builder() {}
 
-        public Builder protocolVersion(String protocolVersion) {
+    /**
+     * Override protocol version (ignored if blank).
+     * @since 2.0.0
+     */
+    public Builder protocolVersion(String protocolVersion) {
             if (protocolVersion != null && !protocolVersion.isBlank()) {
                 this.protocolVersion = protocolVersion;
             }
             return this;
         }
 
-        public Builder addField(InputFieldSpec field) {
+    /**
+     * Append a single field specification (ignored if null).
+     * @since 2.0.0
+     */
+    public Builder addField(InputFieldSpec field) {
             if (field != null) {
                 this.fields.add(field);
             }
             return this;
         }
 
-        public Builder fields(List<InputFieldSpec> fields) {
+    /**
+     * Replace entire field list with provided collection.
+     * @since 2.0.0
+     */
+    public Builder fields(List<InputFieldSpec> fields) {
             this.fields.clear();
             if (fields != null) {
                 this.fields.addAll(fields);
@@ -73,9 +96,11 @@ public final class InputSpec {
             return this;
         }
 
-        public InputSpec build() {
-            return new InputSpec(protocolVersion, fields);
-        }
+        /**
+         * Build immutable {@link InputSpec} instance.
+         * @since 2.0.0
+         */
+        public InputSpec build() { return new InputSpec(protocolVersion, fields); }
     }
 
     @Override

@@ -11,10 +11,36 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * Minimal reference validator implementing protocol v2 order semantics.
- * Not optimized; focuses on correctness & clear mapping to spec.
+ * Reference validator implementing the protocol v2 ordered validation semantics.
+ * <p>
+ * The validation pipeline executes in the following stages:
+ * <ol>
+ *   <li><b>REQUIRED</b> – fails fast if the field is required and the provided value is missing/empty.</li>
+ *   <li><b>TYPE</b> – lightweight structural type check based on {@link io.github.cyfko.inputspec.model.DataType} and the
+ *       {@code expectMultipleValues} flag.</li>
+ *   <li><b>CLOSED DOMAIN MEMBERSHIP</b> – when a {@link io.github.cyfko.inputspec.model.ValuesEndpoint} is provided in CLOSED mode, every value
+ *       (or each element for a multi-value field) must be present in the declared domain.</li>
+ *   <li><b>ORDERED CONSTRAINTS</b> – constraints are applied in the order they appear in the field specification. For multi-value
+ *       collections {@code MIN_LENGTH}/{@code MAX_LENGTH} target the collection size; for single values these two constraint
+ *       types are intentionally ignored (design choice documented in tests).</li>
+ * </ol>
+ * <p>
+ * Short-circuit mode (see {@link ValidationOptions#isShortCircuit()}) stops collecting further errors after the first failure
+ * occurring at stages 1–4 while still guaranteeing REQUIRED and TYPE evaluation ordering.
+ * <p>
+ * This implementation aims for clarity over micro‑optimisation. It is <strong>stateless</strong> and therefore thread-safe.
+ *
+ * @since 2.0.0
  */
 public class FieldValidator {
+    /**
+     * Validate an input value against the provided specification using full error aggregation (no short circuit).
+     *
+     * @param spec  the field specification (must not be {@code null})
+     * @param input the candidate value (may be {@code null})
+     * @return a {@link ValidationResult} containing success flag and zero or more {@link ValidationError}s
+     * @since 2.0.0
+     */
     public ValidationResult validate(InputFieldSpec spec, Object input) {
         return validate(spec, input, false);
     }
@@ -23,12 +49,30 @@ public class FieldValidator {
      * Validate with optional short-circuit: stops collecting further errors for the field after the first error.
      * Short-circuit still ensures REQUIRED and TYPE checks run in order.
      */
+    /**
+     * Convenience overload to enable / disable short‑circuit behaviour.
+     *
+     * @param spec         field specification
+     * @param input        candidate value
+     * @param shortCircuit if {@code true} stop after first validation error (after REQUIRED/TYPE stages)
+     * @return validation result
+     * @since 2.0.0
+     */
     public ValidationResult validate(InputFieldSpec spec, Object input, boolean shortCircuit) {
         return validate(spec, input, ValidationOptions.builder().shortCircuit(shortCircuit).build());
     }
 
     /**
      * Preferred extensible variant using {@link ValidationOptions}.
+     */
+    /**
+     * Core validation entry point using {@link ValidationOptions} for extensibility.
+     *
+     * @param spec    field specification (required)
+     * @param input   value to validate (nullable)
+     * @param options validation tuning options (nullable – defaults applied)
+     * @return validation result encapsulating success flag + collected errors
+     * @since 2.0.0
      */
     public ValidationResult validate(InputFieldSpec spec, Object input, ValidationOptions options) {
         boolean shortCircuit = options != null && options.isShortCircuit();
@@ -88,6 +132,19 @@ public class FieldValidator {
         return new ValidationResult(errors.isEmpty(), errors);
     }
 
+    /**
+     * Apply a single ordered {@link ConstraintDescriptor} to the input (or each element for multi-value input).
+     * Collection-size constraints ({@code MIN_LENGTH}/{@code MAX_LENGTH}) are evaluated only when
+     * {@link InputFieldSpec#isExpectMultipleValues()} is {@code true}. All other constraint types are dispatched
+     * element-wise for multi-value inputs, or directly for single values.
+     *
+     * @param spec         field specification (non-null)
+     * @param cd           constraint descriptor
+     * @param input        validated input (already passed REQUIRED + TYPE)
+     * @param errors       mutable list collecting errors
+     * @param shortCircuit whether to abort on first error
+     * @since 2.0.0
+     */
     private void applyConstraint(InputFieldSpec spec, ConstraintDescriptor cd, Object input, List<ValidationError> errors, boolean shortCircuit) {
     ConstraintType t = cd.getType();
     Object params = cd.getParams();
@@ -139,6 +196,15 @@ public class FieldValidator {
     }
 
     @SuppressWarnings("unchecked")
+    /**
+     * Evaluate a single value against a non size-based constraint.
+     *
+     * @param type   the constraint type
+     * @param params raw parameter object (expected map for built-in constraints)
+     * @param value  candidate element value
+     * @return {@code true} if compliant, {@code false} otherwise
+     * @since 2.0.0
+     */
     private boolean elementValid(ConstraintType type, Object params, Object value) {
         try {
             switch (type) {
@@ -207,6 +273,14 @@ public class FieldValidator {
         }
     }
 
+    /**
+     * Extract an integer parameter from a loose params map.
+     *
+     * @param params params object (should be a Map)
+     * @param key    parameter key
+     * @return integer value or {@code null}
+     * @since 2.0.0
+     */
     private Integer extractInt(Object params, String key) {
         if (!(params instanceof Map)) return null;
         Object v = ((Map<?, ?>) params).get(key);
@@ -214,6 +288,15 @@ public class FieldValidator {
         return null;
     }
 
+    /**
+     * Perform a lightweight type check based on declared {@link io.github.cyfko.inputspec.model.DataType} and multi-value flag.
+     * Deep per-element type validation is intentionally minimal for clarity and could be enhanced externally.
+     *
+     * @param spec  field specification
+     * @param input candidate input value
+     * @return {@code true} if the structural type matches
+     * @since 2.0.0
+     */
     private boolean typeMatches(InputFieldSpec spec, Object input) {
         if (spec.isExpectMultipleValues()) {
             return input instanceof List; // deeper per-element type checks omitted for brevity
@@ -227,6 +310,13 @@ public class FieldValidator {
         }
     }
 
+    /**
+     * Determine emptiness for REQUIRED check (null, blank string or empty list).
+     *
+     * @param v candidate value
+     * @return {@code true} if considered empty
+     * @since 2.0.0
+     */
     private boolean isEmpty(Object v) {
         if (v == null) return true;
         if (v instanceof String) return ((String) v).isBlank();
