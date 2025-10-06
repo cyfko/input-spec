@@ -38,7 +38,7 @@ public class ModelSerializationTest {
     assertEquals("Age", back.getDisplayName());
     assertEquals(DataType.NUMBER, back.getDataType());
     assertEquals(1, back.getConstraints().size());
-    assertEquals("range", back.getConstraints().get(0).getType());
+    assertEquals("RANGE", back.getConstraints().get(0).getType().name());
     }
 
     @Test
