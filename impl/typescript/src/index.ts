@@ -16,11 +16,11 @@ export * from './client';
 export { createDefaultValuesEndpoint } from './types';
 
 // Version info
-export const PROTOCOL_VERSION = '2.0';
+export const PROTOCOL_VERSION = '2.0.0';
 /**
  * Library version
  */
-export const LIBRARY_VERSION = "1.0.0";
+export const LIBRARY_VERSION = "2.0.0";
 
 /**
  * Quick start example:

@@ -8,10 +8,15 @@ description: "Intégration Frontend (Angular · React · Vue · Svelte)."
 
 Ce guide montre comment consommer le protocole **input-spec** côté client sans imposer de design visuel. Tous les exemples s'appuient uniquement sur les API publiques exportées.
 
-API utilisées :
-- `InputFieldSpec`, `ConstraintDescriptor`
-- `FieldValidator` (ou les helpers `validateField`, `validateAllConstraints`)
-- `createDefaultValuesEndpoint`, `ValuesEndpoint`, `ValuesResolver` (pour les valeurs dynamiques)
+API utilisées (v2) :
+- `InputFieldSpec`, `ConstraintDescriptor` (contraintes atomiques)
+- `FieldValidator`, `validateField`
+
+Principales évolutions v2 :
+- Champs composites (`min`, `max`, `pattern`, `enumValues`) remplacés par des contraintes atomiques `{ name, type, params }`
+- Listes statiques via `valuesEndpoint.protocol = 'INLINE'` (mode par défaut `CLOSED`)
+- Indice de format passif `formatHint`
+- Domaines dynamiques : `mode: 'CLOSED'` (membre requis) ou `mode: 'SUGGESTIONS'` (tolérant)
 
 ---
 ## 1. Schéma de validation partagé
@@ -24,12 +29,11 @@ const usernameSpec: InputFieldSpec = {
   dataType: 'STRING',
   expectMultipleValues: false,
   required: true,
+  formatHint: 'username',
   constraints: [
-    {
-      name: 'usernamePattern',
-      pattern: '^[a-zA-Z0-9_]{3,20}$',
-      errorMessage: 'Doit comporter 3 à 20 caractères (lettres, chiffres, underscore)'
-    }
+    { name: 'minL', type: 'minLength', params: { value: 3 } },
+    { name: 'maxL', type: 'maxLength', params: { value: 20 } },
+    { name: 'syntax', type: 'pattern', params: { regex: '^[a-zA-Z0-9_]+' }, errorMessage: 'Alphanum + underscore uniquement' }
   ]
 };
 ```
@@ -41,7 +45,7 @@ const usernameSpec: InputFieldSpec = {
 ```typescript
 import { Directive, Input, forwardRef } from '@angular/core';
 import { NG_ASYNC_VALIDATORS, AbstractControl, AsyncValidator, ValidationErrors } from '@angular/forms';
-import { InputFieldSpec, validateAllConstraints } from 'input-spec';
+import { InputFieldSpec, validateField } from 'input-spec';
 import { from, of } from 'rxjs';
 
 @Directive({
@@ -56,7 +60,7 @@ export class InputSpecFieldDirective implements AsyncValidator {
   validate(control: AbstractControl) {
     if (!this.spec) return of(null);
     return from(
-      validateAllConstraints(this.spec, control.value).then(result => {
+  validateField(this.spec, control.value).then(result => {
         if (result.isValid) return null;
         const grouped: Record<string, { messages: string[] }> = {};
         for (const err of result.errors) {
@@ -87,14 +91,14 @@ export class InputSpecFieldDirective implements AsyncValidator {
 Hook minimal retournant l'état de validation.
 ```tsx
 import { useCallback, useState } from 'react';
-import { InputFieldSpec, validateAllConstraints } from 'input-spec';
+import { InputFieldSpec, validateField } from 'input-spec';
 
 export function useInputSpec(spec: InputFieldSpec) {
   const [errors, setErrors] = useState<Record<string,string[]>>({});
   const [valid, setValid] = useState(true);
 
   const validate = useCallback(async (value: any) => {
-    const result = await validateAllConstraints(spec, value);
+  const result = validateField(spec, value);
     if (result.isValid) {
       setErrors({});
       setValid(true);
@@ -130,14 +134,14 @@ const { validate, errors, valid } = useInputSpec(usernameSpec);
 ## 4. Vue 3 (Composition API)
 ```ts
 import { ref } from 'vue';
-import { InputFieldSpec, validateAllConstraints } from 'input-spec';
+import { InputFieldSpec, validateField } from 'input-spec';
 
 export function useInputSpec(spec: InputFieldSpec) {
   const errors = ref<Record<string,string[]>>({});
   const valid = ref(true);
 
   async function validate(value: any) {
-    const result = await validateAllConstraints(spec, value);
+  const result = validateField(spec, value);
     if (result.isValid) {
       errors.value = {};
       valid.value = true;
@@ -171,14 +175,14 @@ Template :
 ## 5. Svelte (Store helper)
 ```ts
 import { writable } from 'svelte/store';
-import { validateAllConstraints, type InputFieldSpec } from 'input-spec';
+import { validateField, type InputFieldSpec } from 'input-spec';
 
 export function createInputSpecValidator(spec: InputFieldSpec) {
   const errors = writable<Record<string,string[]>>({});
   const valid = writable(true);
 
   async function validate(value: any) {
-    const result = await validateAllConstraints(spec, value);
+  const result = validateField(spec, value);
     if (result.isValid) {
       errors.set({});
       valid.set(true);
@@ -220,15 +224,7 @@ Utilisation :
 ## 6. Valeurs dynamiques (Autocomplete)
 Logique réutilisable pour tout framework :
 ```typescript
-import { ValuesResolver, FetchHttpClient, MemoryCacheProvider, createDefaultValuesEndpoint } from 'input-spec';
-
-const resolver = new ValuesResolver(new FetchHttpClient(), new MemoryCacheProvider());
-const countriesEndpoint = createDefaultValuesEndpoint('https://api.example.com/countries');
-
-export async function rechercherPays(query: string) {
-  const result = await resolver.resolveValues(countriesEndpoint, { search: query, page: 1, limit: 10 });
-  return result.values; // ValueAlias[] (value,label)
-}
+// v2 : aucune implémentation HTTP fournie. Pour un domaine fermé statique utiliser `INLINE`; implémenter un fetch custom sinon.
 ```
 
 ---
@@ -253,7 +249,7 @@ frontend/
 | Couche | Cible | Exemple |
 |--------|-------|---------|
 | Parsing spec | Obligatoire + ordre contraintes | Objet mal formé -> gestion amont |
-| Intégration validateur | Agrégation d'erreurs | Pattern + longueur -> 2 erreurs |
+| Intégration validateur | Agrégation d'erreurs | Pattern + longueur -> 2 erreurs (ordre préservé) |
 | Liaison UI | Rendu des erreurs | Input invalide -> messages présents |
 
 ---
@@ -262,7 +258,7 @@ frontend/
 - [ ] Centraliser la définition des contraintes côté serveur.
 - [ ] Utiliser uniquement les champs du protocole (aucun flag ad hoc).
 - [ ] Regrouper les messages UI par `constraintName`.
-- [ ] Utiliser `ValuesResolver` pour les valeurs dynamiques.
+- [ ] Domaine dynamique distant : implémenter un fetch custom.
 
 ---
 ## 11. Notes
@@ -272,7 +268,7 @@ frontend/
 
 ---
 ## 12. Améliorations futures (optionnel)
-- Wrapper avec debounce autour de `validateAllConstraints`.
+- Wrapper avec debounce autour de `validateField`.
 - Cache pour paires (spec, valeur) inchangées.
 - Validation batch d'un ensemble de `InputFieldSpec`.
 

@@ -94,6 +94,10 @@ interface InputFieldSpec {
 ```
 Full reference: `./docs/API.md`.
 
+Migration: A helper `migrateV1Spec` converts legacy (enumValues + composite min/max/pattern) to v2 atomic form; review output (see Migration section in API docs).
+
+Coercion (optional library-only): Disabled by default; enable via `new FieldValidator({ coercion: { coerce: true } })` or per-field `coercion` block to accept numeric / boolean strings or epoch dates. Protocol wire format remains unchanged.
+
 ---
 
 ## 7. Example Patterns

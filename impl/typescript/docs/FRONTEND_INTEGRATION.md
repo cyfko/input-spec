@@ -1,28 +1,31 @@
-# Frontend Integration Utilities (Angular · React · Vue · Svelte)
+# Frontend Integration (v2) · Angular · React · Vue · Svelte
 
-This guide shows how to consume the **input-spec** protocol on the client side without imposing any visual design. All examples rely only on the public exported APIs:
+This guide targets protocol v2 (atomic constraints, field-level `valuesEndpoint`, `formatHint`, removal of `enumValues`). UI styling is intentionally out-of-scope.
 
-Exports used:
-- `InputFieldSpec`, `ConstraintDescriptor`
-- `FieldValidator` (or the helper `validateField`, `validateAllConstraints`)
-- `createDefaultValuesEndpoint` and `ValuesEndpoint` (for dynamic values)
+Core exports used:
+- `InputFieldSpec`, `ConstraintDescriptor` (atomic form)
+- `FieldValidator`, `validateField`
 
-> Fidelity note: Only actual fields present in `InputFieldSpec` are used (`displayName`, `description`, `dataType`, `expectMultipleValues`, `required`, `constraints`). Length or pattern logic is expressed through individual `ConstraintDescriptor` entries (`min`, `max`, `pattern`, `enumValues`).
+Key v2 shifts:
+- Composite fields (`min`, `max`, `pattern`, `enumValues`) replaced by atomic constraints: `{ name, type, params }`
+- Static enumerations via `valuesEndpoint.protocol = 'INLINE'`
+- `formatHint` added (non-failing display hint)
+- Membership modes: `CLOSED` (strict), `SUGGESTIONS` (advisory)
 
 ---
 ## 1. Shared Validation Pattern
 
 ```typescript
-import { FieldValidator, InputFieldSpec, validateAllConstraints } from 'input-spec';
+import { FieldValidator, InputFieldSpec, validateField } from 'input-spec';
 
 const validator = new FieldValidator();
 
-export async function validateValue(spec: InputFieldSpec, value: any) {
-  return validator.validate(spec, value); // all constraints
+export function validateValue(spec: InputFieldSpec, value: any) {
+  return validator.validate(spec, value);
 }
 
-export async function validateValueStateless(spec: InputFieldSpec, value: any) {
-  return validateAllConstraints(spec, value); // helper wrapper
+export function validateValueStateless(spec: InputFieldSpec, value: any) {
+  return validateField(spec, value);
 }
 ```
 
@@ -34,12 +37,11 @@ const usernameSpec: InputFieldSpec = {
   dataType: 'STRING',
   expectMultipleValues: false,
   required: true,
+  formatHint: 'username',
   constraints: [
-    {
-      name: 'usernamePattern',
-      pattern: '^[a-zA-Z0-9_]{3,20}$',
-      errorMessage: 'Username must be 3-20 chars (letters, digits, underscore)'
-    }
+    { name: 'minL', type: 'minLength', params: { value: 3 } },
+    { name: 'maxL', type: 'maxLength', params: { value: 20 } },
+    { name: 'syntax', type: 'pattern', params: { regex: '^[a-zA-Z0-9_]+' }, errorMessage: 'Alnum + underscore only' }
   ]
 };
 ```
@@ -51,7 +53,7 @@ const usernameSpec: InputFieldSpec = {
 ```typescript
 import { Directive, Input, forwardRef } from '@angular/core';
 import { NG_ASYNC_VALIDATORS, AbstractControl, AsyncValidator, ValidationErrors } from '@angular/forms';
-import { InputFieldSpec, validateAllConstraints } from 'input-spec';
+import { InputFieldSpec, validateField } from 'input-spec';
 import { from, of } from 'rxjs';
 
 @Directive({
@@ -66,7 +68,7 @@ export class InputSpecFieldDirective implements AsyncValidator {
   validate(control: AbstractControl) {
     if (!this.spec) return of(null);
     return from(
-      validateAllConstraints(this.spec, control.value).then(result => {
+  validateField(this.spec, control.value).then(result => {
         if (result.isValid) return null;
         const grouped: Record<string, { messages: string[] }> = {};
         for (const err of result.errors) {
@@ -97,14 +99,14 @@ export class InputSpecFieldDirective implements AsyncValidator {
 Minimal hook returning validation state.
 ```tsx
 import { useCallback, useState } from 'react';
-import { InputFieldSpec, validateAllConstraints } from 'input-spec';
+import { InputFieldSpec, validateField } from 'input-spec';
 
 export function useInputSpec(spec: InputFieldSpec) {
   const [errors, setErrors] = useState<Record<string,string[]>>({});
   const [valid, setValid] = useState(true);
 
   const validate = useCallback(async (value: any) => {
-    const result = await validateAllConstraints(spec, value);
+  const result = validateField(spec, value);
     if (result.isValid) {
       setErrors({});
       setValid(true);
@@ -140,14 +142,14 @@ const { validate, errors, valid } = useInputSpec(usernameSpec);
 ## 4. Vue 3 (Composition API)
 ```ts
 import { ref } from 'vue';
-import { InputFieldSpec, validateAllConstraints } from 'input-spec';
+import { InputFieldSpec, validateField } from 'input-spec';
 
 export function useInputSpec(spec: InputFieldSpec) {
   const errors = ref<Record<string,string[]>>({});
   const valid = ref(true);
 
   async function validate(value: any) {
-    const result = await validateAllConstraints(spec, value);
+  const result = validateField(spec, value);
     if (result.isValid) {
       errors.value = {};
       valid.value = true;
@@ -182,14 +184,14 @@ Template:
 ## 5. Svelte Store Helper
 ```ts
 import { writable } from 'svelte/store';
-import { validateAllConstraints, type InputFieldSpec } from 'input-spec';
+import { validateField, type InputFieldSpec } from 'input-spec';
 
 export function createInputSpecValidator(spec: InputFieldSpec) {
   const errors = writable<Record<string,string[]>>({});
   const valid = writable(true);
 
   async function validate(value: any) {
-    const result = await validateAllConstraints(spec, value);
+  const result = validateField(spec, value);
     if (result.isValid) {
       errors.set({});
       valid.set(true);
@@ -232,15 +234,8 @@ Usage:
 All frameworks can reuse the same resolver logic. If you expose `ValuesResolver` & `createDefaultValuesEndpoint`:
 
 ```typescript
-import { ValuesResolver, FetchHttpClient, MemoryCacheProvider, createDefaultValuesEndpoint } from 'input-spec';
-
-const resolver = new ValuesResolver(new FetchHttpClient(), new MemoryCacheProvider());
-const countriesEndpoint = createDefaultValuesEndpoint('https://api.example.com/countries');
-
-export async function searchCountries(query: string) {
-  const result = await resolver.resolveValues(countriesEndpoint, { search: query, page: 1, limit: 10 });
-  return result.values; // ValueAlias[] (value,label)
-}
+// v2 zero-dep build omits a dynamic fetch helper. Use your HTTP client to resolve remote domains.
+// Static INLINE example attached directly in spec → no call required.
 ```
 
 ---
@@ -265,7 +260,7 @@ frontend/
 | Layer | What to test | Example |
 |-------|--------------|---------|
 | Spec parsing | Required + constraints order | Feed malformed object -> expect failure handling upstream |
-| Validator integration | Aggregated errors | Pattern + length wrong -> 2 errors grouped |
+| Validator integration | Aggregated errors | Pattern + length wrong -> 2 errors grouped (order preserved) |
 | UI binding | Error rendering | Simulate invalid input -> DOM contains messages |
 
 ---
@@ -274,7 +269,7 @@ frontend/
 - [ ] Centralize constraint authoring server-side.
 - [ ] Use only protocol fields; no ad hoc frontend flags.
 - [ ] Group UI error messages by `constraintName`.
-- [ ] Async value lookups use `ValuesResolver`.
+- [ ] For remote dynamic values, implement your own fetch & map to `valuesEndpoint` contract.
 
 ---
 ## 11. Notes
@@ -284,7 +279,7 @@ frontend/
 
 ---
 ## 12. Future Enhancements (Optional)
-- Debounced wrapper around `validateAllConstraints`.
+- Debounced wrapper around `validateField`.
 - Caching layer for unchanged value/spec pairs.
 - Batch validation for entire forms (array of `InputFieldSpec`).
 

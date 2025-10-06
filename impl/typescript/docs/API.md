@@ -1,14 +1,17 @@
-# API Reference: Two Sides of Dynamic Forms
+# API Reference (v2 Protocol)
 
-**Frontend developers**: Use these APIs to consume field specs from your backend  
-**Backend developers**: Use these types to generate field specs in your APIs
+This document covers the TypeScript API surface of `input-spec` version 2.0.0 matching the v2 protocol (atomic constraints, field‑level `valuesEndpoint`, `formatHint`, removed `enumValues`).
+
+Audience:
+- Frontend: consume & validate field specs
+- Backend: generate field specs & serve dynamic value domains
 
 ## Frontend Usage: Consuming Field Specs
 
 ### Quick Start for Frontend Teams
 
 ```typescript
-import { FieldValidator, InputFieldSpec } from 'input-spec';
+import { FieldValidator, InputFieldSpec, validateField } from 'input-spec';
 
 // 1. Get field definition from YOUR backend API
 const emailFieldSpec: InputFieldSpec = await fetch('/api/form-fields/email')
@@ -16,7 +19,7 @@ const emailFieldSpec: InputFieldSpec = await fetch('/api/form-fields/email')
 
 // 2. Validate user input using backend-defined rules
 const validator = new FieldValidator();
-const result = validator.validate(userEmail, emailFieldSpec);
+const result = validator.validate(emailFieldSpec, userEmail);
 
 // 3. Handle validation results
 if (!result.isValid) {
@@ -30,7 +33,7 @@ if (!result.isValid) {
 ### Quick Start for Backend Teams
 
 ```typescript
-import { InputFieldSpec, ConstraintDescriptor } from 'input-spec';
+import { InputFieldSpec, AtomicConstraintDescriptor } from 'input-spec';
 
 // Generate field specs in your API endpoints
 app.get('/api/form-fields/email', (req, res) => {
@@ -40,16 +43,8 @@ app.get('/api/form-fields/email', (req, res) => {
     expectMultipleValues: false,
     required: true,
     constraints: [
-      { 
-        name: "email", 
-        pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$",
-        errorMessage: "Please enter a valid email address" 
-      },
-      { 
-        name: "maxLength", 
-        max: 100,
-        errorMessage: "Email too long (max 100 characters)"
-      }
+      { name: "emailPattern", type: "pattern", params: { regex: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$" }, errorMessage: "Invalid email" },
+      { name: "emailMax", type: "maxLength", params: { value: 100 }, errorMessage: "≤ 100 chars" }
     ]
   };
   
@@ -59,19 +54,18 @@ app.get('/api/form-fields/email', (req, res) => {
 
 ## Core Types
 
-### InputFieldSpec
-
-The heart of the protocol - represents a complete field specification that your backend sends to your frontend.
+### InputFieldSpec (v2)
 
 ```typescript
 interface InputFieldSpec {
-  displayName: string;                  // What users see as field label
-  description?: string;                 // Optional help text
-  dataType: DataType;                   // 'STRING' | 'NUMBER' | 'DATE' | 'BOOLEAN'
-  expectMultipleValues: boolean;        // Array input or single value?
-  required: boolean;                    // Is this field required?
-  constraints: ConstraintDescriptor[];  // Validation rules (ordered execution)
-  valuesEndpoint?: ValuesEndpoint;      // For autocomplete/dropdown data
+  displayName: string;
+  description?: string;
+  dataType: 'STRING' | 'NUMBER' | 'DATE' | 'BOOLEAN';
+  expectMultipleValues: boolean;
+  required: boolean;
+  formatHint?: string; // passive formatting / display hint
+  valuesEndpoint?: ValuesEndpoint; // unified domain (INLINE or remote)
+  constraints: ConstraintDescriptor[]; // ordered atomic constraints
 }
 ```
 
@@ -80,81 +74,43 @@ interface InputFieldSpec {
 ```typescript
 // Backend generates different email rules based on user type
 function createEmailField(isPremiumUser: boolean): InputFieldSpec {
-  const constraints: ConstraintDescriptor[] = [
-    { name: "email", pattern: "^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$", errorMessage: "Invalid email format" }
-  ];
-  
-  if (isPremiumUser) {
-    constraints.push({ 
-      name: "maxLength", 
-      max: 200,
-      errorMessage: "Email too long (premium: max 200 chars)" 
-    });
-  } else {
-    constraints.push({ 
-      name: "maxLength", 
-      max: 50,
-      errorMessage: "Email too long (basic: max 50 chars)" 
-    });
-  }
-
+  const max = isPremiumUser ? 200 : 50;
   return {
-    displayName: "Email Address",
-    dataType: "STRING",
+    displayName: 'Email Address',
+    dataType: 'STRING',
     expectMultipleValues: false,
     required: true,
-    constraints
+    formatHint: 'email',
+    constraints: [
+      { name: 'emailPattern', type: 'pattern', params: { regex: '^[\\w-\\.]+@([\\w-]+\\.)+[\\w-]{2,4}$' }, errorMessage: 'Invalid email format' },
+      { name: 'maxLen', type: 'maxLength', params: { value: max }, errorMessage: `Max ${max} chars` }
+    ]
   };
 }
-```
 };
 ```
 
-### ConstraintDescriptor
+### ConstraintDescriptor (Atomic)
 
-Describes a single validation constraint with execution order.
+Two forms are accepted internally during migration, but new specs MUST use the atomic form:
 
 ```typescript
-interface ConstraintDescriptor {
-  name: string;                    // ✨ v2.0: Required identifier for constraint
-  description?: string;
+interface AtomicConstraintDescriptor {
+  name: string;              // stable ID
+  type: ConstraintType;      // 'pattern' | 'minLength' | 'maxLength' | 'minValue' | 'maxValue' | 'minDate' | 'maxDate' | 'range' | 'custom'
+  params: any;               // shape depends on type
   errorMessage?: string;
-  defaultValue?: any;
-  min?: number;
-  max?: number;
-  pattern?: string;
-  format?: string;
-  enumValues?: ValueAlias[];
-  valuesEndpoint?: ValuesEndpoint;
+  description?: string;
 }
+
+type ConstraintDescriptor = AtomicConstraintDescriptor; // legacy union removed in public surface
 ```
 
-**Properties:**
-- `name` - Unique identifier for this constraint (v2.0: required)
-- `description` - Human-readable explanation
-- `errorMessage` - Custom error message
-- `defaultValue` - Default value if not provided
-- `min`/`max` - Context-dependent limits (length, value, array size)
-- `pattern` - Regex pattern for STRING validation
-- `format` - Format hint (email, url, uuid, iso8601)
-- `enumValues` - Fixed set of allowed values
-- `valuesEndpoint` - Dynamic values configuration
-
-**Example:**
+Examples:
 ```typescript
-const constraints: ConstraintDescriptor[] = [
-  {
-    name: 'length',
-    min: 8,
-    max: 50,
-    errorMessage: 'Must be 8-50 characters'
-  },
-  {
-    name: 'strength',
-    pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)',
-    errorMessage: 'Must contain lowercase, uppercase, and digit'
-  }
-];
+{ name: 'minL', type: 'minLength', params: { value: 3 }, errorMessage: '≥ 3 chars' }
+{ name: 'syntax', type: 'pattern', params: { regex: '^[a-z0-9_]+$', flags: 'i' } }
+{ name: 'range', type: 'range', params: { min: 0, max: 100 } }
 ```
 
 ### ValidationResult
@@ -168,9 +124,10 @@ interface ValidationResult {
 }
 
 interface ValidationError {
-  constraintName: string;
+  constraintName: string; // 'membership' for domain errors or atomic name
   message: string;
   value?: any;
+  index?: number;         // present for multi-value element errors
 }
 ```
 
@@ -187,14 +144,16 @@ Configuration for dynamic value resolution with search and pagination.
 
 ```typescript
 interface ValuesEndpoint {
-  protocol?: 'HTTP' | 'HTTPS' | 'GRPC';
-  uri: string;
+  protocol: 'INLINE' | 'HTTP' | 'HTTPS' | 'GRPC';
+  mode?: 'CLOSED' | 'SUGGESTIONS';
+  items?: ValueAlias[];        // required if INLINE
+  uri?: string;                // required if remote
   method?: 'GET' | 'POST';
   searchField?: string;
-  paginationStrategy?: PaginationStrategy;
-  responseMapping: ResponseMapping;
+  paginationStrategy?: 'NONE' | 'PAGE_NUMBER';
+  responseMapping?: ResponseMapping;
   requestParams?: RequestParams;
-  cacheStrategy?: CacheStrategy;
+  cacheStrategy?: 'NONE' | 'SESSION' | 'SHORT_TERM' | 'LONG_TERM';
   debounceMs?: number;
   minSearchLength?: number;
 }
@@ -228,69 +187,104 @@ Main validation engine for field specifications.
 
 ```typescript
 class FieldValidator {
-  constructor()
-  
-  async validate(
-    fieldSpec: InputFieldSpec,
-    value: any,
-    constraintName?: string
-  ): Promise<ValidationResult>
+  validate(fieldSpec: InputFieldSpec, value: any): ValidationResult;
+  // Atomic application (internal) not exposed separately.
 }
 ```
 
 **Methods:**
 
-#### `validate(fieldSpec, value, constraintName?)`
+#### `validate(fieldSpec, value)`
 
-Validates a value against field specification constraints.
-
-**Parameters:**
-- `fieldSpec` - The field specification to validate against
-- `value` - The value to validate
-- `constraintName` - Optional specific constraint name to validate
-
-**Returns:** `Promise<ValidationResult>`
-
-**Behavior:**
-- If `constraintName` provided: validates only that constraint
-- If no `constraintName`: validates all constraints in array order
-- Checks field-level `required` before constraint validation
-- Returns first error encountered or success
+Runs the full pipeline: required → type → membership (if CLOSED) → atomic constraints (ordered). Always evaluates all constraints (no early stop) to collect comprehensive errors unless implementation chooses optimization.
 
 **Examples:**
 ```typescript
 const validator = new FieldValidator();
 
 // Validate specific constraint
-const result1 = await validator.validate(fieldSpec, 'test@example.com', 'email');
-
-// Validate all constraints in order
-const result2 = await validator.validate(fieldSpec, 'test@example.com');
-
-// Check results
-if (result1.isValid) {
-  console.log('Email format is valid');
-} else {
-  console.log('Errors:', result1.errors.map(e => e.message));
+const result = validator.validate(fieldSpec, 'test@example.com');
+if (!result.isValid) {
+  console.log(result.errors);
 }
 ```
+
+## Optional Coercion (Library Only)
+
+Coercion is a convenience layer; it is NOT part of the protocol wire format. Servers MUST NOT rely on clients performing coercion. Disabled by default for strictness.
+
+### Goals
+- Accept common string representations for NUMBER / BOOLEAN without changing server specs.
+- Optionally interpret epoch timestamps as dates.
+- Permit per-field overrides where only some inputs are lenient.
+
+### Activation
+Two levers (field override wins over global):
+1. Global: `new FieldValidator({ coercion: { coerce: true } })`
+2. Per field: add `coercion: { coerce: true }` inside `InputFieldSpec` (library-only property).
+
+### Available Options (ValidationOptions.coercion or fieldSpec.coercion)
+| Option | Type | Default | Purpose |
+|--------|------|---------|---------|
+| `coerce` | boolean | false | Master on/off switch |
+| `acceptNumericBoolean` | boolean | false | Accept "1"/"0" (and configurable extra) as booleans |
+| `extraTrueValues` | string[] | [] | Additional truthy tokens (lower‑cased) |
+| `extraFalseValues` | string[] | [] | Additional falsey tokens (lower‑cased) |
+| `numberPattern` | RegExp | `/^-?\\d+(\\.\\d+)?$/` | Override numeric detection |
+| `dateEpochSupport` | boolean | false | Treat integer seconds or millis as Date ISO strings |
+| `trimStrings` | boolean | true | Trim leading/trailing whitespace before other checks |
+
+### Behavior Summary
+| DataType | Accepted When Coercion Enabled | Result After Coercion |
+|----------|--------------------------------|-----------------------|
+| NUMBER | "42", "3.14" | 42, 3.14 (number) |
+| BOOLEAN | "true","false" always (case‑insens.), optionally "1"/"0" | true / false |
+| DATE | ISO 8601 passes unchanged; if `dateEpochSupport` then 1700000000 or 1700000000000 | ISO string (from Date.toISOString()) |
+
+Membership checks use a loose compare: if a value is coerced, numeric vs string numeric and boolean vs string boolean differences are ignored when matching INLINE domain values.
+
+### Examples
+```typescript
+import { FieldValidator } from 'input-spec';
+
+const v = new FieldValidator({ coercion: { coerce: true, acceptNumericBoolean: true } });
+
+const boolSpec = { displayName: 'Flag', dataType: 'BOOLEAN', expectMultipleValues: false, required: true, constraints: [] };
+v.validate(boolSpec, 'TRUE');   // valid -> true
+v.validate(boolSpec, '1');      // valid if acceptNumericBoolean
+
+const numSpec = { displayName: 'Amount', dataType: 'NUMBER', expectMultipleValues: false, required: true, constraints: [] };
+v.validate(numSpec, '12.5');    // valid -> 12.5
+
+const dateSpec = { displayName: 'When', dataType: 'DATE', expectMultipleValues: false, required: true, constraints: [], coercion: { coerce: true, dateEpochSupport: true } };
+v.validate(dateSpec, 1700000000); // epoch seconds -> coerced ISO string
+```
+
+### Per-Field Override Use Case
+Enable leniency only for a problematic legacy field:
+```typescript
+const strictNumber = { displayName: 'Code', dataType: 'NUMBER', expectMultipleValues: false, required: true, constraints: [] };
+const lenientNumber = { ...strictNumber, coercion: { coerce: true } };
+
+new FieldValidator().validate(strictNumber, '5');        // invalid (no coercion)
+new FieldValidator().validate(lenientNumber, '5');       // valid
+```
+
+### Non-Goals
+- No locale-specific parsing (commas, spaces).
+- No partial date formats; rely on backend specifying accepted format through `formatHint`.
+- Does not mutate original value in the caller; coercion occurs inside validation pipeline only.
+
+### Recommendation
+Use coercion sparingly: enable globally only if your UI routinely provides raw form input strings without local pre-parsing.
 
 ### ValuesResolver
 
 Orchestrates dynamic value resolution with caching and HTTP requests.
 
 ```typescript
-class ValuesResolver {
-  constructor(
-    private httpClient: HttpClient,
-    private cacheProvider: CacheProvider
-  )
-  
-  async resolveValues(
-    endpoint: ValuesEndpoint,
-    params?: ResolveParams
-  ): Promise<ValuesResult>
-}
+// (v2 minimal core does not ship an HTTP values resolver in zero‑dep build.)
+// Provide your own remote fetching layer as needed.
 ```
 
 **Constructor:**
@@ -311,17 +305,22 @@ Resolves values from dynamic endpoint with caching and pagination.
 
 **Example:**
 ```typescript
-const resolver = new ValuesResolver(
-  new FetchHttpClient(),
-  new MemoryCacheProvider()
-);
-
-const endpoint = createDefaultValuesEndpoint('https://api.example.com/countries');
-const result = await resolver.resolveValues(endpoint, { 
-  search: 'france',
-  page: 1,
-  limit: 10 
-});
+// Example INLINE domain
+const countrySpec: InputFieldSpec = {
+  displayName: 'Country',
+  dataType: 'STRING',
+  expectMultipleValues: false,
+  required: false,
+  valuesEndpoint: {
+    protocol: 'INLINE',
+    mode: 'CLOSED',
+    items: [
+      { value: 'FR', label: 'France' },
+      { value: 'DE', label: 'Germany' }
+    ]
+  },
+  constraints: []
+};
 ```
 
 ### FetchHttpClient
@@ -459,28 +458,17 @@ const passwordSpec: InputFieldSpec = {
   expectMultipleValues: false,
   required: true,
   constraints: [
-    {
-      name: 'length',
-      min: 8,
-      max: 128,
-      errorMessage: 'Password must be 8-128 characters'
-    },
-    {
-      name: 'strength',
-      pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)',
-      errorMessage: 'Must contain lowercase, uppercase, and digit'
-    }
+    { name: 'minL', type: 'minLength', params: { value: 8 }, errorMessage: '≥ 8 chars' },
+    { name: 'maxL', type: 'maxLength', params: { value: 128 }, errorMessage: '≤ 128 chars' },
+    { name: 'strength', type: 'pattern', params: { regex: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)' }, errorMessage: 'Need lower, upper, digit' }
   ]
 };
 
 const validator = new FieldValidator();
 
 // Validate step by step
-const lengthResult = await validator.validate(passwordSpec, 'weak', 'length');
-const strengthResult = await validator.validate(passwordSpec, 'StrongPass123', 'strength');
-
-// Validate all constraints
-const allResult = await validator.validate(passwordSpec, 'StrongPass123!');
+const resultPwd = validator.validate(passwordSpec, 'Weak');
+console.log(resultPwd.errors);
 ```
 
 ### Dynamic Values with Search
@@ -520,17 +508,9 @@ const skillsSpec: InputFieldSpec = {
   expectMultipleValues: true,
   required: false,
   constraints: [
-    {
-      name: 'arraySize',
-      min: 1,
-      max: 5,
-      errorMessage: 'Select 1-5 skills'
-    },
-    {
-      name: 'skillFormat',
-      pattern: '^[a-zA-Z\\s]+$',
-      errorMessage: 'Skills must contain only letters and spaces'
-    }
+    { name: 'minSkills', type: 'minValue', params: { value: 1 }, errorMessage: 'At least 1 skill' },
+    { name: 'maxSkills', type: 'maxValue', params: { value: 5 }, errorMessage: 'At most 5 skills' },
+    { name: 'skillFormat', type: 'pattern', params: { regex: '^[a-zA-Z\\s]+$' }, errorMessage: 'Letters/spaces only' }
   ]
 };
 
@@ -547,22 +527,14 @@ const customFieldSpec: InputFieldSpec = {
   expectMultipleValues: false,
   required: true,
   constraints: [
-    {
-      name: 'format',
-      pattern: '^[a-zA-Z0-9_]+$',
-      errorMessage: 'Username can only contain letters, numbers, and underscores'
-    },
-    {
-      name: 'length',
-      min: 3,
-      max: 20,
-      errorMessage: 'Username must be between 3 and 20 characters'
-    }
+    { name: 'syntax', type: 'pattern', params: { regex: '^[a-zA-Z0-9_]+' }, errorMessage: 'Alnum + underscore' },
+    { name: 'minL', type: 'minLength', params: { value: 3 } },
+    { name: 'maxL', type: 'maxLength', params: { value: 20 } }
   ]
 };
 ```
 
-### Enum Values
+### Static Enumeration (v2 INLINE)
 
 ```typescript
 const statusSpec: InputFieldSpec = {
@@ -570,56 +542,90 @@ const statusSpec: InputFieldSpec = {
   dataType: 'STRING',
   expectMultipleValues: false,
   required: true,
-  constraints: [
-    {
-      name: 'validStatus',
-      enumValues: [
-        { value: 'active', label: 'Active' },
-        { value: 'inactive', label: 'Inactive' },
-        { value: 'pending', label: 'Pending' }
-      ],
-      errorMessage: 'Please select a valid status'
-    }
+  valuesEndpoint: {
+    protocol: 'INLINE',
+    mode: 'CLOSED',
+    items: [
+      { value: 'ACTIVE', label: 'Active' },
+      { value: 'INACTIVE', label: 'Inactive' },
+      { value: 'PENDING', label: 'Pending' }
+    ]
+  },
+  constraints: []
+};
+```
+
+## Migration From v1
+v2 introduces atomic constraints and a unified `valuesEndpoint` replacing `enumValues`. A helper `migrateV1Spec(legacy: LegacyInputFieldSpec): InputFieldSpec` performs a mechanical, best‑effort upgrade.
+
+### What It Transforms
+- `enumValues` -> `valuesEndpoint: { protocol: 'INLINE', mode: 'CLOSED', items: [...] }`
+- Legacy embedded `valuesEndpoint` (rare) -> lifted untouched if already compatible
+- `min` / `max` (numeric) -> separate `minValue` / `maxValue` atomic descriptors
+- `min` / `max` (string length) -> `minLength` / `maxLength`
+- `pattern` -> `pattern`
+- Legacy `format` -> `formatHint`
+
+### Example
+Legacy (v1):
+```jsonc
+{
+  "displayName": "Age",
+  "dataType": "NUMBER",
+  "expectMultipleValues": false,
+  "required": true,
+  "min": 18,
+  "max": 120,
+  "enumValues": [
+    { "value": 18, "label": "18" },
+    { "value": 21, "label": "21" }
   ]
-};
+}
 ```
 
-## Version 2.0 Migration
-
-### Key Changes
-
-1. **Required field moved to top-level**
-2. **Constraints as ordered array**
-3. **Named constraints with execution order**
-
-### Migration Example
-
-**Before (v1.x):**
-```typescript
-const oldSpec = {
-  constraints: {
-    email: { 
-      required: true, 
-      pattern: '...' 
-    }
-  }
-};
-```
-
-**After (v2.0):**
-```typescript
-const newSpec = {
-  required: true,  // Moved to top-level
-  constraints: [   // Now an array
-    { 
-      name: 'email', 
-      pattern: '...' 
-    }
+Upgraded (v2):
+```jsonc
+{
+  "displayName": "Age",
+  "dataType": "NUMBER",
+  "expectMultipleValues": false,
+  "required": true,
+  "valuesEndpoint": {
+    "protocol": "INLINE",
+    "mode": "CLOSED",
+    "items": [
+      { "value": 18, "label": "18" },
+      { "value": 21, "label": "21" }
+    ]
+  },
+  "constraints": [
+    { "name": "min", "type": "minValue", "params": { "value": 18 } },
+    { "name": "max", "type": "maxValue", "params": { "value": 120 } }
   ]
-};
+}
 ```
 
-See [MIGRATION.md](./MIGRATION.md) for complete migration guide.
+### Caveats & Manual Review Checklist
+1. Ordering: The migration preserves no explicit ordering information for legacy overlapping semantics beyond `min` before `max`. If your UI depended on original ordering of multiple pattern-like validations, review and adjust.
+2. Enum Label Collisions: If different `enumValues` entries share the same `value` with different `label`s, they will be kept as‑is; verify the dataset for duplicates.
+3. Mixed Numeric & Length Bounds: If a v1 spec mixed usage (e.g., numeric `min` with a length-based interpretation) you must clarify intent manually.
+4. Custom / Unsupported Fields: Unrecognized legacy keys are copied through into the atomic `params` only if they map cleanly; otherwise they remain unused and should be removed.
+5. Default Values: Legacy `defaultValue` (if present) is not enforced by the validator; surface it separately in your UI logic.
+
+### Usage
+```typescript
+import { migrateV1Spec } from 'input-spec';
+
+const upgraded = migrateV1Spec(legacySpec);
+// Validate with standard v2 pipeline
+const result = new FieldValidator().validate(upgraded, userValue);
+```
+
+### Non‑Goals
+The migration does NOT attempt semantic inference (e.g., turning a combined range into a single `range` descriptor); it emits distinct atomic constraints for minimal ambiguity.
+
+### Recommendation
+Run migration once on the backend at spec generation time and store / serve only v2 forward. Avoid migrating on every request.
 
 ## TypeScript Support
 
@@ -629,7 +635,7 @@ All types are fully typed with TypeScript strict mode:
 // Full type inference
 const spec: InputFieldSpec = { /* ... */ };
 const validator = new FieldValidator();
-const result = await validator.validate(spec, value);
+const result = validator.validate(spec, value);
 
 // result.isValid is boolean
 // result.errors is ValidationError[]
@@ -640,7 +646,7 @@ const result = await validator.validate(spec, value);
 
 ```typescript
 try {
-  const result = await validator.validate(fieldSpec, value);
+  const result = validator.validate(fieldSpec, value);
   
   if (!result.isValid) {
     result.errors.forEach(error => {
@@ -655,7 +661,6 @@ try {
 ## Performance
 
 - **Zero dependencies**: No runtime overhead from external libraries
-- **Lazy validation**: Only validates when called
-- **Efficient caching**: Built-in memory cache with TTL
-- **Minimal memory**: Uses native data structures (Map, Array)
-- **Fast execution**: Optimized validation algorithms
+- **Deterministic order**: Atomic constraint evaluation sequence is stable
+- **Indexed errors**: Multi-value membership / constraint violations include `index`
+- **Zero deps**: Small surface optimized for embedding

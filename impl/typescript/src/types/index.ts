@@ -7,16 +7,19 @@
 export type DataType = 'STRING' | 'NUMBER' | 'DATE' | 'BOOLEAN';
 
 // Protocol hints for client implementations
-export type Protocol = 'HTTPS' | 'HTTP' | 'GRPC';
+export type Protocol = 'HTTPS' | 'HTTP' | 'GRPC' | 'INLINE';
 export type HttpMethod = 'GET' | 'POST';
 
 // Pagination Strategies
 export type PaginationStrategy = 'NONE' | 'PAGE_NUMBER';
 
-// Cache Strategies  
+// Cache Strategies
 export type CacheStrategy = 'NONE' | 'SESSION' | 'SHORT_TERM' | 'LONG_TERM';
 
-// Value Alias - Représente une option de valeur
+// Domain Modes
+export type ClosedDomainMode = 'CLOSED' | 'SUGGESTIONS';
+
+// Value Alias - Represents a selectable value
 export interface ValueAlias {
   value: any;
   label: string;
@@ -39,42 +42,85 @@ export interface ResponseMapping {
   hasNextField?: string;
 }
 
-// Values Endpoint Configuration
+// Updated Values Endpoint Configuration (v2)
 export interface ValuesEndpoint {
-  protocol?: Protocol; // Default: 'HTTPS' (client protocol hint)
-  uri: string;
-  method?: HttpMethod; // Default: 'GET'
+  protocol: Protocol;              // 'INLINE' or remote protocol
+  mode?: ClosedDomainMode;         // default: CLOSED
+  items?: ValueAlias[];            // required if protocol = INLINE
+  uri?: string;                    // required if remote
+  method?: HttpMethod;             // default GET
   searchField?: string;
   paginationStrategy?: PaginationStrategy;
-  responseMapping: ResponseMapping;
+  responseMapping?: ResponseMapping; // optional for INLINE
   requestParams?: RequestParams;
   cacheStrategy?: CacheStrategy;
-  debounceMs?: number; // Default: 300
-  minSearchLength?: number; // Default: 0
+  debounceMs?: number;             // hint
+  minSearchLength?: number;        // hint
 }
 
-// Constraint Descriptor - Règles de validation pour un champ
-export interface ConstraintDescriptor {
-  name: string; // Nom de la contrainte (ex: 'email', 'length', 'pattern')
+// Atomic Constraint Types
+export type ConstraintType =
+  | 'pattern'
+  | 'minLength'
+  | 'maxLength'
+  | 'minValue'
+  | 'maxValue'
+  | 'minDate'
+  | 'maxDate'
+  | 'range'
+  | 'custom';
+
+// Atomic Constraint Descriptor (v2 canonical)
+export interface AtomicConstraintDescriptor {
+  name: string;              // stable identifier
+  type: ConstraintType;      // discriminator
+  params: any;               // type specific payload { regex }, { value }, { min, max, step }, etc.
+  errorMessage?: string;
+  description?: string;
+}
+
+// Legacy Descriptor (v1) kept for transitional migration (NOT in spec, will be removed)
+// This allows old tests / data to pass through a transformation layer.
+export interface LegacyConstraintDescriptor {
+  // marker: absence of 'type' & 'params' implies legacy
+  name: string;
   description?: string;
   errorMessage?: string;
   defaultValue?: any;
-  min?: number | string; // number for STRING length/NUMBER value, string for DATE
-  max?: number | string; // number for STRING length/NUMBER value, string for DATE
+  min?: number | string;
+  max?: number | string;
   pattern?: string;
   format?: string;
   enumValues?: ValueAlias[];
-  valuesEndpoint?: ValuesEndpoint;
+  valuesEndpoint?: any; // legacy embedded, will be lifted; kept as any to avoid strict coupling
+  [key: string]: any;
 }
 
-// Input Field Specification - Spécification complète d'un champ
+export type ConstraintDescriptor = AtomicConstraintDescriptor | LegacyConstraintDescriptor;
+
+// Input Field Specification (v2)
 export interface InputFieldSpec {
   displayName: string;
   description?: string;
   dataType: DataType;
   expectMultipleValues: boolean;
-  required: boolean; // Required field at top level
-  constraints: ConstraintDescriptor[]; // Array for ordered execution
+  required: boolean;
+  formatHint?: string;                 // moved from constraint-level format to a global, non-enforced hint
+  valuesEndpoint?: ValuesEndpoint;          // top-level domain (optional)
+  constraints: ConstraintDescriptor[];       // ordered; legacy entries transformed at runtime
+  /**
+   * Library-only (non-protocol) optional per-field coercion override.
+   * Not serialized as part of the wire protocol unless a custom profile permits.
+   */
+  coercion?: {
+    coerce?: boolean;
+    acceptNumericBoolean?: boolean;
+    extraTrueValues?: string[];
+    extraFalseValues?: string[];
+    numberPattern?: RegExp;
+    dateEpochSupport?: boolean;
+    trimStrings?: boolean;
+  };
 }
 
 // =========================================
@@ -91,6 +137,7 @@ export interface ValidationError {
   constraintName: string;
   message: string;
   value?: any;
+  index?: number; // present for multi-value element level errors
 }
 
 // API Response Types
@@ -121,23 +168,12 @@ export interface ValuesResponse {
  * Utilisation légère si besoin de runtime validation
  */
 export function isInputFieldSpec(obj: any): obj is InputFieldSpec {
-  if (!obj || typeof obj !== 'object') {
-    return false;
-  }
-  
-  return (
-    typeof obj.displayName === 'string' &&
-    typeof obj.dataType === 'string' &&
-    ['STRING', 'NUMBER', 'DATE', 'BOOLEAN'].includes(obj.dataType) &&
+  if (!obj || typeof obj !== 'object') return false;
+  if (!['STRING', 'NUMBER', 'DATE', 'BOOLEAN'].includes(obj.dataType)) return false;
+  if (!Array.isArray(obj.constraints)) return false;
+  return typeof obj.displayName === 'string' &&
     typeof obj.expectMultipleValues === 'boolean' &&
-    typeof obj.required === 'boolean' &&
-    Array.isArray(obj.constraints) &&
-    obj.constraints.every((constraint: any) => 
-      constraint && 
-      typeof constraint === 'object' && 
-      typeof constraint.name === 'string'
-    )
-  );
+    typeof obj.required === 'boolean';
 }
 
 /**
@@ -157,13 +193,21 @@ export function isValueAlias(obj: any): obj is ValueAlias {
  */
 export function createDefaultValuesEndpoint(uri: string): ValuesEndpoint {
   return {
-    protocol: 'HTTPS', // Recommended default
+    protocol: 'HTTPS',
     uri,
     method: 'GET',
     debounceMs: 300,
     minSearchLength: 0,
-    responseMapping: {
-      dataField: 'data'
-    }
+    // Provide a minimal default response mapping to satisfy tests & typical usage
+    responseMapping: { dataField: 'data' }
   };
+}
+
+export function buildInlineValuesEndpoint(items: ValueAlias[], mode: ClosedDomainMode = 'CLOSED'): ValuesEndpoint {
+  return { protocol: 'INLINE', items, mode };
+}
+
+// Utility: detect atomic vs legacy
+export function isAtomicConstraint(c: ConstraintDescriptor): c is AtomicConstraintDescriptor {
+  return (c as any).type !== undefined && (c as any).params !== undefined;
 }

@@ -1,4 +1,375 @@
-# Dynamic Input Field Specification Protocol v1.0
+# Dynamic Input Field Specification Protocol v2.0 (Breaking Change)
+
+> THIS IS A MAJOR REVISION introducing a new constraint model, removal of `enumValues`, and relocation of `valuesEndpoint`.
+
+## RFC 2119 Terminology
+
+The key words MUST, MUST NOT, REQUIRED, SHALL, SHALL NOT, SHOULD, SHOULD NOT, RECOMMENDED, MAY, and OPTIONAL in this document are to be interpreted as described in RFC 2119.
+
+---
+
+## 1. Introduction
+
+This protocol defines a **technology‑agnostic** structure to describe smart input fields, their validation semantics, and (optionally) dynamic or static value domains.
+
+### 1.1 Goals
+
+* Provide runtime field metadata (no hard‑coded forms)
+* Express validation as an ordered, deterministic pipeline
+* Support dynamic (remote / paginated / searchable) value sets
+* Unify static enumerations and remote values under one mechanism
+* Ensure cross‑language, cross‑framework interoperability
+* Allow explicit extensibility without ambiguity
+
+### 1.2 Non‑Goals
+* Authentication / authorization strategy
+* Transport security enforcement (HTTPS is a hint, not a guarantee)
+* UI rendering specification (purely a data contract)
+* Cross‑field relational constraints (future extension)
+
+---
+
+## 2. Core Entities (v2 Model)
+
+### 2.1 InputFieldSpec
+
+Represents a single logical input field.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `displayName` | string | ✓ | Human readable label |
+| `description` | string |  | Human readable explanation / help text |
+| `dataType` | string | ✓ | One of: `STRING`, `NUMBER`, `DATE`, `BOOLEAN` |
+| `expectMultipleValues` | boolean | ✓ | Accepts an array (true) or single value (false) |
+| `required` | boolean | ✓ | Field level required flag (applied before constraints) |
+| `valuesEndpoint` | ValuesEndpoint |  | Defines a (possibly closed) value domain (static or remote) |
+| `constraints` | ConstraintDescriptor[] | ✓ | Ordered list of **atomic** constraints |
+| `formatHint` | string |  | Non-enforced formatting/display hint (moved from constraint type) |
+
+**Key Semantics**
+1. Validation order is strictly: required → type → (closed domain membership, if any) → ordered constraints.
+2. If `valuesEndpoint.mode = CLOSED`, membership validation MUST occur and, if any element fails, subsequent scalar constraints MUST still run only if they *do not* redefine membership (i.e. pattern/minLength etc. still apply unless the implementation chooses to short‑circuit for performance). Implementations MAY short‑circuit after the first membership failure for UX performance.
+3. If `valuesEndpoint.mode = SUGGESTIONS`, returned values are helpers only; membership MUST NOT cause failures. Scalar constraints proceed as if no closed domain.
+4. `enumValues` (v1) is removed. Static enumerations MUST use `valuesEndpoint.protocol = "INLINE"`.
+5. Each constraint is atomic: exactly one semantic unit per descriptor.
+
+### 2.2 ValuesEndpoint
+
+Unified representation for value sourcing.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `protocol` | string | ✓ | `INLINE` | `HTTPS` | `HTTP` | `GRPC` (default: `HTTPS` if omitted) |
+| `mode` | string |  | `CLOSED` (default) or `SUGGESTIONS` |
+| `items` | ValueAlias[] | conditional | Required iff `protocol = INLINE` |
+| `uri` | string | conditional | Required if protocol is remote (`HTTPS`/`HTTP`/`GRPC`) |
+| `method` | string |  | `GET` (default) or `POST` |
+| `searchField` | string |  | Remote search field hint |
+| `paginationStrategy` | string |  | `NONE` | `PAGE_NUMBER` (default: `NONE` if absent) |
+| `responseMapping` | ResponseMapping |  | Where to extract data (required for non-INLINE if structure not root array) |
+| `requestParams` | RequestParams |  | Names for query or body parameters |
+| `cacheStrategy` | string |  | `NONE` | `SESSION` | `SHORT_TERM` | `LONG_TERM` |
+| `debounceMs` | number |  | Client hint for search debounce |
+| `minSearchLength` | number |  | Minimum characters before search (default 0) |
+
+**Membership Semantics**
+* `mode = CLOSED`: Value(s) MUST belong to the provided (static or fetched) set.
+* `mode = SUGGESTIONS`: Value(s) MAY lie outside; no membership failure generated.
+
+### 2.3 ValueAlias
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `value` | any | ✓ | Canonical value returned to server |
+| `label` | string | ✓ | UI label (no automatic transformation) |
+
+### 2.4 ConstraintDescriptor (Atomic)
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | ✓ | Unique identifier within the field (stable for telemetry/UI) |
+| `type` | string | ✓ | Constraint type discriminator (see registry) |
+| `params` | any | ✓ | Type‑specific payload (structure depends on `type`) |
+| `errorMessage` | string |  | Message used on failure (MAY be omitted) |
+| `description` | string |  | Human description / UX hint |
+
+**No legacy fields** like `min`, `max`, `pattern`, `enumValues` remain—migration required.
+
+### 2.5 Constraint Type Registry (Initial Set)
+
+| Type | params Shape | Applies To | Validation Rule |
+|------|--------------|-----------|-----------------|
+| `pattern` | `{ regex: string, flags?: string }` | STRING | Value MUST match regex |
+| `minLength` | `{ value: number }` | STRING | length ≥ value |
+| `maxLength` | `{ value: number }` | STRING | length ≤ value |
+| `minValue` | `{ value: number }` | NUMBER | value ≥ number |
+| `maxValue` | `{ value: number }` | NUMBER | value ≤ number |
+| `minDate` | `{ iso: string }` | DATE | date ≥ iso timestamp |
+| `maxDate` | `{ iso: string }` | DATE | date ≤ iso timestamp |
+| `range` | `{ min: number|string, max: number|string, step?: number }` | NUMBER or DATE | Combined inclusive bounds (DATE uses ISO strings) |
+| `custom` | `{ key: string, [extra: string]: any }` | ANY | Implementation-defined; MUST NOT break default validators |
+
+> Future extensions MUST define param schema clearly. Unknown `type` values MUST be ignored (tolerant) or cause a controlled validation warning; they MUST NOT crash a generic validator.
+
+### 2.6 Validation Pipeline (Normative)
+
+Pseudocode:
+```
+function validate(fieldSpec, input): ValidationResult {
+  // 1. REQUIRED
+  if (fieldSpec.required && isEmpty(input)) return error('required');
+  if (isEmpty(input)) return ok(); // optional & empty
+
+  // 2. TYPE
+  if (!matchesType(input, fieldSpec.dataType, fieldSpec.expectMultipleValues)) return error('type');
+
+  // 3. CLOSED DOMAIN MEMBERSHIP
+  if (fieldSpec.valuesEndpoint && fieldSpec.valuesEndpoint.mode !== 'SUGGESTIONS') {
+     const domain = resolveDomain(fieldSpec.valuesEndpoint); // remote fetch or inline
+     if (fieldSpec.expectMultipleValues) {
+        collect membership errors per element (index)
+     } else {
+        membership check single value
+     }
+     // MAY short-circuit if membership fails
+  }
+
+  // 4. ORDERED CONSTRAINTS
+  for each constraint in fieldSpec.constraints in array order:
+     applyConstraint(constraint, input)
+     (for arrays: apply per element and/or array length depending on constraint semantics)
+
+  // 5. AGGREGATE
+  return { isValid: errors.length == 0, errors }
+}
+```
+
+### 2.7 Error Object (Standard Form)
+
+```json
+{
+  "constraintName": "minLength",
+  "message": "Minimum length is 3",
+  "value": "ab",
+  "index": 0 // present only for multi-value element-level errors
+}
+```
+
+Multiple errors MAY share the same `constraintName` (e.g. multi-values). Clients MAY group them for display.
+
+---
+
+## 3. Examples (v2)
+
+### 3.1 Static Enumeration (INLINE Closed Domain)
+```json
+{
+  "displayName": "Status",
+  "description": "Current lifecycle status",
+  "dataType": "STRING",
+  "expectMultipleValues": false,
+  "required": true,
+  "valuesEndpoint": {
+    "protocol": "INLINE",
+    "mode": "CLOSED",
+    "items": [
+      { "value": "ACTIVE", "label": "Active" },
+      { "value": "INACTIVE", "label": "Inactive" },
+      { "value": "PENDING", "label": "Pending" }
+    ]
+  },
+  "constraints": [
+    { "name": "patternId", "type": "pattern", "params": { "regex": "^[A-Z]+$" }, "errorMessage": "Must be uppercase letters" }
+  ]
+}
+```
+
+### 3.2 Number With Range & Min/Max Values
+```json
+{
+  "displayName": "Temperature",
+  "dataType": "NUMBER",
+  "expectMultipleValues": false,
+  "required": true,
+  "constraints": [
+    { "name": "operationalRange", "type": "range", "params": { "min": 0, "max": 100 }, "errorMessage": "0–100" },
+    { "name": "softMax", "type": "maxValue", "params": { "value": 95 }, "errorMessage": "Prefer ≤ 95" }
+  ]
+}
+```
+
+### 3.3 String With Length & Pattern
+```json
+{
+  "displayName": "Username",
+  "dataType": "STRING",
+  "expectMultipleValues": false,
+  "required": true,
+  "constraints": [
+    { "name": "minL", "type": "minLength", "params": { "value": 3 }, "errorMessage": "At least 3 chars" },
+    { "name": "maxL", "type": "maxLength", "params": { "value": 20 }, "errorMessage": "At most 20 chars" },
+    { "name": "syntax", "type": "pattern", "params": { "regex": "^[a-zA-Z0-9_]+$" }, "errorMessage": "Alnum + underscore only" }
+  ]
+}
+```
+
+### 3.4 Multi-Select (Membership + Length)
+```json
+{
+  "displayName": "Tags",
+  "dataType": "STRING",
+  "expectMultipleValues": true,
+  "required": true,
+  "valuesEndpoint": {
+    "protocol": "HTTPS",
+    "uri": "/api/tags",
+    "paginationStrategy": "NONE",
+    "mode": "CLOSED"
+  },
+  "constraints": [
+    { "name": "minCount", "type": "minValue", "params": { "value": 1 }, "description": "(applies to array length)" },
+    { "name": "maxCount", "type": "maxValue", "params": { "value": 10 } }
+  ]
+}
+```
+
+### 3.5 Date With Range and Format Hint
+```json
+{
+  "displayName": "Created Date",
+  "dataType": "DATE",
+  "expectMultipleValues": false,
+  "required": false,
+  "formatHint": "iso8601",
+  "constraints": [
+    { "name": "after", "type": "minDate", "params": { "iso": "2024-01-01T00:00:00Z" } },
+    { "name": "before", "type": "maxDate", "params": { "iso": "2025-12-31T23:59:59Z" } }
+  ]
+}
+```
+
+### 3.6 Suggestions (Non-Closed Domain)
+```json
+{
+  "displayName": "Country",
+  "dataType": "STRING",
+  "expectMultipleValues": false,
+  "required": false,
+  "valuesEndpoint": {
+    "protocol": "HTTPS",
+    "uri": "/api/countries",
+    "mode": "SUGGESTIONS",
+    "paginationStrategy": "PAGE_NUMBER",
+    "responseMapping": { "dataField": "data" },
+    "requestParams": { "pageParam": "page", "limitParam": "limit", "searchParam": "q", "defaultLimit": 50 }
+  },
+  "constraints": [
+    { "name": "patternAlpha", "type": "pattern", "params": { "regex": "^[A-Za-z\s]+$" }, "errorMessage": "Letters only" }
+  ]
+}
+```
+
+---
+
+## 4. Conformance Test Matrix (Extract)
+
+| Scenario | Input | Expected |
+|----------|-------|----------|
+| Closed domain match | value in INLINE items | Valid |
+| Closed domain miss | value not in items | 1 membership error |
+| Suggestions miss | value not in suggestions | Valid (no membership error) |
+| Pattern fail | string violates regex | pattern error |
+| Range fail (number) | value outside min/max | range error |
+| Multi-values partial | array includes 1 invalid | error with index for invalid element |
+| MinLength + Pattern | order respected | first failing constraint MAY short-circuit |
+
+---
+
+## 5. Error Handling (v2)
+
+Standard validation response (example):
+```json
+{
+  "isValid": false,
+  "errors": [
+    { "constraintName": "membership", "message": "Value not allowed", "value": "XYZ" },
+    { "constraintName": "patternAlpha", "message": "Letters only", "value": "123" }
+  ]
+}
+```
+
+Clients MAY aggregate errors by `constraintName` or index for display. Servers SHOULD preserve order for deterministic UX.
+
+---
+
+## 6. Migration (v1 → v2)
+
+| v1 Concept | v1 Example | v2 Replacement |
+|------------|-----------|----------------|
+| `enumValues` | `"enumValues": [{"value":"A","label":"A"}]` | `valuesEndpoint.protocol = INLINE` + `items` |
+| Mixed constraint (min+max+pattern) | single descriptor with multiple scalar fields | Multiple atomic descriptors (one per rule) |
+| `valuesEndpoint` inside a constraint | embedded in constraint | Top-level `valuesEndpoint` |
+| `pattern` / `min` / `max` fields | inline scalar fields | `constraints[].type` + `params` |
+| `format` passive field | part of constraint or root | Field-level `formatHint` |
+| Array length via `min`/`max` polymorphism | `min:1, max:10` | Use explicit constraints *OR* range / minValue/maxValue applied to length (implementation note) |
+
+**Automated Migration Strategy (Suggested)**
+1. Lift first encountered `valuesEndpoint` (or `enumValues` → create INLINE endpoint) to field level.
+2. If multiple endpoints found → specification error (must be manually resolved).
+3. For each legacy constraint descriptor:
+   * Create a new atomic descriptor per scalar (pattern/min/max/etc.).
+4. Replace `enumValues` entirely.
+5. Move legacy `format` value (if present) to field-level `formatHint`.
+6. Add version marker or serve both under content negotiation if dual support is required temporarily.
+
+**Backward Compatibility**
+Implementations MAY offer a transitional mode parsing both v1 & v2 until deprecation.
+
+---
+
+## 7. Security & Performance Notes
+* Membership checks for large remote sets SHOULD be cached respecting `cacheStrategy`.
+* `SUGGESTIONS` mode SHOULD be used for very large or open sets where closed membership is impractical.
+* Clients SHOULD debounce search using `debounceMs` if provided.
+* Servers MUST still re‑validate all constraints (never trust client‑side acceptance).
+
+---
+
+## 8. Versioning
+Current protocol version: `2.0.0`.
+
+**Breaking Changes Introduced in 2.0.0**
+* Removal of `enumValues`.
+* Relocation of `valuesEndpoint` to field level.
+* Atomic constraint model (`type` + `params`).
+* Introduction of `INLINE` protocol & `mode` (CLOSED / SUGGESTIONS).
+* Range constraint type.
+
+Additive future extensions (non‑breaking): new constraint types, new pagination strategies, new endpoint modes, hint fields.
+
+---
+
+## 9. Glossary
+| Term | Definition |
+|------|------------|
+| Closed Domain | A finite authoritative set of allowed values (INLINE or resolved remote) |
+| Suggestions | Non‑authoritative helper list; values outside remain valid |
+| Atomic Constraint | Single semantic validation rule with its own descriptor |
+| Membership | Validation step ensuring value ∈ domain (closed mode) |
+
+---
+
+## 10. Summary
+The v2 protocol unifies dynamic and static domains, enforces deterministic atomic validation, and clarifies precedence while simplifying extensibility. Migration utilities SHOULD focus on systematic mechanical transformation of v1 descriptors into atomic v2 forms.
+
+---
+
+© 2025 input-spec – Protocol Specification v2.0
+
+
+## Appendix A: Legacy v1 Specification (Deprecated)
+
+> The following section preserves the original v1-era descriptive text for historical reference. New implementations MUST target the v2 model defined above. This appendix may be removed in a future revision.
 
 ## 1. Introduction
 

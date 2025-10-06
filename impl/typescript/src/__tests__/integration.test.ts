@@ -21,18 +21,17 @@ describe('Integration Tests', () => {
         dataType: 'STRING',
         expectMultipleValues: false,
         required: true,
-        constraints: [
-          {
-            name: 'country',
-            errorMessage: 'Please select a valid country',
-            enumValues: [
-              { value: 'FR', label: 'France' },
-              { value: 'DE', label: 'Germany' },
-              { value: 'IT', label: 'Italy' },
-              { value: 'ES', label: 'Spain' },
-            ],
-          }
-        ],
+        valuesEndpoint: {
+          protocol: 'INLINE',
+          mode: 'CLOSED',
+          items: [
+            { value: 'FR', label: 'France' },
+            { value: 'DE', label: 'Germany' },
+            { value: 'IT', label: 'Italy' },
+            { value: 'ES', label: 'Spain' }
+          ]
+        },
+        constraints: []
       };
 
       // 2. Validate the field specification structure
@@ -42,16 +41,16 @@ describe('Integration Tests', () => {
       const validator = new FieldValidator();
 
       // Valid value
-      const validResult = await validator.validate(countryFieldSpec, 'FR', 'country');
+  const validResult = await validator.validate(countryFieldSpec, 'FR');
       expect(validResult.isValid).toBe(true);
 
       // Invalid value (not in enum)
-      const invalidResult = await validator.validate(countryFieldSpec, 'UK', 'country');
-      expect(invalidResult.isValid).toBe(false);
-      expect(invalidResult.errors[0].message).toBe('Please select a valid country');
+  const invalidResult = await validator.validate(countryFieldSpec, 'UK');
+  expect(invalidResult.isValid).toBe(false);
+  expect(invalidResult.errors[0].constraintName).toBe('membership');
 
       // Required validation - now test with empty value to trigger field-level required
-      const requiredResult = await validator.validate(countryFieldSpec, '', 'country');
+  const requiredResult = await validator.validate(countryFieldSpec, '');
       expect(requiredResult.isValid).toBe(false);
       expect(requiredResult.errors[0].constraintName).toBe('required');
     });
@@ -108,17 +107,9 @@ describe('Integration Tests', () => {
         expectMultipleValues: false,
         required: true,
         constraints: [
-          {
-            name: 'length',
-            min: 8,
-            max: 128,
-            errorMessage: 'Password must be between 8 and 128 characters',
-          },
-          {
-            name: 'strength',
-            pattern: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]',
-            errorMessage: 'Password must contain uppercase, lowercase, number and special character',
-          }
+          { name: 'lenMin', type: 'minLength', params: { value: 8 }, errorMessage: 'Password must be between 8 and 128 characters' },
+          { name: 'lenMax', type: 'maxLength', params: { value: 128 }, errorMessage: 'Password must be between 8 and 128 characters' },
+          { name: 'strength', type: 'pattern', params: { regex: '^(?=.*[a-z])(?=.*[A-Z])(?=.*\\d)(?=.*[@$!%*?&])[A-Za-z\\d@$!%*?&]' }, errorMessage: 'Password must contain uppercase, lowercase, number and special character' }
         ],
       };
 
@@ -126,17 +117,17 @@ describe('Integration Tests', () => {
 
       // Test valid password
       const validPassword = 'MySecure123!';
-      const validResult = await validator.validate(passwordFieldSpec, validPassword, 'strength');
+  const validResult = await validator.validate(passwordFieldSpec, validPassword);
       expect(validResult.isValid).toBe(true);
 
       // Test length constraint
       const shortPassword = '123';
-      const shortResult = await validator.validate(passwordFieldSpec, shortPassword, 'length');
+  const shortResult = await validator.validate(passwordFieldSpec, shortPassword);
       expect(shortResult.isValid).toBe(false);
-      expect(shortResult.errors[0].message).toBe('Password must be between 8 and 128 characters');
+  expect(shortResult.errors.some(e => e.message === 'Password must be between 8 and 128 characters')).toBe(true);
 
       // Test required constraint (now at field level)
-      const emptyResult = await validator.validate(passwordFieldSpec, '', 'length');
+  const emptyResult = await validator.validate(passwordFieldSpec, '');
       expect(emptyResult.isValid).toBe(false);
       expect(emptyResult.errors[0].constraintName).toBe('required');
     });
@@ -149,11 +140,8 @@ describe('Integration Tests', () => {
         expectMultipleValues: true,
         required: false,
         constraints: [
-          {
-            name: 'arraySize',
-            min: 1, // Minimum 1 tag
-            max: 5, // Maximum 5 tags
-          }
+          { name: 'arraySizeMin', type: 'minValue', params: { value: 1 } },
+          { name: 'arraySizeMax', type: 'maxValue', params: { value: 5 } }
         ],
       };
 
@@ -161,31 +149,27 @@ describe('Integration Tests', () => {
 
       // Valid tags array
       const validTags = ['frontend', 'react', 'typescript'];
-      const validResult = await validator.validate(tagsFieldSpec, validTags, 'arraySize');
+  const validResult = await validator.validate(tagsFieldSpec, validTags);
       expect(validResult.isValid).toBe(true);
 
       // Too many tags
       const tooManyTags = ['tag1', 'tag2', 'tag3', 'tag4', 'tag5', 'tag6'];
-      const tooManyResult = await validator.validate(tagsFieldSpec, tooManyTags, 'arraySize');
-      expect(tooManyResult.isValid).toBe(false);
-      expect(tooManyResult.errors[0].message).toContain('Maximum 5 items');
+  const tooManyResult = await validator.validate(tagsFieldSpec, tooManyTags);
+  expect(tooManyResult.isValid).toBe(false);
+  expect(tooManyResult.errors.some(e => e.message.includes('Maximum 5 items'))).toBe(true);
 
       // Test individual tag format (separate constraint)
       const tagsWithFormatSpec: InputFieldSpec = {
         ...tagsFieldSpec,
         constraints: [
-          {
-            name: 'tagFormat',
-            pattern: '^[a-zA-Z0-9-]+$',
-            errorMessage: 'Tags can only contain letters, numbers, and hyphens',
-          }
-        ],
+          { name: 'tagFormat', type: 'pattern', params: { regex: '^[a-zA-Z0-9-]+$' }, errorMessage: 'Tags can only contain letters, numbers, and hyphens' }
+        ]
       };
 
       const invalidFormatTags = ['valid-tag', 'invalid tag with spaces'];
-      const formatResult = await validator.validate(tagsWithFormatSpec, invalidFormatTags, 'tagFormat');
+  const formatResult = await validator.validate(tagsWithFormatSpec, invalidFormatTags);
       expect(formatResult.isValid).toBe(false);
-      expect(formatResult.errors[0].constraintName).toBe('tagFormat[1]');
+  expect(formatResult.errors.some(e => e.constraintName === 'tagFormat' && e.index === 1)).toBe(true);
     });
 
     it('should demonstrate type safety without runtime overhead', () => {
