@@ -84,7 +84,7 @@ export class InputSpecFieldDirective implements AsyncValidator {
 ```html
 <input formControlName="username" [inputSpecField]="usernameSpec" />
 @if (fc('username').errors as errs) {
-  @for (k of objectKeys(errs.inputSpec || {}); track k) {
+  @for (k of Object.keys(errs.inputSpec || {}); track k) {
     <strong>{{ k }}</strong>
     @for (m of errs.inputSpec[k].messages; track m) {
       <div>{{ m }}</div>
@@ -310,6 +310,67 @@ frontend/
 - Wrapper avec debounce autour de `validateField`.
 - Cache pour paires (spec, valeur) inchangées.
 - Validation batch d'un ensemble de `InputFieldSpec`.
+
+---
+## 13. FAQ rapide Frontend
+
+| Question | Réponse courte | Exemple |
+|----------|----------------|---------|
+| Valider seulement au blur ? | N'appelez `validate` que dans `onBlur` / `@blur` / `on:blur`. | React: `<input onBlur={e => validate(e.target.value)} />` |
+| Debounce différent selon champ ? | Passez `debounceMs` différent par hook/composable/store. | `useInputSpec(spec, { debounceMs: 600 })` |
+| Comment pré-charger un domain fermé ? | Si `valuesEndpoint.mode==='CLOSED'`, fetch au montage et mettez les options en cache local. | `useEffect(()=>{ fetchSuggestions(spec,''); },[])` |
+| Mapping i18n des erreurs ? | Transformez chaque message avant affichage via une table locale. | `const msg = t(err.messageKey || err.message)` |
+| Validation multi‑champs (dépendances) ? | Validez chaque champ après mise à jour du contexte partagé. | Mettre un état global `formData` + re‑valider dépendants |
+| Intégration React Hook Form ? | Utiliser un resolver async qui appelle `validateField` pour chaque champ. | Voir pattern resolver classique (non répété ici) |
+| Annuler une validation en cours ? | Utiliser un contrôleur Abort ou un flag « génération » de requête. | Stocker `currentRunId` et ignorer les réponses obsolètes |
+| Suggestions côté Vue avec composition ? | Exposer `suggestions` + méthode `load(query)` dans le composable. | `const suggestions = ref([]);` puis assigner après fetch |
+| Angular: afficher état pending ? | Lire `directive.status()` signal. | `@if (dir.status()==='checking'){ <span>…</span> }` |
+| Svelte: reset après submit ? | Réinitialiser stores `errors.set({}); valid.set(true);`. | Dans handler `on:submit` |
+
+### Snippet: Resolver React Hook Form minimal
+```ts
+import { validateField } from 'input-spec';
+
+export const makeResolver = (specs: Record<string, InputFieldSpec>) => async (values: any) => {
+  const errors: Record<string, any> = {};
+  await Promise.all(Object.entries(specs).map(async ([name, spec]) => {
+    const res = await validateField(spec, values[name]);
+    if (!res.isValid) {
+      errors[name] = {
+        type: 'input-spec',
+        message: res.errors[0]?.message,
+        messages: res.errors.map(e => e.message)
+      };
+    }
+  }));
+  return { values: Object.keys(errors).length ? {} : values, errors };
+};
+```
+
+### Snippet: Pré-chargement de suggestions (React)
+```ts
+useEffect(() => {
+  let cancelled = false;
+  (async () => {
+    if (fieldSpec.valuesEndpoint && fieldSpec.valuesEndpoint.mode === 'CLOSED') {
+      const initial = await fetchSuggestions(fieldSpec, '');
+      if (!cancelled) setInitialOptions(initial);
+    }
+  })();
+  return () => { cancelled = true; };
+}, [fieldSpec]);
+```
+
+### Snippet: Adapter i18n simple
+```ts
+const dictionary: Record<string,string> = {
+  'validation.required': 'Champ obligatoire',
+  'validation.pattern': 'Format invalide'
+};
+function translate(message: string) {
+  return dictionary[message] || message;
+}
+```
 
 ---
 © input-spec – Guide d'intégration Frontend (FR)
