@@ -9,14 +9,13 @@ description: "Intégration Frontend (Angular · React · Vue · Svelte)."
 Ce guide montre comment consommer le protocole **input-spec** côté client sans imposer de design visuel. Tous les exemples s'appuient uniquement sur les API publiques exportées.
 
 API utilisées (v2) :
-- `InputFieldSpec`, `ConstraintDescriptor` (contraintes atomiques)
-- `FieldValidator`, `validateField`
+- `InputFieldSpec` (spécification de champ)
+- `FieldValidator.validate(fieldSpec, value)` (validation unique normalisée)
 
-Principales évolutions v2 :
-- Champs composites (`min`, `max`, `pattern`, `enumValues`) remplacés par des contraintes atomiques `{ name, type, params }`
-- Listes statiques via `valuesEndpoint.protocol = 'INLINE'` (mode par défaut `CLOSED`)
-- Indice de format passif `formatHint`
-- Domaines dynamiques : `mode: 'CLOSED'` (membre requis) ou `mode: 'SUGGESTIONS'` (tolérant)
+Rappels v2 clés :
+- Plus de `enumValues` : utiliser `fieldSpec.valuesEndpoint` (INLINE ou distant) au niveau du champ.
+- Contraintes atomiques simples (minLength, maxLength, pattern…) ordonnées pour un flux d'erreurs stable.
+- `valuesEndpoint.mode` pilote la sémantique : `CLOSED` = domaine strict, `SUGGESTIONS` = assistance.
 
 ---
 ## 1. Schéma de validation partagé
@@ -39,11 +38,11 @@ const usernameSpec: InputFieldSpec = {
 ```
 
 ---
-## 2. Angular
+## 2. Angular (>= v17, standalone, Typed Forms)
 
-### 2.1 Directive Async Validator (toutes contraintes)
+### 2.1 AsyncValidator standalone + Signal de statut
 ```typescript
-import { Directive, Input, forwardRef } from '@angular/core';
+import { Directive, Input, forwardRef, computed, signal } from '@angular/core';
 import { NG_ASYNC_VALIDATORS, AbstractControl, AsyncValidator, ValidationErrors } from '@angular/forms';
 import { InputFieldSpec, validateField } from 'input-spec';
 import { from, of } from 'rxjs';
@@ -57,24 +56,36 @@ import { from, of } from 'rxjs';
 export class InputSpecFieldDirective implements AsyncValidator {
   @Input('inputSpecField') spec!: InputFieldSpec | null;
 
+  status = signal<'idle'|'valid'|'invalid'|'checking'>('idle');
+  errorsMap = signal<Record<string,string[]>>({});
+
   validate(control: AbstractControl) {
     if (!this.spec) return of(null);
+    this.status.set('checking');
     return from(
-  validateField(this.spec, control.value).then(result => {
-        if (result.isValid) return null;
-        const grouped: Record<string, { messages: string[] }> = {};
-        for (const err of result.errors) {
-          grouped[err.constraintName] ||= { messages: [] };
-            grouped[err.constraintName].messages.push(err.message);
+      validateField(this.spec, control.value).then(result => {
+        if (result.isValid) {
+          this.status.set('valid');
+          this.errorsMap.set({});
+          return null;
         }
+        const grouped: Record<string,string[]> = {};
+        for (const err of result.errors) {
+          (grouped[err.constraintName] ||= []).push(err.message);
+        }
+        this.errorsMap.set(grouped);
+        this.status.set('invalid');
         return { inputSpec: grouped } as ValidationErrors;
-      }).catch(e => ({ inputSpecInternal: { message: e?.message || 'validation_error' } }))
+      }).catch(e => {
+        this.status.set('invalid');
+        return { inputSpecInternal: { message: e?.message || 'validation_error' } };
+      })
     );
   }
 }
 ```
 
-### 2.2 Utilisation
+### 2.2 Utilisation (standalone component)
 ```html
 <input formControlName="username" [inputSpecField]="usernameSpec" />
 <div *ngIf="fc('username').errors as errs">
@@ -86,35 +97,42 @@ export class InputSpecFieldDirective implements AsyncValidator {
 ```
 
 ---
-## 3. React
+## 3. React (18+, Hooks, Transition Safe)
 
-Hook minimal retournant l'état de validation.
+Hook avec gestion debounced + état détaillé.
 ```tsx
-import { useCallback, useState } from 'react';
+import { useCallback, useState, useRef, useTransition } from 'react';
 import { InputFieldSpec, validateField } from 'input-spec';
 
-export function useInputSpec(spec: InputFieldSpec) {
+export function useInputSpec(spec: InputFieldSpec, { debounceMs = 250 } = {}) {
   const [errors, setErrors] = useState<Record<string,string[]>>({});
   const [valid, setValid] = useState(true);
+  const [isPending, startTransition] = useTransition();
+  const timer = useRef<number | undefined>();
 
-  const validate = useCallback(async (value: any) => {
-  const result = validateField(spec, value);
-    if (result.isValid) {
-      setErrors({});
-      setValid(true);
-      return true;
-    }
-    const grouped: Record<string,string[]> = {};
-    for (const err of result.errors) {
-      grouped[err.constraintName] ||= [];
-      grouped[err.constraintName].push(err.message);
-    }
-    setErrors(grouped);
-    setValid(false);
-    return false;
+  const run = useCallback(async (value: any) => {
+    const result = await validateField(spec, value);
+    startTransition(() => {
+      if (result.isValid) {
+        setErrors({});
+        setValid(true);
+      } else {
+        const grouped: Record<string,string[]> = {};
+        for (const err of result.errors) {
+          (grouped[err.constraintName] ||= []).push(err.message);
+        }
+        setErrors(grouped);
+        setValid(false);
+      }
+    });
   }, [spec]);
 
-  return { validate, errors, valid };
+  const validate = useCallback((value: any) => {
+    if (timer.current) window.clearTimeout(timer.current);
+    timer.current = window.setTimeout(() => { run(value); }, debounceMs);
+  }, [debounceMs, run]);
+
+  return { validate, errors, valid, isPending };
 }
 ```
 
@@ -131,33 +149,38 @@ const { validate, errors, valid } = useInputSpec(usernameSpec);
 ```
 
 ---
-## 4. Vue 3 (Composition API)
+## 4. Vue 3 (Composition API + <script setup>)
 ```ts
 import { ref } from 'vue';
 import { InputFieldSpec, validateField } from 'input-spec';
 
-export function useInputSpec(spec: InputFieldSpec) {
+export function useInputSpec(spec: InputFieldSpec, { debounceMs = 250 } = {}) {
   const errors = ref<Record<string,string[]>>({});
   const valid = ref(true);
+  const pending = ref(false);
+  let handle: number | undefined;
 
-  async function validate(value: any) {
-  const result = validateField(spec, value);
-    if (result.isValid) {
-      errors.value = {};
-      valid.value = true;
-      return true;
-    }
-    const grouped: Record<string,string[]> = {};
-    for (const err of result.errors) {
-      grouped[err.constraintName] ||= [];
-      grouped[err.constraintName].push(err.message);
-    }
-    errors.value = grouped;
-    valid.value = false;
-    return false;
+  function schedule(value: any) {
+    if (handle) window.clearTimeout(handle);
+    handle = window.setTimeout(async () => {
+      pending.value = true;
+      const result = await validateField(spec, value);
+      if (result.isValid) {
+        errors.value = {};
+        valid.value = true;
+      } else {
+        const grouped: Record<string,string[]> = {};
+        for (const err of result.errors) {
+          (grouped[err.constraintName] ||= []).push(err.message);
+        }
+        errors.value = grouped;
+        valid.value = false;
+      }
+      pending.value = false;
+    }, debounceMs);
   }
 
-  return { errors, valid, validate };
+  return { errors, valid, pending, validate: schedule };
 }
 ```
 Template :
@@ -172,33 +195,38 @@ Template :
 ```
 
 ---
-## 5. Svelte (Store helper)
+## 5. Svelte (Store helper + debounce)
 ```ts
 import { writable } from 'svelte/store';
 import { validateField, type InputFieldSpec } from 'input-spec';
 
-export function createInputSpecValidator(spec: InputFieldSpec) {
+export function createInputSpecValidator(spec: InputFieldSpec, { debounceMs = 250 } = {}) {
   const errors = writable<Record<string,string[]>>({});
   const valid = writable(true);
+  const pending = writable(false);
+  let handle: number | undefined;
 
-  async function validate(value: any) {
-  const result = validateField(spec, value);
-    if (result.isValid) {
-      errors.set({});
-      valid.set(true);
-      return true;
-    }
-    const grouped: Record<string,string[]> = {};
-    for (const err of result.errors) {
-      grouped[err.constraintName] ||= [];
-      grouped[err.constraintName].push(err.message);
-    }
-    errors.set(grouped);
-    valid.set(false);
-    return false;
+  function validate(value: any) {
+    if (handle) clearTimeout(handle);
+    handle = setTimeout(async () => {
+      pending.set(true);
+      const result = await validateField(spec, value);
+      if (result.isValid) {
+        errors.set({});
+        valid.set(true);
+      } else {
+        const grouped: Record<string,string[]> = {};
+        for (const err of result.errors) {
+          (grouped[err.constraintName] ||= []).push(err.message);
+        }
+        errors.set(grouped);
+        valid.set(false);
+      }
+      pending.set(false);
+    }, debounceMs) as unknown as number;
   }
 
-  return { errors, valid, validate };
+  return { errors, valid, pending, validate };
 }
 ```
 Utilisation :
@@ -221,14 +249,28 @@ Utilisation :
 ```
 
 ---
-## 6. Valeurs dynamiques (Autocomplete)
-Logique réutilisable pour tout framework :
-```typescript
-// v2 : aucune implémentation HTTP fournie. Pour un domaine fermé statique utiliser `INLINE`; implémenter un fetch custom sinon.
+## 6. Valeurs dynamiques (Autocomplete v2)
+Exemple générique (fetch JSON) pour un champ avec `fieldSpec.valuesEndpoint` en mode `SUGGESTIONS`.
+```ts
+export async function fetchSuggestions(fieldSpec: InputFieldSpec, query: string) {
+  if (!fieldSpec.valuesEndpoint) return [];
+  const ve = fieldSpec.valuesEndpoint;
+  if (ve.mode === 'CLOSED' && query.length === 0) {
+    // Charger la première page si pagination
+  }
+  const url = new URL(ve.uri, window.location.origin);
+  if (ve.requestParams?.searchParam) {
+    url.searchParams.set(ve.requestParams.searchParam, query);
+  }
+  const res = await fetch(url.toString(), { method: ve.method || 'GET' });
+  const data = await res.json();
+  const container = ve.responseMapping?.dataField ? data[ve.responseMapping.dataField] : data;
+  return Array.isArray(container) ? container : [];
+}
 ```
 
 ---
-## 7. Stratégie de gestion des erreurs
+## 7. Gestion des erreurs
 - Toujours consommer le tableau `errors: ValidationError[]`.
 - Regrouper par `constraintName` pour l'affichage.
 - Ne pas re-dupliquer les règles côté client (source unique serveur).
@@ -245,7 +287,7 @@ frontend/
 ```
 
 ---
-## 9. Suggestions de tests
+## 9. Tests ciblés
 | Couche | Cible | Exemple |
 |--------|-------|---------|
 | Parsing spec | Obligatoire + ordre contraintes | Objet mal formé -> gestion amont |
