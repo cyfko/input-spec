@@ -83,12 +83,14 @@ export class InputSpecFieldDirective implements AsyncValidator {
 ### 2.2 Utilisation (standalone component)
 ```html
 <input formControlName="username" [inputSpecField]="usernameSpec" />
-<div *ngIf="fc('username').errors as errs">
-  <div *ngFor="let k of objectKeys(errs.inputSpec || {})">
+@if (fc('username').errors as errs) {
+  @for (k of objectKeys(errs.inputSpec || {}); track k) {
     <strong>{{ k }}</strong>
-    <div *ngFor="let m of errs.inputSpec[k].messages">{{ m }}</div>
-  </div>
-</div>
+    @for (m of errs.inputSpec[k].messages; track m) {
+      <div>{{ m }}</div>
+    }
+  }
+}
 ```
 
 ---
