@@ -34,9 +34,9 @@ yarn add @cyfko/input-spec
 
 ```xml
 <dependency>
-    <groupId>io.github.cyfko</groupId>
-    <artifactId>input-spec</artifactId>
-    <version>1.0.0</version>
+  <groupId>io.github.cyfko</groupId>
+  <artifactId>input-spec</artifactId>
+  <version>2.0.0</version>
 </dependency>
 ```
 
@@ -56,31 +56,22 @@ const assigneeFieldSpec: InputFieldSpec = {
   dataType: DataType.STRING,
   expectMultipleValues: false,
   required: true,
-  constraints: [{
-    name: "user_validation",
-    errorMessage: "Veuillez sélectionner un utilisateur valide",
-    valuesEndpoint: {
-      protocol: "HTTPS",
-      uri: "/api/users",
-      method: "GET",
-      searchField: "name",
-      paginationStrategy: "PAGE_NUMBER",
-      debounceMs: 300,
-      minSearchLength: 2,
-      responseMapping: {
-        dataField: "users",
-        totalField: "total",
-        hasNextField: "hasNext"
-      },
-      requestParams: {
-        pageParam: "page",
-        limitParam: "limit",
-        searchParam: "search",
-        defaultLimit: 20
-      },
-      cacheStrategy: "SHORT_TERM"
-    }
-  }]
+  valuesEndpoint: {
+    protocol: "HTTPS",
+    uri: "/api/users",
+    method: "GET",
+    searchField: "name",
+    paginationStrategy: "PAGE_NUMBER",
+    debounceMs: 300,
+    minSearchLength: 2,
+    responseMapping: { dataField: "users", totalField: "total", hasNextField: "hasNext" },
+    requestParams: { pageParam: "page", limitParam: "limit", searchParam: "search", defaultLimit: 20 },
+    cacheStrategy: "SHORT_TERM",
+    mode: "CLOSED"
+  },
+  constraints: [
+    { name: "pattern_id", type: "pattern", params: { regex: "^[A-Za-z0-9_]+$" }, errorMessage: "Identifiant utilisateur invalide" }
+  ]
 };
 ```
 
@@ -93,36 +84,40 @@ public class FieldSpecController {
     
     @GetMapping("/api/fields/assignee")
     public InputFieldSpec getAssigneeField() {
-        ValuesEndpoint usersEndpoint = new ValuesEndpoint();
-        usersEndpoint.setUri("/api/users");
-        usersEndpoint.setSearchField("name");
-        usersEndpoint.setPaginationStrategy(PaginationStrategy.PAGE_NUMBER);
-        usersEndpoint.setDebounceMs(300);
-        
-        ResponseMapping mapping = new ResponseMapping();
-        mapping.setDataField("users");
-        mapping.setTotalField("total");
-        mapping.setHasNextField("hasNext");
-        usersEndpoint.setResponseMapping(mapping);
-        
-        RequestParams params = new RequestParams();
-        params.setPageParam("page");
-        params.setLimitParam("limit");
-        params.setSearchParam("search");
-        params.setDefaultLimit(20);
-        usersEndpoint.setRequestParams(params);
-        
-        ConstraintDescriptor constraint = new ConstraintDescriptor();
-        constraint.setName("user_validation");
-        constraint.setErrorMessage("Veuillez sélectionner un utilisateur valide");
-        constraint.setValuesEndpoint(usersEndpoint);
-        
-        return InputFieldSpec.builder("Assigné à", DataType.STRING)
-            .description("Sélectionner l'utilisateur responsable du ticket")
-            .required(true)
-            .expectMultipleValues(false)
-            .constraints(List.of(constraint))
-            .build();
+    ValuesEndpoint usersEndpoint = ValuesEndpoint.builder()
+      .protocol(Protocol.HTTPS)
+      .uri("/api/users")
+      .searchField("name")
+      .paginationStrategy(PaginationStrategy.PAGE_NUMBER)
+      .debounceMs(300)
+      .mode(DomainMode.CLOSED)
+      .responseMapping(ResponseMapping.builder()
+        .dataField("users")
+        .totalField("total")
+        .hasNextField("hasNext")
+        .build())
+      .requestParams(RequestParams.builder()
+        .pageParam("page")
+        .limitParam("limit")
+        .searchParam("search")
+        .defaultLimit(20)
+        .build())
+      .build();
+
+    ConstraintDescriptor pattern = ConstraintDescriptor.builder()
+      .name("pattern_id")
+      .type("pattern")
+      .errorMessage("Identifiant utilisateur invalide")
+      .putParam("regex", "^[A-Za-z0-9_]+$")
+      .build();
+
+    return InputFieldSpec.builder("Assigné à", DataType.STRING)
+      .description("Sélectionner l'utilisateur responsable du ticket")
+      .required(true)
+      .expectMultipleValues(false)
+      .valuesEndpoint(usersEndpoint)
+      .constraints(List.of(pattern))
+      .build();
     }
 }
 ```
@@ -223,13 +218,8 @@ async function loadFieldSpec(): Promise<InputFieldSpec> {
 // Fonction pour rechercher des utilisateurs
 async function searchUsers(query: string, page: number = 1) {
   const fieldSpec = await loadFieldSpec();
-  const valuesEndpoint = fieldSpec.constraints[0].valuesEndpoint;
-  
-  if (!valuesEndpoint) {
-    throw new Error('Pas d\'endpoint de valeurs configuré');
-  }
-  
-  return resolver.resolveValues(valuesEndpoint, {
+  if (!fieldSpec.valuesEndpoint) throw new Error('Pas d\'endpoint de valeurs configuré');
+  return resolver.resolveValues(fieldSpec.valuesEndpoint, {
     search: query,
     page,
     limit: 20

@@ -8,6 +8,10 @@
   url: /INTERMEDIATE_GUIDE
 - title: "Expert Guide"
   url: /EXPERT_GUIDE
+- title: "Migration v1→v2"
+  url: /MIGRATION_V1_V2
+- title: "Implementation Notes"
+  url: /IMPLEMENTATION_NOTES
 - title: "FAQ"
   url: /FAQ
 - title: "Contributing"

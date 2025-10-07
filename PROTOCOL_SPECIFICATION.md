@@ -2,6 +2,21 @@
 
 > THIS IS A MAJOR REVISION introducing a new constraint model, removal of `enumValues`, and relocation of `valuesEndpoint`.
 
+## Quick Navigation
+
+| Section | Objet |
+|---------|-------|
+| 1. Introduction | Objectifs & périmètre |
+| 2. Core Entities | `InputFieldSpec`, `ValuesEndpoint`, `ConstraintDescriptor` |
+| 2.5 Registry | Liste des types de contraintes atomiques |
+| 2.6 Pipeline | Ordre normatif de validation |
+| 3. Membership Semantics | Modes CLOSED vs SUGGESTIONS |
+| 4. Error Model | Structure des erreurs de validation |
+| 5. Migration Notes | Résumé v1 → v2 |
+| 6. Extensibility | Ajout de nouveaux types |
+| Appendix A | Legacy v1 (référence uniquement) |
+
+
 ## RFC 2119 Terminology
 
 The key words MUST, MUST NOT, REQUIRED, SHALL, SHALL NOT, SHOULD, SHOULD NOT, RECOMMENDED, MAY, and OPTIONAL in this document are to be interpreted as described in RFC 2119.
