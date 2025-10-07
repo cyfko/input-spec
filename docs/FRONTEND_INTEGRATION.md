@@ -8,14 +8,9 @@ description: "Intégration Frontend (Angular · React · Vue · Svelte)."
 
 Ce guide montre comment consommer le protocole **input-spec** côté client sans imposer de design visuel. Tous les exemples s'appuient uniquement sur les API publiques exportées.
 
-API utilisées (v2) :
-- `InputFieldSpec` (spécification de champ)
-- `FieldValidator.validate(fieldSpec, value)` (validation unique normalisée)
-
-Rappels v2 clés :
-- Plus de `enumValues` : utiliser `fieldSpec.valuesEndpoint` (INLINE ou distant) au niveau du champ.
-- Contraintes atomiques simples (minLength, maxLength, pattern…) ordonnées pour un flux d'erreurs stable.
-- `valuesEndpoint.mode` pilote la sémantique : `CLOSED` = domaine strict, `SUGGESTIONS` = assistance.
+API principales :
+- `InputFieldSpec`
+- `FieldValidator.validate(fieldSpec, value)`
 
 ---
 ## 1. Schéma de validation partagé
