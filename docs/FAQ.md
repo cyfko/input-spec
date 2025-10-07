@@ -252,13 +252,12 @@ export function useProtocolForm<T extends Record<string, any>>(
     // Recherche de valeurs pour les champs avec ValuesEndpoint
     searchValues: async (fieldName: keyof T, query: string) => {
       const fieldSpec = fieldSpecs[fieldName];
-      const constraint = fieldSpec.constraints?.find(c => c.valuesEndpoint);
-      
-      if (!constraint?.valuesEndpoint) {
-        throw new Error(`Pas d'endpoint de recherche pour ${String(fieldName)}`);
+      // v2: valuesEndpoint est au niveau du champ (plus dans une contrainte)
+      if (!fieldSpec.valuesEndpoint) {
+        throw new Error(`Pas d'endpoint de recherche (valuesEndpoint) pour ${String(fieldName)}`);
       }
-      
-      return resolver.resolveValues(constraint.valuesEndpoint, { search: query });
+
+      return resolver.resolveValues(fieldSpec.valuesEndpoint, { search: query });
     }
   };
 }
@@ -285,15 +284,16 @@ const SmartSelectField: React.FC<{
   const searchValues = async (query: string) => {
     setIsLoading(true);
     try {
-      const constraint = fieldSpec.constraints?.find(c => c.valuesEndpoint);
-      if (constraint?.valuesEndpoint) {
-        const resolver = new ValuesResolver(httpClient, cache);
-        const result = await resolver.resolveValues(constraint.valuesEndpoint, {
-          search: query,
-          limit: 20
-        });
-        setOptions(result.values);
+      // v2: accès direct au fieldSpec.valuesEndpoint
+      if (!fieldSpec.valuesEndpoint) {
+        throw new Error('Ce champ ne définit pas de valuesEndpoint (v2)');
       }
+      const resolver = new ValuesResolver(httpClient, cache);
+      const result = await resolver.resolveValues(fieldSpec.valuesEndpoint, {
+        search: query,
+        limit: fieldSpec.valuesEndpoint.requestParams?.defaultLimit || 20
+      });
+      setOptions(result.values);
     } catch (error) {
       console.error('Erreur de recherche:', error);
     } finally {
@@ -1054,9 +1054,8 @@ const CandidateSkillsSelector: React.FC<{
         position,
         seniority
       });
-      
-      const constraint = fieldSpec.constraints.find(c => c.name === 'required_skills');
-      if (constraint?.valuesEndpoint) {
+      // v2: plus de recherche du valuesEndpoint dans une contrainte
+      if (fieldSpec.valuesEndpoint) {
         const result = await formManager.searchValues('candidate-skills', '');
         setAvailableSkills(result.values);
       }

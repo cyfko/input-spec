@@ -114,15 +114,20 @@ export class ProjectFormSpecifications {
       dataType: DataType.STRING,
       expectMultipleValues: false,
       required: true,
-      constraints: [{
-        name: "type_selection",
-        enumValues: [
+      // v2: enumValues est supprimé. Utiliser un valuesEndpoint INLINE pour les listes statiques.
+      valuesEndpoint: {
+        protocol: "INLINE",
+        items: [
           { value: "SMALL", label: "Petit projet (1-5 personnes)" },
           { value: "MEDIUM", label: "Projet moyen (6-15 personnes)" },
           { value: "LARGE", label: "Grand projet (16+ personnes)" },
           { value: "RESEARCH", label: "Projet de recherche" },
           { value: "MAINTENANCE", label: "Maintenance" }
         ],
+        mode: "CLOSED"
+      },
+      constraints: [{
+        name: "type_selection",
         errorMessage: "Veuillez sélectionner un type de projet"
       }]
     };
@@ -167,6 +172,22 @@ export class ProjectFormSpecifications {
   static getTeamMembersSpec(projectType?: string): InputFieldSpec {
     const constraints: ConstraintDescriptor[] = [{
       name: "team_selection",
+      errorMessage: "Veuillez sélectionner des membres d'équipe valides"
+    }];
+
+    // Contraintes conditionnelles selon le type de projet
+    if (projectType) {
+      const teamSizeConstraints = this.getTeamSizeConstraints(projectType);
+      constraints.unshift(teamSizeConstraints);
+    }
+
+    return {
+      displayName: "Membres de l'équipe",
+      description: "Sélectionnez les membres qui participeront au projet",
+      dataType: DataType.STRING,
+      expectMultipleValues: true,
+      required: false,
+      // v2: valuesEndpoint déplacé au niveau du champ
       valuesEndpoint: {
         protocol: "HTTPS",
         uri: "/api/users/team-members",
@@ -186,21 +207,6 @@ export class ProjectFormSpecifications {
         },
         cacheStrategy: "SHORT_TERM"
       },
-      errorMessage: "Veuillez sélectionner des membres d'équipe valides"
-    }];
-
-    // Contraintes conditionnelles selon le type de projet
-    if (projectType) {
-      const teamSizeConstraints = this.getTeamSizeConstraints(projectType);
-      constraints.unshift(teamSizeConstraints);
-    }
-
-    return {
-      displayName: "Membres de l'équipe",
-      description: "Sélectionnez les membres qui participeront au projet",
-      dataType: DataType.STRING,
-      expectMultipleValues: true,
-      required: false,
       constraints
     };
   }
@@ -441,21 +447,18 @@ export class ProjectFormManager {
   async searchValues(fieldName: string, query: string, page: number = 1): Promise<FetchValuesResult> {
     const fieldSpec = this.fieldSpecs.get(fieldName);
     
-    if (!fieldSpec || !fieldSpec.constraints) {
-      throw new Error(`Pas de contraintes de valeurs pour le champ: ${fieldName}`);
+    if (!fieldSpec) {
+      throw new Error(`Spécification introuvable pour le champ: ${fieldName}`);
     }
-    
-    // Trouver la contrainte avec valuesEndpoint
-    const constraint = fieldSpec.constraints.find(c => c.valuesEndpoint);
-    
-    if (!constraint?.valuesEndpoint) {
-      throw new Error(`Pas d'endpoint de valeurs pour le champ: ${fieldName}`);
+    if (!fieldSpec.valuesEndpoint) {
+      throw new Error(`Pas de valuesEndpoint défini au niveau du champ (v2) pour: ${fieldName}`);
     }
+    // v2: utilisation directe du fieldSpec.valuesEndpoint
     
-    return this.resolver.resolveValues(constraint.valuesEndpoint, {
+    return this.resolver.resolveValues(fieldSpec.valuesEndpoint, {
       search: query,
       page,
-      limit: constraint.valuesEndpoint.requestParams?.defaultLimit || 20
+      limit: fieldSpec.valuesEndpoint.requestParams?.defaultLimit || 20
     });
   }
   

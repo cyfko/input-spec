@@ -158,6 +158,8 @@ graph TB
 
 ### 1. Moteur de validation - Analyse approfondie
 
+> ⚠️ Compatibilité rétro (v1) : Le moteur présenté ci‑dessous illustre encore certains points d'extension pour `enumValues` afin d'expliquer comment un adapter de migration peut fonctionner. En v2 canonique, les ensembles de valeurs doivent être fournis via `fieldSpec.valuesEndpoint` (INLINE ou distant). Lorsque vous construisez un moteur strictement v2, vous pouvez supprimer toute la logique faisant référence à `enumValues`.
+
 ```typescript
 // TypeScript - Architecture interne du FieldValidator
 export class FieldValidator {
@@ -175,12 +177,14 @@ export class FieldValidator {
   private initializeProcessors(): Map<string, ConstraintProcessor> {
     const processors = new Map<string, ConstraintProcessor>();
     
-    // Processeurs de base du protocole
-    processors.set('pattern', new PatternConstraintProcessor());
-    processors.set('min', new MinConstraintProcessor());
-    processors.set('max', new MaxConstraintProcessor());
-    processors.set('enumValues', new EnumConstraintProcessor());
-    processors.set('format', new FormatConstraintProcessor());
+  // Processeurs de base du protocole (v2)
+  processors.set('pattern', new PatternConstraintProcessor());
+  processors.set('min', new MinConstraintProcessor());
+  processors.set('max', new MaxConstraintProcessor());
+  processors.set('format', new FormatConstraintProcessor());
+  // NOTE v2: enumValues est retiré du modèle protocolaire canonique. Un processeur
+  // peut subsister côté implémentation pour compatibilité rétro (adapter v1).
+  // processors.set('enumValues', new LegacyEnumConstraintProcessor()); // Optionnel
     
     return processors;
   }
@@ -299,8 +303,8 @@ export class FieldValidator {
     if (constraint.format) order.push('format');
     
     // 2. Validations nécessitant des données externes en dernier
-    if (constraint.enumValues) order.push('enumValues');
-    if (constraint.valuesEndpoint) order.push('valuesEndpoint');
+    // v2: les ensembles de valeurs sont définis via fieldSpec.valuesEndpoint (pas stocké dans la contrainte)
+    // Un adapter de compatibilité pourrait encore pousser 'enumValues' ici.
     
     return order;
   }
@@ -599,8 +603,9 @@ export class CompiledValidator {
         validationSteps.push(this.compileMinMaxValidation(constraint, fieldSpec));
       }
       
-      if (constraint.enumValues) {
-        const validValues = new Set(constraint.enumValues.map(ev => ev.value));
+    // Legacy (migration): prise en charge optionnelle de enumValues pour specs non migrées
+    if (constraint.enumValues) {
+      const validValues = new Set(constraint.enumValues.map(ev => ev.value));
         validationSteps.push({
           type: 'enum',
           validator: (value: any) => validValues.has(value),
