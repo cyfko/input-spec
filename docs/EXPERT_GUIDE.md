@@ -1354,8 +1354,8 @@ export const CreditCardConstraintProposal: NewConstraintProposal = {
         required: true,
         constraints: [
           {
-            name: "credit_card_validation",
-            type: "custom",
+            name: "cardValidation",
+            type: "credit_card_validation",
             params: { acceptedTypes: ["visa"] }
           }
         ]

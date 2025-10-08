@@ -18,11 +18,11 @@ app.get('/api/form-fields/user-profile', (req, res) => {
     dataType: "STRING",
     required: true,
     constraints: [
-      { name: "email", type: "email", message: "Invalid email format" },
+      { name: "emailFormat", type: "email", message: "Invalid email format" },
       { 
-        name: "maxLength", 
+        name: "lengthLimit", 
         type: "maxLength", 
-        value: userRole === 'premium' ? 200 : 50,
+        params: { value: userRole === 'premium' ? 200 : 50 },
         message: `Email too long (max ${userRole === 'premium' ? 200 : 50} chars)`
       }
     ]

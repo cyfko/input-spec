@@ -106,7 +106,6 @@ Imaginons un champ "Assigné à" dans un système de tickets :
   }
 }
 ```
-```
 
 **💻 Côté client** - Rendu automatique :
 ```typescript

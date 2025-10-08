@@ -77,18 +77,18 @@ export class ProjectFormSpecifications {
       required: true,
       constraints: [
         {
-          name: "minLength",
-          type: "number", 
+          name: "minLenConstraint",
+          type: "minLength", 
           params: { value: 3 }
         },
         {
-          name: "maxLength",
-          type: "number",
+          name: "maxLenConstraint",
+          type: "maxLength",
           params: { value: 50 }
         },
         {
-          name: "pattern",
-          type: "string",
+          name: "formatConstraint",
+          type: "pattern",
           params: { pattern: "^[a-zA-Z0-9\\s\\-_]+$" }
         }
       ],
@@ -117,8 +117,8 @@ export class ProjectFormSpecifications {
       required: true,
       constraints: [
         {
-          name: "membership",
-          type: "array",
+          name: "typeSelection",
+          type: "membership",
           params: { 
             allowedValues: ["SMALL", "MEDIUM", "LARGE", "RESEARCH", "MAINTENANCE"]
           }
@@ -228,8 +228,8 @@ export class ProjectFormSpecifications {
     const rule = sizeRules[projectType] || { min: 1, max: 10 };
 
     return {
-      name: "arraySize",
-      type: "object",
+      name: "teamSizeConstraint",
+      type: "arraySize",
       params: { 
         minItems: rule.min,
         maxItems: rule.max
