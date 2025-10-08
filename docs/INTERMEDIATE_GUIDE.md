@@ -77,32 +77,33 @@ export class ProjectFormSpecifications {
       required: true,
       constraints: [
         {
-          name: "length",
-          min: 3,
-          max: 50,
-          errorMessage: "Le nom doit faire entre 3 et 50 caractères"
+          name: "minLength",
+          type: "number", 
+          params: { value: 3 }
         },
         {
-          name: "format",
-          pattern: "^[a-zA-Z0-9\\s\\-_]+$",
-          errorMessage: "Seuls les lettres, chiffres, espaces, tirets et underscores sont autorisés"
+          name: "maxLength",
+          type: "number",
+          params: { value: 50 }
         },
         {
-          name: "uniqueness",
-          valuesEndpoint: {
-            protocol: "HTTPS",
-            uri: "/api/projects/validate-name",
-            method: "POST",
-            debounceMs: 500,
-            minSearchLength: 3,
-            responseMapping: {
-              dataField: "isAvailable"
-            },
-            cacheStrategy: "NONE" // Pas de cache pour l'unicité
-          },
-          errorMessage: "Ce nom de projet existe déjà"
+          name: "pattern",
+          type: "string",
+          params: { pattern: "^[a-zA-Z0-9\\s\\-_]+$" }
         }
-      ]
+      ],
+      valuesEndpoint: {
+        protocol: "HTTPS",
+        uri: "/api/projects/validate-name",
+        method: "POST",
+        mode: "CLOSED",
+        debounceMs: 500,
+        minSearchLength: 3,
+        responseMapping: {
+          dataField: "isAvailable"
+        },
+        cacheStrategy: "NONE" // Pas de cache pour l'unicité
+      }
     };
   }
 
@@ -114,22 +115,27 @@ export class ProjectFormSpecifications {
       dataType: DataType.STRING,
       expectMultipleValues: false,
       required: true,
+      constraints: [
+        {
+          name: "membership",
+          type: "array",
+          params: { 
+            allowedValues: ["SMALL", "MEDIUM", "LARGE", "RESEARCH", "MAINTENANCE"]
+          }
+        }
+      ],
       // v2: enumValues est supprimé. Utiliser un valuesEndpoint INLINE pour les listes statiques.
       valuesEndpoint: {
         protocol: "INLINE",
-        items: [
+        mode: "CLOSED",
+        values: [
           { value: "SMALL", label: "Petit projet (1-5 personnes)" },
           { value: "MEDIUM", label: "Projet moyen (6-15 personnes)" },
           { value: "LARGE", label: "Grand projet (16+ personnes)" },
           { value: "RESEARCH", label: "Projet de recherche" },
           { value: "MAINTENANCE", label: "Maintenance" }
-        ],
-        mode: "CLOSED"
-      },
-      constraints: [{
-        name: "type_selection",
-        errorMessage: "Veuillez sélectionner un type de projet"
-      }]
+        ]
+      }
     };
   }
 
@@ -141,39 +147,34 @@ export class ProjectFormSpecifications {
       dataType: DataType.STRING,
       expectMultipleValues: false,
       required: true,
-      constraints: [{
-        name: "lead_validation",
-        valuesEndpoint: {
-          protocol: "HTTPS",
-          uri: "/api/users/project-leads",
-          searchField: "name",
-          paginationStrategy: "PAGE_NUMBER",
-          debounceMs: 300,
-          minSearchLength: 2,
-          responseMapping: {
-            dataField: "users",
-            totalField: "total",
-            hasNextField: "hasNext"
-          },
-          requestParams: {
-            pageParam: "page",
-            limitParam: "limit",
-            searchParam: "search",
-            defaultLimit: 15
-          },
-          cacheStrategy: "SHORT_TERM"
+      valuesEndpoint: {
+        protocol: "HTTPS",
+        uri: "/api/users/project-leads",
+        method: "GET",
+        mode: "SUGGESTIONS",
+        searchField: "name",
+        paginationStrategy: "PAGE_NUMBER",
+        debounceMs: 300,
+        minSearchLength: 2,
+        responseMapping: {
+          dataField: "users",
+          totalField: "total",
+          hasNextField: "hasNext"
         },
-        errorMessage: "Veuillez sélectionner un chef de projet valide"
-      }]
+        requestParams: {
+          pageParam: "page",
+          limitParam: "limit",
+          searchParam: "search",
+          defaultLimit: 15
+        },
+        cacheStrategy: "SHORT_TERM"
+      }
     };
   }
 
   // Champ équipe avec contraintes conditionnelles
   static getTeamMembersSpec(projectType?: string): InputFieldSpec {
-    const constraints: ConstraintDescriptor[] = [{
-      name: "team_selection",
-      errorMessage: "Veuillez sélectionner des membres d'équipe valides"
-    }];
+    const constraints: ConstraintDescriptor[] = [];
 
     // Contraintes conditionnelles selon le type de projet
     if (projectType) {
@@ -187,10 +188,15 @@ export class ProjectFormSpecifications {
       dataType: DataType.STRING,
       expectMultipleValues: true,
       required: false,
+      constraints: [
+        ...constraints
+      ],
       // v2: valuesEndpoint déplacé au niveau du champ
       valuesEndpoint: {
         protocol: "HTTPS",
         uri: "/api/users/team-members",
+        method: "GET",
+        mode: "SUGGESTIONS",
         searchField: "name", 
         paginationStrategy: "PAGE_NUMBER",
         debounceMs: 300,
@@ -206,8 +212,7 @@ export class ProjectFormSpecifications {
           defaultLimit: 20
         },
         cacheStrategy: "SHORT_TERM"
-      },
-      constraints
+      }
     };
   }
 
@@ -223,9 +228,12 @@ export class ProjectFormSpecifications {
     const rule = sizeRules[projectType] || { min: 1, max: 10 };
 
     return {
-      name: "team_size",
-      min: rule.min,
-      max: rule.max,
+      name: "arraySize",
+      type: "object",
+      params: { 
+        minItems: rule.min,
+        maxItems: rule.max
+      },
       errorMessage: `L'équipe doit avoir entre ${rule.min} et ${rule.max} membres pour ce type de projet`
     };
   }

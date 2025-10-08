@@ -1333,7 +1333,7 @@ export const CreditCardConstraintProposal: NewConstraintProposal = {
         name: "acceptedTypes",
         type: "string[]",
         description: "Types de cartes acceptées (visa, mastercard, amex, etc.)",
-        required: false
+        optional: true
       }
     ],
     behavior: {
@@ -1352,11 +1352,13 @@ export const CreditCardConstraintProposal: NewConstraintProposal = {
         dataType: DataType.STRING,
         expectMultipleValues: false,
         required: true,
-        constraints: [{
-          name: "credit_card_validation",
-          acceptedTypes: ["visa"],
-          errorMessage: "Numéro de carte Visa invalide"
-        }]
+        constraints: [
+          {
+            name: "credit_card_validation",
+            type: "custom",
+            params: { acceptedTypes: ["visa"] }
+          }
+        ]
       },
       testCases: [
         {

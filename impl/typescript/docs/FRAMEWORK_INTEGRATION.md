@@ -148,12 +148,16 @@ import { InputFieldSpec } from 'input-spec';
         (blur)="validateEmail()"
         [class.error]="emailError"
       />
-      <div *ngIf="emailError" class="error-message">{{ emailError }}</div>
+      @if (emailError) {
+        <div class="error-message">{{ emailError }}</div>
+      }
       
       <select [(ngModel)]="country" (focus)="loadCountries()">
-        <option *ngFor="let country of countries" [value]="country.value">
-          {{ country.label }}
-        </option>
+        @for (country of countries; track country.value) {
+          <option [value]="country.value">
+            {{ country.label }}
+          </option>
+        }
       </select>
     </form>
   `

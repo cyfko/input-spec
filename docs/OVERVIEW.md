@@ -95,16 +95,17 @@ Imaginons un champ "Assigné à" dans un système de tickets :
   "dataType": "STRING",
   "expectMultipleValues": false,
   "required": true,
-  "constraints": [{
-    "name": "user_selection",
-    "valuesEndpoint": {
-      "uri": "/api/users",
-      "searchField": "name",
-      "paginationStrategy": "PAGE_NUMBER",
-      "responseMapping": { "dataField": "users" }
-    }
-  }]
+  "valuesEndpoint": {
+    "protocol": "HTTPS",
+    "uri": "/api/users",
+    "method": "GET",
+    "mode": "SUGGESTIONS",
+    "searchField": "name",
+    "paginationStrategy": "PAGE_NUMBER",
+    "responseMapping": { "dataField": "users" }
+  }
 }
+```
 ```
 
 **💻 Côté client** - Rendu automatique :

@@ -25,7 +25,24 @@ const emailFieldSpec: InputFieldSpec = {
   ]
 };
 
-// 2. Create validator instance
+// 2. Cr        <select
+          formControlName="country"
+          class="form-control mt-2"
+          [class.is-invalid]="hasError('country')"
+        >
+          <option value="">Select a country</option>
+          @for (country of countries; track country.value) {
+            <option [value]="country.value">
+              {{ country.label }}
+            </option>
+          }
+        </select>
+      </div>
+      @if (hasError('country')) {
+        <div class="invalid-feedback">
+          {{ getErrorMessage('country') }}
+        </div>
+      }stance
 const validator = new FieldValidator();
 
 // 3. Validate user input
@@ -680,9 +697,11 @@ export class UserFormComponent implements OnInit, OnDestroy {
         [class.is-invalid]="hasError('email')"
         placeholder="Enter your email address"
       />
-      <div *ngIf="hasError('email')" class="invalid-feedback">
-        {{ getErrorMessage('email') }}
-      </div>
+      @if (hasError('email')) {
+        <div class="invalid-feedback">
+          {{ getErrorMessage('email') }}
+        </div>
+      }
     </div>
 
     <!-- Password Field -->
@@ -696,9 +715,11 @@ export class UserFormComponent implements OnInit, OnDestroy {
         [class.is-invalid]="hasError('password')"
         placeholder="Create a secure password"
       />
-      <div *ngIf="hasError('password')" class="invalid-feedback">
-        {{ getErrorMessage('password') }}
-      </div>
+      @if (hasError('password')) {
+        <div class="invalid-feedback">
+          {{ getErrorMessage('password') }}
+        </div>
+      }
       <small class="form-text text-muted">
         Password must contain uppercase, lowercase, number and special character
       </small>
@@ -738,28 +759,29 @@ export class UserFormComponent implements OnInit, OnDestroy {
     <div class="form-group">
       <label>Skills (select 1-5) *</label>
       <div class="skills-container">
-        <div 
-          *ngFor="let skill of skills" 
-          class="form-check"
-        >
-          <input
-            [id]="'skill-' + skill.value"
-            type="checkbox"
-            class="form-check-input"
-            [checked]="isSkillSelected(skill.value)"
-            (change)="onSkillChange(skill.value, $event.target.checked)"
-          />
-          <label 
-            [for]="'skill-' + skill.value" 
-            class="form-check-label"
-          >
-            {{ skill.label }}
-          </label>
+        @for (skill of skills; track skill.value) {
+          <div class="form-check">
+            <input
+              [id]="'skill-' + skill.value"
+              type="checkbox"
+              class="form-check-input"
+              [checked]="isSkillSelected(skill.value)"
+              (change)="onSkillChange(skill.value, $event.target.checked)"
+            />
+            <label 
+              [for]="'skill-' + skill.value" 
+              class="form-check-label"
+            >
+              {{ skill.label }}
+            </label>
+          </div>
+        }
+      </div>
+      @if (hasError('skills')) {
+        <div class="invalid-feedback d-block">
+          {{ getErrorMessage('skills') }}
         </div>
-      </div>
-      <div *ngIf="hasError('skills')" class="invalid-feedback d-block">
-        {{ getErrorMessage('skills') }}
-      </div>
+      }
     </div>
 
     <!-- Submit Button -->
@@ -772,11 +794,13 @@ export class UserFormComponent implements OnInit, OnDestroy {
     </button>
     
     <!-- Form Debug (remove in production) -->
-    <div class="mt-4" *ngIf="false">
-      <h5>Form Debug:</h5>
-      <pre>{{ userForm.value | json }}</pre>
-      <p>Form Valid: {{ userForm.valid }}</p>
-    </div>
+    @if (false) {
+      <div class="mt-4">
+        <h5>Form Debug:</h5>
+        <pre>{{ userForm.value | json }}</pre>
+        <p>Form Valid: {{ userForm.valid }}</p>
+      </div>
+    }
     
   </form>
 </div>
