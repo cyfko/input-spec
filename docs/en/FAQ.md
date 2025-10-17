@@ -1,7 +1,9 @@
+
 layout: default
 title: FAQ
 nav_order: 7
 description: "Frequently asked questions about the protocol and its implementations."
+nav_exclude: true
 
 [🇫🇷 French](../FAQ.md) | [🇬🇧 English](./FAQ.md)
 

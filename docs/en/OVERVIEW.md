@@ -1,7 +1,9 @@
+
 layout: default
 title: Overview
 nav_order: 2
 description: "Protocol overview, objectives, and comparison with existing solutions."
+nav_exclude: true
 
 
 

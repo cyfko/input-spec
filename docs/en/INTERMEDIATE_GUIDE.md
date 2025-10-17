@@ -1,8 +1,10 @@
+
 # Language selector
 layout: default
 title: Intermediate Guide
 nav_order: 4
 description: "Intermediate features, configuration, and concrete scenarios."
+nav_exclude: true
 
 [🇫🇷 French](../INTERMEDIATE_GUIDE.md) | [🇬🇧 English](./INTERMEDIATE_GUIDE.md)
 # 🎓 Intermediate Guide
