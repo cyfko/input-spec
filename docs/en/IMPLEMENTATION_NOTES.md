@@ -1,4 +1,10 @@
-[🇫🇷 French](../IMPLEMENTATION_NOTES.md) | [🇬🇧 English](./IMPLEMENTATION_NOTES.md)
+---
+layout: default
+title: Implementation Notes
+nav_order: 6
+description: "Intégration Frontend (Angular · React · Vue · Svelte)."
+---
+[🇫🇷 Français](./IMPLEMENTATION_NOTES.md) | [🇬🇧 English](./en/IMPLEMENTATION_NOTES.md)
 
 # Implementation Notes (Non-normative Extensions)
 

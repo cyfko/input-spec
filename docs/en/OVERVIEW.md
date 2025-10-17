@@ -1,13 +1,10 @@
-
+---
 layout: default
 title: Overview
-nav_order: 2
-description: "Protocol overview, objectives, and comparison with existing solutions."
-nav_exclude: true
-
-
-
-[🇫🇷 French](../OVERVIEW.md) | [🇬🇧 English](./OVERVIEW.md)
+nav_order: 1
+description: "Présentation du protocole, objectifs et comparaisons avec les solutions existantes."
+---
+[🇫🇷 Français](./OVERVIEW.md) | [🇬🇧 English](./en/OVERVIEW.md)
 
 
 # Dynamic Input Field Specification Protocol v2.1

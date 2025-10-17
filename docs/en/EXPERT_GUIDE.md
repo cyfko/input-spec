@@ -1,12 +1,10 @@
-
+---
 layout: default
 title: Expert Guide
 nav_order: 5
 description: "Cas avancés, optimisations et implémentations spécifiques au protocole."
-nav_exclude: true
-
-
-[🇫🇷 French](../EXPERT_GUIDE.md) | [🇬🇧 English](./EXPERT_GUIDE.md)
+---
+[🇫🇷 Français](./EXPERT_GUIDE.md) | [🇬🇧 English](./en/EXPERT_GUIDE.md)
 # 🎓 Expert Guide
 
 *Internal architecture, advanced optimizations, and protocol contributions*

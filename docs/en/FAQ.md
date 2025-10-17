@@ -1,11 +1,10 @@
-
+---
 layout: default
 title: FAQ
 nav_order: 7
-description: "Frequently asked questions about the protocol and its implementations."
-nav_exclude: true
-
-[🇫🇷 French](../FAQ.md) | [🇬🇧 English](./FAQ.md)
+description: "Questions fréquemment posées sur le protocole et ses implémentations."
+---
+[🇫🇷 Français](./FAQ.md) | [🇬🇧 English](./en/FAQ.md)
 
 # ❓ FAQ and Real-World Scenarios
 

@@ -1,16 +1,16 @@
-- title: "Overview"
+- title: "Généralités"
   url: /OVERVIEW
-- title: "Quick Start"
+- title: "Démarrage rapide"
   url: /QUICK_START
-- title: "Frontend Integration"
+- title: "Intégration Frontend"
   url: /FRONTEND_INTEGRATION
-- title: "Intermediate Guide"
+- title: "Guide Intermédiaire"
   url: /INTERMEDIATE_GUIDE
-- title: "Expert Guide"
+- title: "Guide Expert"
   url: /EXPERT_GUIDE
 - title: "Migration v1→v2"
   url: /MIGRATION_V1_V2
-- title: "Implementation Notes"
+- title: "Notes d'Implémentation"
   url: /IMPLEMENTATION_NOTES
 - title: "FAQ"
   url: /FAQ

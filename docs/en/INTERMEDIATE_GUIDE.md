@@ -1,12 +1,10 @@
-
-# Language selector
+---
 layout: default
 title: Intermediate Guide
 nav_order: 4
-description: "Intermediate features, configuration, and concrete scenarios."
-nav_exclude: true
-
-[🇫🇷 French](../INTERMEDIATE_GUIDE.md) | [🇬🇧 English](./INTERMEDIATE_GUIDE.md)
+description: "Fonctionnalités intermédiaires, configuration et scénarios concrets."
+---
+[🇫🇷 Français](./INTERMEDIATE_GUIDE.md) | [🇬🇧 English](./en/INTERMEDIATE_GUIDE.md)
 # 🎓 Intermediate Guide
 
 *Mastering the protocol for advanced use cases*
