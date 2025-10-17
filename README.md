@@ -1,4 +1,5 @@
-# Dynamic Input Field Specification Protocol (v2.0.0)
+
+# Dynamic Input Field Specification Protocol (v2.1.0)
 
 *Protocole agnostique pour décrire, valider et alimenter dynamiquement des champs de saisie – version 2 unifiée (atomic constraints + domaine de valeurs centralisé).* 
 
@@ -25,7 +26,7 @@ Définissez côté serveur les champs (métadonnées, contraintes, domaine de va
 ### Valeur ajoutée unique
 
 - **Unification dynamique des domaines de valeurs**  
-  Permet de décrire aussi bien des listes statiques (`INLINE`) que des domaines dynamiques (endpoints paginés, suggestions, recherche distante) via un unique champ `valuesEndpoint` au niveau du champ.  
+  Permet de décrire aussi bien des listes statiques (`INLINE`) que des domaines dynamiques (endpoints paginés, suggestions, recherche avancée multi-critères) via un unique champ `valuesEndpoint` au niveau du champ.  
   → *Impossible avec JSON Schema, OpenAPI, Zod, Yup, etc.*
 
 - **Pipeline de validation déterministe et normatif**  
@@ -49,7 +50,43 @@ Définissez côté serveur les champs (métadonnées, contraintes, domaine de va
 
 ---
 
+
 ### 📎 [Liste des contraintes atomiques (Registry)](./PROTOCOL_SPECIFICATION.md#25-registry)
+
+### 🔍 Recherche avancée : `searchParams` et `searchParamsSchema`
+
+Depuis la version 2.1, le protocole permet de décrire des paramètres de recherche avancés pour les endpoints distants via :
+- `searchParams` : objet clé/valeur transmis en query (GET) ou body (POST)
+- `searchParamsSchema` : schéma JSON Schema décrivant chaque clé (type, description, enum, etc.)
+
+**Exemple :**
+```json
+{
+  "protocol": "HTTPS",
+  "uri": "/api/items",
+  "method": "POST",
+  "searchParams": { "name": "foo", "status": "active" },
+  "searchParamsSchema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Nom de l’item à rechercher (recherche partielle autorisée)"
+      },
+      "status": {
+        "type": "string",
+        "description": "Statut de l’item (ex: active, archived, pending)",
+        "enum": ["active", "archived", "pending"]
+      }
+    },
+    "required": ["name"]
+  },
+  "paginationStrategy": "PAGE_NUMBER",
+  "responseMapping": { "dataField": "data" }
+}
+```
+
+Ce mécanisme permet la génération automatique d’UI de recherche, la validation locale, et l’interopérabilité avec des agents IA (MCP, etc.).
 
 ---
 
@@ -311,4 +348,4 @@ Licence MIT – voir `LICENSE`.
 
 **Fait avec ❤️ par la communauté**
 
-**Version protocole**: 2.0.0 • **Dernière mise à jour**: Octobre 2025
+**Version protocole**: 2.1.0 • **Dernière mise à jour**: Octobre 2025

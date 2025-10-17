@@ -155,7 +155,7 @@ Unified representation for value sourcing.
 ### 2.6 Validation Pipeline (Normative)
 
 Pseudocode:
-```
+```ts
 function validate(fieldSpec, input): ValidationResult {
   // 1. REQUIRED
   if (fieldSpec.required && isEmpty(input)) return error('required');
@@ -200,7 +200,7 @@ Multiple errors MAY share the same `constraintName` (e.g. multi-values). Clients
 
 ---
 
-## 3. Examples (v2)
+## 3. Examples (v2.1)
 
 ### 3.1 Static Enumeration (INLINE Closed Domain)
 ```json
@@ -289,233 +289,87 @@ Multiple errors MAY share the same `constraintName` (e.g. multi-values). Clients
 }
 ```
 
+
 ### 3.6 Suggestions (Non-Closed Domain)
-```json
-| `minSearchLength` | integer | | Minimum characters required before triggering search (default: 0) |
-
-**Pagination Strategies:**
-
-| Strategy | Description | Use Case |
-|----------|-------------|----------|
-| `NONE` | No pagination, returns all values | Small, static datasets (< 100 items) |
-| `PAGE_NUMBER` | Page-based (page 1, 2, 3...) | Traditional pagination |
-
-### 2.4 ResponseMapping
-
-Describes where to find information in the endpoint response.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `dataField` | string | ✓ | Field containing the array of `ValueAlias` |
-| `pageField` | string | | Field containing current page number |
-| `pageSizeField` | string | | Field containing number of items in this page |
-| `totalField` | string | | Field containing total count across all pages |
-| `hasNextField` | string | | Field indicating if there's a next page (boolean) |
-
-**Note:** If `dataField` is absent, the root response is assumed to be the array of `ValueAlias`.
-
-### 2.5 RequestParams
-
-Describes how to send pagination and search parameters in the request.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `pageParam` | string | conditional | Parameter name for page number (required for `PAGE_NUMBER`) |
-| `limitParam` | string | | Parameter name for page size |
-| `searchParam` | string | | Parameter name for search query (e.g., "search", "q", "filter") |
-| `defaultLimit` | integer | | Default page size if not specified |
-
-### 2.6 ValueAlias
-
-Represents a single value option.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `value` | any | ✓ | Actual value to send back to server (used as-is) |
-| `label` | string | ✓ | Display text (shown to user without transformation) |
-
-**Important:** 
-- `value` is returned to server **exactly as received** (no transformation)
-- `label` is displayed to user **without any transformation**
-
----
-
-## 3. Complete Examples
-
-### Example 1: Simple Text Input
+Exemple d’un champ qui propose des suggestions mais n’impose pas l’appartenance à un domaine fermé :
 ```json
 {
-  "displayName": "Username",
-  "description": "User's unique identifier",
+  "displayName": "Ville de naissance",
+  "dataType": "STRING",
+  "expectMultipleValues": false,
+  "required": false,
+  "valuesEndpoint": {
+    "protocol": "HTTPS",
+    "uri": "/api/cities",
+    "mode": "SUGGESTIONS",
+    "searchParams": { "q": "paris" },
+    "searchParamsSchema": {
+      "type": "object",
+      "properties": {
+        "q": { "type": "string", "description": "Nom partiel de la ville" }
+      },
+      "required": ["q"]
+    },
+    "paginationStrategy": "PAGE_NUMBER"
+  },
+  "constraints": []
+}
+```
+
+### 3.7 Advanced Search (searchParams & searchParamsSchema)
+Exemple d’un champ avec recherche multi-critères structurée :
+```json
+{
+  "displayName": "Produit",
   "dataType": "STRING",
   "expectMultipleValues": false,
   "required": true,
-  "constraints": [
-    {
-      "name": "value",
-      "min": 3,
-      "max": 20,
-      "pattern": "^[a-zA-Z0-9_]+$",
-      "description": "Username (3-20 alphanumeric characters)",
-      "errorMessage": "Username must be 3-20 characters, alphanumeric with underscores"
-    }
-  ]
+  "valuesEndpoint": {
+    "protocol": "HTTPS",
+    "uri": "/api/products",
+    "method": "POST",
+    "searchParams": { "name": "chaise", "category": "mobilier" },
+    "searchParamsSchema": {
+      "type": "object",
+      "properties": {
+        "name": { "type": "string", "description": "Nom du produit (recherche partielle)" },
+        "category": { "type": "string", "description": "Catégorie du produit" }
+      },
+      "required": ["name"]
+    },
+    "paginationStrategy": "PAGE_NUMBER",
+    "responseMapping": { "dataField": "results" }
+  },
+  "constraints": []
 }
 ```
 
-### Example 2: Numeric Range Input
+### 3.8 Boolean Field
+Champ booléen simple :
 ```json
 {
-  "displayName": "Price",
-  "description": "Price filter range",
-  "dataType": "NUMBER",
+  "displayName": "Actif ?",
+  "dataType": "BOOLEAN",
   "expectMultipleValues": false,
   "required": true,
-  "constraints": [
-    {
-      "name": "value",
-      "min": 0,
-      "description": "Price value",
-      "errorMessage": "Price must be greater than 0",
-      "defaultValue": 0
-    }
-  ]
+  "constraints": []
 }
 ```
 
-### Example 3: Email Input with Pattern
+### 3.9 Custom Constraint
+Exemple d’utilisation d’un validateur customisé :
 ```json
 {
-  "displayName": "Email Address",
-  "description": "Contact email address",
+  "displayName": "Code promotionnel",
   "dataType": "STRING",
-  "expectMultipleValues": false,
-  "required": true,
-  "constraints": [
-    {
-      "name": "value",
-      "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
-      "format": "email",
-      "description": "Valid email address",
-      "errorMessage": "Please provide a valid email address"
-    }
-  ]
-}
-```
-
-### Example 4: Static Select Field
-```json
-{
-  "displayName": "Status",
-  "description": "Filter by status",
-  "dataType": "STRING",
-  "expectMultipleValues": false,
-  "required": true,
-  "constraints": [
-    {
-      "name": "value",
-      "description": "Item status",
-      "errorMessage": "Please select a status",
-      "enumValues": [
-        { "value": "active", "label": "Active" },
-        { "value": "inactive", "label": "Inactive" },
-        { "value": "pending", "label": "Pending" }
-      ]
-    }
-  ]
-}
-```
-
-### Example 5: Searchable User Select with Pagination
-```json
-{
-  "displayName": "Assigned To",
-  "description": "Assign task to user",
-  "dataType": "STRING",
-  "expectMultipleValues": false,
-  "required": true,
-  "constraints": [
-    {
-      "name": "value",
-      "description": "User to assign task to",
-      "errorMessage": "Please select a user",
-      "valuesEndpoint": {
-        "protocol": "HTTPS",
-        "uri": "/api/users",
-        "method": "GET",
-        "searchField": "name",
-        "paginationStrategy": "PAGE_NUMBER",
-        "cacheStrategy": "SHORT_TERM",
-        "debounceMs": 300,
-        "minSearchLength": 2,
-        "responseMapping": {
-          "dataField": "data",
-          "pageField": "page",
-          "pageSizeField": "pageSize",
-          "totalField": "total",
-          "hasNextField": "hasNext"
-        },
-        "requestParams": {
-          "pageParam": "page",
-          "limitParam": "limit",
-          "searchParam": "search",
-          "defaultLimit": 50
-        }
-      }
-    }
-  ]
-}
-```
-
-### Example 6: Multi-Select Tags with Search
-```json
-{
-  "displayName": "Tags",
-  "description": "Select relevant tags for content",
-  "dataType": "STRING",
-  "expectMultipleValues": true,
-  "required": true,
-  "constraints": [
-    {
-      "name": "value",
-      "min": 1,
-      "max": 5,
-      "description": "Select 1 to 5 relevant tags",
-      "errorMessage": "You must select between 1 and 5 tags",
-      "valuesEndpoint": {
-        "protocol": "HTTPS",
-        "uri": "/api/tags",
-        "searchField": "name",
-        "paginationStrategy": "NONE",
-        "cacheStrategy": "LONG_TERM",
-        "debounceMs": 200,
-        "minSearchLength": 1,
-        "responseMapping": {
-          "dataField": "tags"
-        },
-        "requestParams": {
-          "searchParam": "q"
-        }
-      }
-    }
-  ]
-}
-```
-
-### Example 7: Date Range Input
-```json
-{
-  "displayName": "Created Date",
-  "description": "Filter by creation date",
-  "dataType": "DATE",
   "expectMultipleValues": false,
   "required": false,
   "constraints": [
     {
-      "name": "value",
-      "format": "iso8601",
-      "description": "Creation date",
-      "errorMessage": "Please provide a valid date"
+      "name": "promoCheck",
+      "type": "custom",
+      "params": { "key": "promoCode", "minDiscount": 10 },
+      "errorMessage": "Code non valide ou réduction insuffisante"
     }
   ]
 }
