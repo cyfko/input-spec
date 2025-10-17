@@ -10,6 +10,7 @@
 [![CI Status](https://img.shields.io/badge/build-passing-success)](#)
 [![Migration Guide](https://img.shields.io/badge/migration-v1→v2-orange)](./docs/MIGRATION_V1_V2.md)
 [![Impl Notes](https://img.shields.io/badge/impl-notes-informational)](./docs/IMPLEMENTATION_NOTES.md)
+[![Docs Site](https://img.shields.io/badge/docs-online-blueviolet)](https://cyfko.github.io/input-spec/)
 
 > La branche principale reflète la spécification **v2**. Le modèle v1 (composite constraints, `enumValues`) est **déprécié**. Voir `docs/MIGRATION_V1_V2.md`.
 
@@ -17,18 +18,87 @@
 
 Définissez côté serveur les champs (métadonnées, contraintes, domaine de valeurs) et laissez les clients appliquer une validation déterministe et fournir une UX riche (autocomplete, pagination, filtrage) sans logique dupliquée.
 
-### 🔍 Pourquoi pas simplement JSON Schema / Zod / Yup ?
-| Besoin | Ce projet | JSON Schema | Zod / Yup |
-|--------|-----------|-------------|-----------|
-| Domaine de valeurs dynamique (search + pagination) | ✅ Modèle unifié `valuesEndpoint` | ❌ (extensions ad-hoc) | ❌ (logique code) |
-| Mode suggestions vs fermé | ✅ `mode: SUGGESTIONS/CLOSED` | ❌ | ❌ |
-| Pipeline inter-langages normatif | ✅ Spécifié | Partiel (validation générique) | ❌ (exécution runtime locale) |
-| Migration versionnée protocolaire | ✅ Pages dédiées | ⚠️ (schéma évolutif, pas pipeline) | ❌ |
-| Séparation norme / impl extensions | ✅ (Impl Notes) | ❌ | ❌ |
+---
+
+## 🚀 Pourquoi choisir le protocole Dynamic Input Field Specification v2 ?
+
+### Valeur ajoutée unique
+
+- **Unification dynamique des domaines de valeurs**  
+  Permet de décrire aussi bien des listes statiques (`INLINE`) que des domaines dynamiques (endpoints paginés, suggestions, recherche distante) via un unique champ `valuesEndpoint` au niveau du champ.  
+  → *Impossible avec JSON Schema, OpenAPI, Zod, Yup, etc.*
+
+- **Pipeline de validation déterministe et normatif**  
+  L’ordre de validation est strictement défini : `required` → type → membership (si `valuesEndpoint.mode = CLOSED`) → contraintes atomiques ordonnées.  
+  → *Assure la cohérence des erreurs et la reproductibilité cross-langages.*
+
+- **Contraintes atomiques extensibles**  
+  Chaque contrainte est atomique (`type` du registre, `params` dédiés), ce qui permet d’ajouter des règles métier ou des extensions custom sans casser la rétrocompatibilité.
+
+- **Séparation stricte entre données, validation et UI**  
+  Le protocole ne spécifie aucun rendu, mais fournit tous les hints nécessaires (`formatHint`, `errorMessage`, `description`) pour générer dynamiquement des interfaces riches, multi-plateformes.
+
+- **Gestion native des domaines ouverts/fermés**  
+  `valuesEndpoint.mode` distingue un domaine fermé (`CLOSED`) d’un domaine ouvert à suggestions (`SUGGESTIONS`), couvrant des cas avancés (tags, recherche utilisateur, etc.) sans hack.
+
+- **Interopérabilité multi-langages et multi-frameworks**  
+  La spec est conçue pour être consommée aussi bien côté backend (Java, Node, Python…) que frontend (React, Angular, Vue, Svelte…), sans duplication de logique.
+
+- **Migration et évolutivité**  
+  Migration mécanique v1→v2 prévue, extensibilité future (nouvelles contraintes, pagination, etc.) sans breaking change.
+
+---
+
+### 📎 [Liste des contraintes atomiques (Registry)](./PROTOCOL_SPECIFICATION.md#25-registry)
+
+---
+
+### 🧠 Utilité dans les protocoles de modèles d’IA (ex. MCP)
+
+- **Configuration dynamique de modèles d’IA**  
+  Permet de décrire et valider dynamiquement les hyperparamètres, options et choix de pipeline d’un modèle (LLM, vision, etc.), avec gestion des domaines évolutifs (datasets, stratégies, etc.).
+
+- **Interopérabilité multi-agent et multi-plateforme**  
+  Facilite la génération automatique d’interfaces de configuration et la validation locale dans des orchestrateurs, notebooks, UI web, agents CLI, etc.
+
+- **Gestion des domaines contextuels et évolutifs**  
+  Grâce à `valuesEndpoint`, les listes de choix (datasets, modèles, devices…) sont toujours à jour et contextualisées.
+
+- **Validation déterministe et auditabilité**  
+  Les erreurs sont précises, localisées et cohérentes entre UI, API et backend ; la spec formelle facilite l’audit et la reproductibilité des runs.
+
+- **Extensibilité et versioning**  
+  Ajout/retrait de paramètres sans breaking change, versionnement des specs, adaptation aux évolutions des modèles.
+
+---
+
+### 🥊 Comparatif avec les standards existants
+
+| Critère / Solution         | input-spec v2 | JSON Schema | OpenAPI | Zod/Yup/Ajv | Formik/RHF | MCP custom |
+|---------------------------|:-------------:|:-----------:|:-------:|:-----------:|:----------:|:----------:|
+| **Domaines dynamiques**   |      ✅       |     ❌      |   ❌    |     ❌      |     ❌     |     ⚠️     |
+| **Enum + suggestions**    |      ✅       |     ❌      |   ❌    |     ❌      |     ❌     |     ⚠️     |
+| **Pipeline normatif**     |      ✅       |     ❌      |   ❌    |     ❌      |     ❌     |     ❌     |
+| **Interop multi-langage** |      ✅       |     ✅      |   ✅    |     ❌      |     ❌     |     ⚠️     |
+| **Extensible/versionné**  |      ✅       |     ⚠️      |   ⚠️    |     ✅      |     ❌     |     ⚠️     |
+| **UI hints**              |      ✅       |     ⚠️      |   ⚠️    |     ❌      |     ⚠️     |     ❌     |
+| **Migration v1→v2**       |      ✅       |     ❌      |   ❌    |     ❌      |     ❌     |     ❌     |
+
+---
+
+### 🎯 En résumé
+
+Le protocole v2 apporte une **vraie valeur ajoutée** pour :
+- Générer dynamiquement des formulaires riches, multi-plateformes, avec domaines de valeurs distants ou évolutifs.
+- Garantir la cohérence de validation entre plusieurs langages ou stacks.
+- Offrir un modèle extensible, transmissible, normatif, là où les standards existants sont trop statiques ou trop couplés à une stack.
+- Servir de socle pour la configuration dynamique, l’orchestration et l’auditabilité des modèles d’IA (MCP, MLOps, etc.).
 
 > Ce protocole complète plutôt qu’il ne remplace ces outils : vous pouvez générer plus tard un JSON Schema dérivé pour du gating API.
 
-### Le problème résolu
+---
+
+## Le problème résolu
 
 ```typescript
 // ❌ Avant : Logique dupliquée et incohérente
@@ -38,9 +108,11 @@ const validateEmailB = (email:string) => email.includes('@'); // Différent !
 // ✅ Après : Spécification centrale
 const emailFieldSpec = {
   displayName: 'Email', dataType: 'STRING', required: true,
-  constraints: [{ name: 'pattern', type: 'pattern', params: { regex: '^[^@]+@[^@]+\\.[^@]+$' } }]
+  constraints: [{ name: 'pattern', type: 'pattern', params: { regex: '^[^@]+@[^@]+\\.[^@]+$' }, errorMessage: 'Format email requis' }]
 };
 ```
+
+---
 
 ## ✨ Fonctionnalités clés (v2)
 
@@ -57,6 +129,8 @@ const emailFieldSpec = {
 | Extensibilité | `custom` + futurs types | Stable |
 
 > Les éléments "Extension" ne sont pas normatifs (hors cœur protocole) et sont documentés dans `docs/IMPLEMENTATION_NOTES.md`.
+
+---
 
 ## 🚀 Exemple rapide (v2 pur)
 
@@ -89,7 +163,7 @@ const emailFieldSpec = {
 import { FieldValidator } from '@cyfko/input-spec';
 const validator = new FieldValidator();
 const result = await validator.validate(fieldSpec, selectedUserId);
-if(!result.isValid) console.log(result.errors);
+if(!result.isValid) console.log(result.errors); // Affiche les erreurs si la validation échoue
 ```
 
 ### 💡 Hello World minimal
@@ -123,6 +197,8 @@ const resolver = new ValuesResolver(new FetchHttpClient(), new MemoryCacheProvid
 const { values } = await resolver.resolveValues(fieldSpec.valuesEndpoint!, { search: 'john', page: 1 });
 ```
 
+---
+
 ## 📚 Documentation
 
 | Niveau | Guide | Contenu |
@@ -133,11 +209,13 @@ const { values } = await resolver.resolveValues(fieldSpec.valuesEndpoint!, { sea
 
 ### 📖 Référence
 
-- Spécification : `PROTOCOL_SPECIFICATION.md`
-- Migration v1→v2 : `docs/MIGRATION_V1_V2.md`
-- Notes implémentation : `docs/IMPLEMENTATION_NOTES.md`
-- FAQ : `docs/FAQ.md`
-- Contribution : `docs/CONTRIBUTING.md`
+- [Spécification](./PROTOCOL_SPECIFICATION.md)
+- [Migration v1→v2](./docs/MIGRATION_V1_V2.md)
+- [Notes implémentation](./docs/IMPLEMENTATION_NOTES.md)
+- [FAQ](./docs/FAQ.md)
+- [Contribution](./docs/CONTRIBUTING.md)
+
+---
 
 ## 🛠️ Implémentations
 
@@ -164,11 +242,15 @@ npm install @cyfko/input-spec
 | Python | Planifié | - | - | - | Backlog |
 | C# | Planifié | - | - | - | Backlog |
 
+---
+
 ## 🎪 Exemples
 
 - Formulaire complet : `impl/typescript/examples/complete-form.ts`
 - Valeurs dynamiques : `impl/typescript/examples/dynamic-values.ts`
 - FAQ scénarios : `docs/FAQ.md`
+
+---
 
 ## 🏗️ Architecture (vue conceptuelle)
 
@@ -180,9 +262,13 @@ graph TB
   VALID --> ERR[Résultats Structurés]
 ```
 
+---
+
 ## 🎯 Cas d'usage
 
 Parfait pour : multi-formulaires, multi-clients, validation métier riche, configuration dynamique. Moins utile pour micro-apps statiques.
+
+---
 
 ## 🚀 Roadmap (post 2.0.0)
 
@@ -193,27 +279,35 @@ Parfait pour : multi-formulaires, multi-clients, validation métier riche, confi
 | 2.x | I18n messages, contraintes email/uuid natives | Backlog |
 | 3.0.0 | Retrait legacy adapter v1 (TS) | Prévision |
 
+---
+
 ## 🤝 Contribution
 
 Guide : `docs/CONTRIBUTING.md` – tests, implémentations supplémentaires, exemples réels bienvenus.
+
+---
 
 ## 📊 Observabilité communautaire
 
 - Stars / Forks / Issues : onglets GitHub
 - Contributions prioritaires : tests de conformité multi-langages, adaptateurs frameworks
 
+---
+
 ## 📄 Licence
 
 Licence MIT – voir `LICENSE`.
 
+---
+
 ## 🔗 Liens
 
-- Doc site : https://cyfko.github.io/input-spec/
-- Issues : ../../issues
-- Discussions : ../../discussions
-- Releases : ../../releases
-- Changelog TypeScript : `impl/typescript/CHANGELOG.md`
-- Changelog Java : `impl/java/CHANGELOG.md`
+- [Doc site](https://cyfko.github.io/input-spec/)
+- [Issues](../../issues)
+- [Discussions](../../discussions)
+- [Releases](../../releases)
+- [Changelog TypeScript](./impl/typescript/CHANGELOG.md)
+- [Changelog Java](./impl/java/CHANGELOG.md)
 
 **Fait avec ❤️ par la communauté**
 
