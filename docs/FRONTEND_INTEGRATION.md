@@ -5,6 +5,7 @@ nav_order: 3
 description: "Intégration Frontend (Angular · React · Vue · Svelte)."
 ---
 [🇫🇷 Français](./FRONTEND_INTEGRATION.md) | [🇬🇧 English](./en/FRONTEND_INTEGRATION.md)
+
 # Intégration Frontend (Angular · React · Vue · Svelte)
 
 Ce guide montre comment consommer le protocole **input-spec** côté client sans imposer de design visuel. Tous les exemples s'appuient uniquement sur les API publiques exportées.

@@ -6,6 +6,7 @@ description: "Cas avancés, optimisations et implémentations spécifiques au pr
 nav_exclude: true
 ---
 [🇫🇷 Français](./EXPERT_GUIDE.md) | [🇬🇧 English](./en/EXPERT_GUIDE.md)
+
 # 🎓 Expert Guide
 
 *Internal architecture, advanced optimizations, and protocol contributions*

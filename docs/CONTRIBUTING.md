@@ -5,6 +5,7 @@ nav_order: 8
 description: "Guide de contribution pour les développeurs et intégrateurs du projet."
 ---
 [🇫🇷 Français](./CONTRIBUTING.md) | [🇬🇧 English](./en/CONTRIBUTING.md)
+
 # 🤝 Guide de contribution
 
 *Comment participer au développement du Dynamic Input Field Specification Protocol*

@@ -5,6 +5,7 @@ nav_order: 1
 description: "Documentation du protocole – vue d’ensemble, guides et comparaisons client/serveur."
 ---
 [🇫🇷 Français](./index.md) | [🇬🇧 English](./en/index.md)
+
 # Documentation Complète - Input Field Specification Protocol
 
 Bienvenue dans la documentation officielle du projet **Dynamic Input Field Specification Protocol** ! 

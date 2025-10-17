@@ -5,6 +5,7 @@ nav_order: 4
 description: "Fonctionnalités intermédiaires, configuration et scénarios concrets."
 ---
 [🇫🇷 Français](./INTERMEDIATE_GUIDE.md) | [🇬🇧 English](./en/INTERMEDIATE_GUIDE.md)
+
 # 🎓 Guide intermédiaire
 
 *Maîtriser le protocole pour des cas d'usage avancés*

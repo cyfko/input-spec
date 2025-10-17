@@ -6,6 +6,7 @@ description: "Protocol documentation – overview, guides and client/server comp
 nav_exclude: true
 ---
 [🇫🇷 Français](./index.md) | [🇬🇧 English](./en/index.md)
+
 # Complete Documentation - Input Field Specification Protocol
 
 Welcome to the official documentation for the **Dynamic Input Field Specification Protocol**!

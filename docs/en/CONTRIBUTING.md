@@ -6,7 +6,7 @@ description: "Guide de contribution pour les développeurs et intégrateurs du p
 nav_exclude: true
 ---
 [🇫🇷 Français](./CONTRIBUTING.md) | [🇬🇧 English](./en/CONTRIBUTING.md)
----
+
 # 🤝 Guide de contribution
 
 *Comment participer au développement du Dynamic Input Field Specification Protocol*

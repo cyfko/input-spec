@@ -6,6 +6,7 @@ description: "Fonctionnalités intermédiaires, configuration et scénarios conc
 nav_exclude: true
 ---
 [🇫🇷 Français](./INTERMEDIATE_GUIDE.md) | [🇬🇧 English](./en/INTERMEDIATE_GUIDE.md)
+
 # 🎓 Intermediate Guide
 
 *Mastering the protocol for advanced use cases*
