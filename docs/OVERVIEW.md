@@ -4,19 +4,32 @@ title: Overview
 nav_order: 2
 description: "Présentation du protocole, objectifs et comparaisons avec les solutions existantes."
 ---
-# Dynamic Input Field Specification Protocol
 
-*Un protocole moderne pour les champs de formulaire intelligents et adaptatifs*
+# Dynamic Input Field Specification Protocol v2.1
 
-## 🎯 Le problème réel que nous résolvons
+*Le standard moderne pour des champs de formulaire intelligents, adaptatifs et interopérables*
 
-Combien de fois avez-vous dû coder la même logique de validation de formulaire ? Combien de fois avez-vous implémenté des dropdowns avec recherche, pagination et mise en cache ? Combien de fois avez-vous répété la validation côté client puis côté serveur ?
 
-Le **Dynamic Input Field Specification Protocol** répond à une frustration quotidienne du développement web : **l'absence de standardisation pour spécifier dynamiquement les champs de formulaire intelligents**. 
+## 🚩 Pourquoi ce protocole est unique ?
+
+Le **Dynamic Input Field Specification Protocol v2.1** résout enfin la fragmentation des formulaires dynamiques :
+
+- 🔥 **Standardisation totale** : une seule structure pour décrire contraintes, valeurs, validation et comportement
+- 🧩 **Interopérabilité** : front et back parlent le même langage, sans duplication
+- 🛠️ **Recherche avancée** : support natif des recherches multi-critères, pagination, cache, debouncing
+- 🧑‍💻 **Extensible et agnostique** : pas lié à un framework, ni à une techno
+- 🏗️ **Atomicité des contraintes** : chaque règle est indépendante, claire et télémetrée
+
 
 ## 🔍 Qu'est-ce que ce protocole ?
 
-Ce protocole définit une **méthode agnostique** pour décrire complètement un champ de saisie : ses contraintes, ses sources de valeurs, ses règles de validation et son comportement. Il permet de créer des formulaires adaptatifs qui se configurent automatiquement selon les métadonnées fournies par le serveur.
+Une **spécification universelle** pour décrire dynamiquement chaque champ de formulaire :
+
+- Métadonnées complètes (label, type, aide, etc.)
+- Contraintes atomiques (regex, min/max, custom, etc.)
+- Source de valeurs (statique ou distante, paginée, filtrée)
+- Validation pipeline ordonné et déterministe
+- Recherche avancée via `searchParams` et `searchParamsSchema` (JSON Schema)
 
 ### Architecture générale
 
@@ -58,11 +71,11 @@ graph TB
 
 ## 🚫 Ce que nous ne sommes PAS
 
-**Nous ne sommes pas** encore un autre framework de formulaires. Nous ne remplaçons pas React Hook Form, Formik ou Angular Forms. 
+- ❌ Un framework de formulaires (React, Angular, Vue…)
+- ❌ Un validateur de données (Joi, Yup, Zod…)
+- ❌ Un SDK ou une librairie imposée
 
-**Nous ne sommes pas** une nouvelle façon de valider des données. Joi, Yup et Zod excellent déjà dans ce domaine.
-
-**Nous sommes** un **protocole de communication** qui standardise comment décrire les champs de formulaire pour que vos systèmes front/back puissent collaborer sans code dupliqué.
+> **Nous sommes** un **protocole universel** : il décrit, il ne code pas. Il permet à vos outils, frameworks et langages de collaborer sans friction ni duplication.
 
 ## ✅ Notre valeur ajoutée concrète
 
@@ -84,57 +97,57 @@ graph TB
 - **Onboarding facilité** avec des patterns standards
 - **Time-to-market réduit** pour les nouveaux formulaires
 
-## 🎪 Démonstration rapide
 
-Imaginons un champ "Assigné à" dans un système de tickets :
+## 🎪 Démonstration avancée (v2.1)
 
-**🖥️ Côté serveur** - Spécification du champ :
+**Exemple : Recherche multi-critères sur un champ produit**
+
+**🖥️ Côté serveur** - Spécification du champ :
 ```json
 {
-  "displayName": "Assigné à",
-  "dataType": "STRING",
-  "expectMultipleValues": false,
-  "required": true,
-  "valuesEndpoint": {
-    "protocol": "HTTPS",
-    "uri": "/api/users",
-    "method": "GET",
-    "mode": "SUGGESTIONS",
-    "searchField": "name",
-    "paginationStrategy": "PAGE_NUMBER",
-    "responseMapping": { "dataField": "users" }
-  }
+    "displayName": "Produit",
+    "dataType": "STRING",
+    "expectMultipleValues": false,
+    "required": true,
+    "valuesEndpoint": {
+        "protocol": "HTTPS",
+        "uri": "/api/products",
+        "method": "POST",
+        "searchParams": { "name": "chaise", "category": "mobilier" },
+        "searchParamsSchema": {
+            "type": "object",
+            "properties": {
+                "name": { "type": "string", "description": "Nom du produit (recherche partielle)" },
+                "category": { "type": "string", "description": "Catégorie du produit" }
+            },
+            "required": ["name"]
+        },
+        "paginationStrategy": "PAGE_NUMBER",
+        "responseMapping": { "dataField": "results" }
+    },
+    "constraints": []
 }
 ```
 
-**💻 Côté client** - Rendu automatique :
+**💻 Côté client** - Adaptation automatique :
 ```typescript
-// Le composant s'adapte automatiquement à la spécification
-const AssigneeField = ({ fieldSpec }) => {
-  // ✅ Dropdown avec recherche automatique
-  // ✅ Pagination intégrée  
-  // ✅ Validation temps réel
-  // ✅ Cache intelligent
-  // ✅ Debouncing des requêtes
-  return <SmartSelectField spec={fieldSpec} />
-}
+const ProductField = ({ fieldSpec }) => (
+    <SmartSelectField spec={fieldSpec} /> // Recherche multi-critères, pagination, validation pipeline
+)
 ```
 
-**🔄 Flux d'interaction** :
+**🔄 Flux d'interaction** :
 ```mermaid
 sequenceDiagram
-    participant U as Utilisateur
-    participant C as Client
-    participant S as Serveur
-    
-    U->>C: Tape "joh"
-    C->>C: Debounce (300ms)
-    C->>S: GET /api/users?search=joh&page=1&limit=10
-    S->>C: {users: [{value:"usr_123", label:"John Doe"}]}
-    C->>C: Cache résultat (5min)
-    C->>U: Affiche "John Doe"
-    U->>C: Sélectionne utilisateur
-    C->>C: Valide: usr_123 ✅
+        participant U as Utilisateur
+        participant C as Client
+        participant S as Serveur
+        U->>C: Saisit "chaise" + sélectionne "mobilier"
+        C->>S: POST /api/products {name: "chaise", category: "mobilier", page:1, limit:10}
+        S->>C: {results: [{value:"prod_001", label:"Chaise design"}]}
+        C->>U: Affiche "Chaise design"
+        U->>C: Sélectionne produit
+        C->>C: Valide: prod_001 ✅
 ```
 
 ## 🚀 Pour qui est-ce fait ?
@@ -165,12 +178,12 @@ sequenceDiagram
 
 ## 🏗️ Implémentations disponibles
 
-| Langage | Status | Validation | Client HTTP | Cache | Tests |
-|---------|--------|------------|-------------|--------|--------|
-| **TypeScript** | ✅ Stable | ✅ Complète | ✅ Fetch/Axios | ✅ Mémoire | ✅ Jest |
-| **Java** | ✅ Stable | ✅ Complète | 🚧 En cours | 🚧 En cours | ✅ JUnit |
-| **Python** | 📋 Planifié | - | - | - | - |
-| **C#** | 📋 Planifié | - | - | - | - |
+| Langage | Status | Validation | Recherche avancée | Client HTTP | Cache | Tests |
+|---------|--------|------------|-------------------|-------------|--------|--------|
+| **TypeScript** | ✅ Stable | ✅ Complète | ✅ searchParams | ✅ Fetch/Axios | ✅ Mémoire | ✅ Jest |
+| **Java** | ✅ Stable | ✅ Complète | ✅ searchParams | 🚧 En cours | 🚧 En cours | ✅ JUnit |
+| **Python** | 📋 Planifié | - | - | - | - | - |
+| **C#** | 📋 Planifié | - | - | - | - | - |
 
 ## 🔧 Écosystème et intégrations
 
@@ -213,21 +226,22 @@ graph LR
     class SPRING,EXPRESS,DJANGO,NEST backend
 ```
 
-## 🎯 Feuille de route
 
-### ✅ Version 1.0 (Actuelle)
-- ✅ Protocole de base stabilisé
-- ✅ Validation TypeScript complète
-- ✅ Validation Java complète
-- ✅ Documentation exhaustive
+## 🗺️ Feuille de route
 
-### 🚧 Version 1.1 (En cours)
+### ✅ Version 2.1 (Actuelle)
+- ✅ Recherche avancée multi-critères (`searchParams`, `searchParamsSchema`)
+- ✅ Atomicité des contraintes
+- ✅ Documentation exhaustive et guides
+- ✅ Implémentations TypeScript & Java
+
+### 🚧 Version 2.2 (En cours)
 - 🚧 Client HTTP Java complet
 - 🚧 Système de cache Java
-- 🚧 Adaptateurs React/Vue
+- 🚧 Adaptateurs React/Vue/Svelte
 - 🚧 Métriques de performance
 
-### 📋 Version 2.0 (Planifiée)
+### 📋 Versions futures
 - 📋 Support des validations conditionnelles
 - 📋 Internationalisation native
 - 📋 Validation côté serveur intégrée
@@ -264,4 +278,4 @@ Témoignages :
 - 🤔 [FAQ](./FAQ.md)
 - 💬 [Discussions](../../discussions)
 
-*Dernière mise à jour : Octobre 2025*
+*Dernière mise à jour : Octobre 2025 (v2.1)*
