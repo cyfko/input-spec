@@ -1,51 +1,52 @@
+# Language selector
 layout: default
 title: Intermediate Guide
 nav_order: 4
-description: "Fonctionnalités intermédiaires, configuration et scénarios concrets."
+description: "Intermediate features, configuration, and concrete scenarios."
 
-[🇫🇷 Français](./INTERMEDIATE_GUIDE.md) | [🇬🇧 English](./en/INTERMEDIATE_GUIDE.md)
-# 🎓 Guide intermédiaire
+[🇫🇷 French](../INTERMEDIATE_GUIDE.md) | [🇬🇧 English](./INTERMEDIATE_GUIDE.md)
+# 🎓 Intermediate Guide
 
-*Maîtriser le protocole pour des cas d'usage avancés*
+*Mastering the protocol for advanced use cases*
 
-## 🎯 Objectifs de ce guide
+## 🎯 Guide Objectives
 
-Après avoir maîtrisé les bases, ce guide vous aidera à :
-- 🏗️ Architecturer des formulaires complexes avec validation orchestrée
-- 🔌 Intégrer le protocole avec vos frameworks existants
-- ⚡ Optimiser les performances et la gestion du cache
-- 🔒 Implémenter des validations conditionnelles et avancées
-- 🌐 Gérer les cas d'edge et la robustesse en production
+After mastering the basics, this guide will help you:
+- 🏗️ Architect complex forms with orchestrated validation
+- 🔌 Integrate the protocol with your existing frameworks
+- ⚡ Optimize performance and cache management
+- 🔒 Implement conditional and advanced validations
+- 🌐 Handle edge cases and production robustness
 
-## 📋 Cas d'usage : Formulaire de création de projet
+## 📋 Use Case: Project Creation Form
 
-Nous allons construire un formulaire complexe de création de projet qui démontre les capacités avancées du protocole.
+We will build a complex project creation form that demonstrates the advanced capabilities of the protocol.
 
-### Architecture du formulaire
+### Form Architecture
 
 ```mermaid
 graph TB
-    subgraph "Formulaire Projet"
-        NAME[📝 Nom du projet]
-        TYPE[🏷️ Type de projet]
-        LEAD[👤 Chef de projet]
-        TEAM[👥 Équipe]
-        TAGS[🏷️ Tags]
-        BUDGET[💰 Budget]
-        DEADLINE[📅 Date limite]
+  subgraph "Project Form"
+    NAME[📝 Project Name]
+    TYPE[🏷️ Project Type]
+    LEAD[👤 Project Lead]
+    TEAM[👥 Team]
+    TAGS[🏷️ Tags]
+    BUDGET[💰 Budget]
+    DEADLINE[📅 Deadline]
     end
     
-    subgraph "Dépendances"
-        TYPE --> TEAM
-        TYPE --> BUDGET
-        LEAD --> TEAM
+  subgraph "Dependencies"
+    TYPE --> TEAM
+    TYPE --> BUDGET
+    LEAD --> TEAM
     end
     
-    subgraph "Validations"
-        NAME --> VAL1[Unicité nom]
-        LEAD --> VAL2[Permissions utilisateur]
-        TEAM --> VAL3[Taille équipe selon type]
-        BUDGET --> VAL4[Limites budgétaires]
+  subgraph "Validations"
+    NAME --> VAL1[Name uniqueness]
+    LEAD --> VAL2[User permissions]
+    TEAM --> VAL3[Team size by type]
+    BUDGET --> VAL4[Budget limits]
     end
     
     classDef field fill:#e3f2fd
@@ -999,12 +1000,12 @@ interface FormPerformanceReport {
 }
 ```
 
-## 🎯 Cas d'usage avancés
+## 🎯 Advanced Use Cases
 
-### 1. Formulaires conditionnels complexes
+### 1. Complex Conditional Forms
 
 ```typescript
-// Gestion de formulaires avec logique conditionnelle avancée
+// Managing forms with advanced conditional logic
 export class ConditionalFormBuilder {
   
   buildProjectForm(userRole: string, projectContext?: ProjectContext): FormConfiguration {
@@ -1014,13 +1015,13 @@ export class ConditionalFormBuilder {
       submitButton: { text: 'Créer le projet', variant: 'primary' }
     };
     
-    // Champs de base pour tous les utilisateurs
+  // Base fields for all users
     config.fields.push(
       this.createField('projectName', { required: true }),
       this.createField('projectDescription', { required: false })
     );
     
-    // Champs conditionnels selon le rôle
+  // Conditional fields by role
     if (userRole === 'PROJECT_MANAGER' || userRole === 'ADMIN') {
       config.fields.push(
         this.createField('projectType', { required: true }),
@@ -1035,10 +1036,10 @@ export class ConditionalFormBuilder {
       );
     }
     
-    // Adapter selon le contexte d'édition
+  // Adapt according to edit context
     if (projectContext?.isEditing) {
       config.submitButton.text = 'Mettre à jour';
-      // Pré-remplir les valeurs existantes
+    // Pre-fill existing values
       config.initialData = projectContext.existingData;
     }
     
@@ -1058,20 +1059,20 @@ export class ConditionalFormBuilder {
 
 ## 🎉 Conclusion
 
-Ce guide intermédiaire vous a montré comment :
+This intermediate guide showed you how to:
 
-- 🏗️ **Architecturer des formulaires complexes** avec gestion des dépendances
-- ⚡ **Optimiser les performances** avec cache intelligent et batch validation  
-- 🔒 **Sécuriser vos validations** côté serveur et client
-- 📊 **Monitorer les performances** pour optimiser l'expérience utilisateur
-- 🎯 **Gérer des cas d'usage avancés** avec logique conditionnelle
+- 🏗️ **Architect complex forms** with dependency management
+- ⚡ **Optimize performance** with smart cache and batch validation
+- 🔒 **Secure your validations** on both server and client
+- 📊 **Monitor performance** to optimize user experience
+- 🎯 **Handle advanced use cases** with conditional logic
 
-### Prochaines étapes
+### Next steps
 
-1. 🔧 [Guide expert](./EXPERT_GUIDE.md) - Architecture interne et contributions
-2. 📚 [Exemples concrets](../impl/typescript/examples/) - Implémentations complètes
-3. 🤝 [Contributions](./CONTRIBUTING.md) - Participer au développement
+1. 🔧 [Expert Guide](./EXPERT_GUIDE.md) – Internal architecture and contributions
+2. 📚 [Concrete examples](../impl/typescript/examples/) – Complete implementations
+3. 🤝 [Contributions](./CONTRIBUTING.md) – Participate in development
 
 ---
 
-*Temps estimé : 30-45 minutes • Difficulté : Intermédiaire*
+*Estimated time: 30-45 minutes • Difficulty: Intermediate*

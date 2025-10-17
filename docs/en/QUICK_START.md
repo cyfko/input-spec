@@ -1,24 +1,25 @@
 layout: default
 title: Quick Start
 nav_order: 3
-description: "Commencez rapidement à utiliser le protocole côté client et serveur."
+description: "Get started quickly with the protocol on client and server."
 
-[🇫🇷 Français](./QUICK_START.md) | [🇬🇧 English](./en/QUICK_START.md)
-# 🚀 Guide de démarrage rapide
+[🇫🇷 French](../QUICK_START.md) | [🇬🇧 English](./QUICK_START.md)
 
-*De zéro à votre premier champ intelligent en 5 minutes*
+# 🚀 Quick Start Guide
 
-## 🎯 Objectif
+*From zero to your first smart field in 5 minutes*
 
-Créer un champ de sélection d'utilisateur avec recherche et validation automatiques en utilisant le Dynamic Input Field Specification Protocol.
+## 🎯 Goal
 
-## 🏁 Résultat attendu
+Create a user selection field with real-time search and automatic validation using the Dynamic Input Field Specification Protocol.
 
-À la fin de ce guide, vous aurez :
-- ✅ Un champ de sélection avec recherche en temps réel
-- ✅ Validation automatique côté client
-- ✅ Pagination intégrée pour les grands datasets
-- ✅ Cache intelligent pour optimiser les performances
+## 🏁 Expected Result
+
+At the end of this guide, you will have:
+- ✅ A selection field with real-time search
+- ✅ Automatic client-side validation
+- ✅ Integrated pagination for large datasets
+- ✅ Smart cache to optimize performance
 
 ## 📦 Installation
 
@@ -26,7 +27,7 @@ Créer un champ de sélection d'utilisateur avec recherche et validation automat
 
 ```bash
 npm install @cyfko/input-spec
-# ou
+# or
 yarn add @cyfko/input-spec
 ```
 
@@ -40,19 +41,19 @@ yarn add @cyfko/input-spec
 </dependency>
 ```
 
-## 🎬 Scénario : Champ "Assigné à"
+## 🎬 Scenario: "Assigned To" Field
 
-Imaginons que vous développez un système de tickets et devez créer un champ pour assigner des tickets à des utilisateurs.
+Imagine you are developing a ticketing system and need to create a field to assign tickets to users.
 
-### Étape 1 : Côté serveur - Définir la spécification
+### Step 1: Server Side – Define the Specification
 
 ```typescript
 // TypeScript/Node.js
 import { InputFieldSpec, DataType } from '@cyfko/input-spec';
 
 const assigneeFieldSpec: InputFieldSpec = {
-  displayName: "Assigné à",
-  description: "Sélectionner l'utilisateur responsable du ticket",
+  displayName: "Assigned To",
+  description: "Select the user responsible for the ticket",
   dataType: DataType.STRING,
   expectMultipleValues: false,
   required: true,
@@ -70,7 +71,7 @@ const assigneeFieldSpec: InputFieldSpec = {
     mode: "CLOSED"
   },
   constraints: [
-    { name: "pattern_id", type: "pattern", params: { regex: "^[A-Za-z0-9_]+$" }, errorMessage: "Identifiant utilisateur invalide" }
+  { name: "pattern_id", type: "pattern", params: { regex: "^[A-Za-z0-9_]+$" }, errorMessage: "Invalid user identifier" }
   ]
 };
 ```
@@ -111,8 +112,8 @@ public class FieldSpecController {
       .putParam("regex", "^[A-Za-z0-9_]+$")
       .build();
 
-    return InputFieldSpec.builder("Assigné à", DataType.STRING)
-      .description("Sélectionner l'utilisateur responsable du ticket")
+    return InputFieldSpec.builder("Assigned To", DataType.STRING)
+      .description("Select the user responsible for the ticket")
       .required(true)
       .expectMultipleValues(false)
       .valuesEndpoint(usersEndpoint)
@@ -122,16 +123,16 @@ public class FieldSpecController {
 }
 ```
 
-### Étape 2 : Côté serveur - Endpoint des valeurs
+### Step 2: Server Side – Values Endpoint
 
-Créez l'endpoint `/api/users` qui retourne la liste des utilisateurs :
+Create the `/api/users` endpoint that returns the list of users:
 
 ```typescript
 // Express.js exemple
 app.get('/api/users', (req, res) => {
   const { search = '', page = 1, limit = 20 } = req.query;
   
-  // Simuler une recherche dans la base de données
+  // Simulate a database search
   const allUsers = [
     { value: "usr_001", label: "Alice Dubois" },
     { value: "usr_002", label: "Bob Martin" },
@@ -140,7 +141,7 @@ app.get('/api/users', (req, res) => {
     // ... plus d'utilisateurs
   ];
   
-  // Filtrer par recherche
+  // Filter by search
   const filteredUsers = allUsers.filter(user => 
     user.label.toLowerCase().includes(search.toLowerCase())
   );
@@ -160,7 +161,7 @@ app.get('/api/users', (req, res) => {
 ```
 
 ```java
-// Spring Boot exemple
+// Spring Boot example
 @RestController
 public class UsersController {
     
@@ -170,7 +171,7 @@ public class UsersController {
         @RequestParam(defaultValue = "1") int page,
         @RequestParam(defaultValue = "20") int limit) {
         
-        // Simuler recherche en base
+  // Simulate database search
         List<ValueAlias> allUsers = Arrays.asList(
             new ValueAlias("usr_001", "Alice Dubois"),
             new ValueAlias("usr_002", "Bob Martin"),
@@ -178,7 +179,7 @@ public class UsersController {
             new ValueAlias("usr_004", "David Moreau")
         );
         
-        // Filtrage et pagination
+  // Filtering and pagination
         List<ValueAlias> filtered = allUsers.stream()
             .filter(user -> user.getLabel().toLowerCase()
                 .contains(search.toLowerCase()))
@@ -197,7 +198,7 @@ public class UsersController {
 }
 ```
 
-### Étape 3 : Côté client - Validation et résolution
+### Step 3: Client Side – Validation and Resolution
 
 ```typescript
 // Client TypeScript
@@ -209,13 +210,13 @@ const cache = new MemoryCacheProvider();
 const validator = new FieldValidator();
 const resolver = new ValuesResolver(httpClient, cache);
 
-// Fonction pour récupérer les spécifications de champ
+// Function to fetch field specifications
 async function loadFieldSpec(): Promise<InputFieldSpec> {
   const response = await fetch('/api/fields/assignee');
   return response.json();
 }
 
-// Fonction pour rechercher des utilisateurs
+// Function to search users
 async function searchUsers(query: string, page: number = 1) {
   const fieldSpec = await loadFieldSpec();
   if (!fieldSpec.valuesEndpoint) throw new Error('Pas d\'endpoint de valeurs configuré');
@@ -226,16 +227,16 @@ async function searchUsers(query: string, page: number = 1) {
   });
 }
 
-// Fonction pour valider une sélection
+// Function to validate a selection
 async function validateSelection(selectedUserId: string) {
   const fieldSpec = await loadFieldSpec();
   return validator.validate(fieldSpec, selectedUserId);
 }
 ```
 
-### Étape 4 : Côté client - Interface utilisateur
+### Step 4: Client Side – User Interface
 
-Voici un exemple avec un composant React simple :
+Here is an example with a simple React component:
 
 ```typescript
 import React, { useState, useEffect, useMemo } from 'react';
@@ -250,7 +251,7 @@ const AssigneeSelector: React.FC = () => {
   
   const debouncedQuery = useDebounce(query, 300);
   
-  // Effet pour charger les utilisateurs quand la recherche change
+  // Effect to load users when the search changes
   useEffect(() => {
     if (debouncedQuery.length >= 2) {
       setIsLoading(true);
@@ -266,7 +267,7 @@ const AssigneeSelector: React.FC = () => {
     }
   }, [debouncedQuery]);
   
-  // Effet pour valider la sélection
+  // Effect to validate the selection
   useEffect(() => {
     if (selectedUser) {
       validateSelection(selectedUser)
@@ -276,18 +277,18 @@ const AssigneeSelector: React.FC = () => {
   
   return (
     <div className="assignee-selector">
-      <label htmlFor="assignee-search">Assigné à *</label>
+  <label htmlFor="assignee-search">Assigned To *</label>
       
       <input
         id="assignee-search"
         type="text"
         value={query}
         onChange={(e) => setQuery(e.target.value)}
-        placeholder="Rechercher un utilisateur..."
+  placeholder="Search for a user..."
         className={validation && !validation.isValid ? 'error' : ''}
       />
       
-      {isLoading && <div className="loading">Recherche en cours...</div>}
+  {isLoading && <div className="loading">Searching...</div>}
       
       {users.length > 0 && (
         <div className="user-dropdown">
@@ -320,76 +321,76 @@ const AssigneeSelector: React.FC = () => {
 };
 ```
 
-## 🎭 Démonstration du flux complet
+## 🎭 Complete Flow Demonstration
 
-Voici ce qui se passe quand l'utilisateur interagit avec le champ :
+Here is what happens when the user interacts with the field:
 
 ```mermaid
 sequenceDiagram
-    participant U as Utilisateur
-    participant C as Composant React
-    participant V as Validator
-    participant R as ValuesResolver
-    participant S as Serveur
+  participant U as User
+  participant C as React Component
+  participant V as Validator
+  participant R as ValuesResolver
+  participant S as Server
     
-    Note over U,S: 1. Chargement initial
-    C->>S: GET /api/fields/assignee
-    S->>C: {displayName, constraints, valuesEndpoint}
+  Note over U,S: 1. Initial load
+  C->>S: GET /api/fields/assignee
+  S->>C: {displayName, constraints, valuesEndpoint}
     
-    Note over U,S: 2. Recherche utilisateur
-    U->>C: Tape "Ali"
-    C->>C: Debounce 300ms
-    C->>R: resolveValues("Ali", page=1)
-    R->>S: GET /api/users?search=Ali&page=1&limit=20
-    S->>R: {users: [{value:"usr_001", label:"Alice Dubois"}]}
-    R->>C: Cache + retourne résultats
-    C->>U: Affiche "Alice Dubois"
+  Note over U,S: 2. User search
+  U->>C: Types "Ali"
+  C->>C: Debounce 300ms
+  C->>R: resolveValues("Ali", page=1)
+  R->>S: GET /api/users?search=Ali&page=1&limit=20
+  S->>R: {users: [{value:"usr_001", label:"Alice Dubois"}]}
+  R->>C: Cache + return results
+  C->>U: Show "Alice Dubois"
     
-    Note over U,S: 3. Sélection et validation
-    U->>C: Clique sur "Alice Dubois"
-    C->>V: validate(fieldSpec, "usr_001")
-    V->>C: {isValid: true, errors: []}
-    C->>U: Affiche sélection valide ✅
+  Note over U,S: 3. Selection and validation
+  U->>C: Clicks on "Alice Dubois"
+  C->>V: validate(fieldSpec, "usr_001")
+  V->>C: {isValid: true, errors: []}
+  C->>U: Show valid selection ✅
 ```
 
-## ✅ Vérifications finales
+## ✅ Final Checks
 
-Si tout fonctionne, vous devriez avoir :
+If everything works, you should have:
 
-1. **Recherche temps réel** - Tapez quelques lettres et voyez les résultats
-2. **Debouncing automatique** - Pas de requête à chaque frappe
-3. **Cache intelligent** - Les recherches répétées sont instantanées  
-4. **Validation en temps réel** - Retour immédiat sur la validité
-5. **Pagination** - Pour les listes d'utilisateurs importantes
+1. **Real-time search** – Type a few letters and see results
+2. **Automatic debouncing** – No request on every keystroke
+3. **Smart cache** – Repeated searches are instant
+4. **Real-time validation** – Immediate feedback on validity
+5. **Pagination** – For large user lists
 
-## 🐛 Dépannage courant
+## 🐛 Common Troubleshooting
 
-### Problème : Aucun résultat de recherche
-**Solution :** Vérifiez que votre endpoint `/api/users` retourne bien la structure attendue avec le champ `users`.
+### Problem: No search results
+**Solution:** Check that your `/api/users` endpoint returns the expected structure with the `users` field.
 
-### Problème : Validation échoue toujours
-**Solution :** Assurez-vous que la valeur sélectionnée correspond à un `value` retourné par l'endpoint.
+### Problem: Validation always fails
+**Solution:** Make sure the selected value matches a `value` returned by the endpoint.
 
-### Problème : Pas de debouncing
-**Solution :** Vérifiez que `debounceMs` est configuré dans votre `ValuesEndpoint`.
+### Problem: No debouncing
+**Solution:** Check that `debounceMs` is set in your `ValuesEndpoint`.
 
-## 🎯 Prochaines étapes
+## 🎯 Next Steps
 
-Maintenant que vous maîtrisez les bases :
+Now that you know the basics:
 
-1. 📖 [Guide intermédiaire](./INTERMEDIATE_GUIDE.md) - Intégrations avancées et optimisations
-2. 🎓 [Exemples complets](../impl/typescript/examples/) - Formulaires complexes et cas d'usage réels
-3. 🔧 [Guide expert](./EXPERT_GUIDE.md) - Architecture interne et contributions
+1. 📖 [Intermediate Guide](./INTERMEDIATE_GUIDE.md) – Advanced integrations and optimizations
+2. 🎓 [Complete examples](../impl/typescript/examples/) – Complex forms and real-world use cases
+3. 🔧 [Expert Guide](./EXPERT_GUIDE.md) – Internal architecture and contributions
 
-## 💡 Idées d'amélioration pour votre implémentation
+## 💡 Improvement Ideas for Your Implementation
 
-- **Multi-sélection** : Changez `expectMultipleValues: true` pour un champ multi-utilisateurs
-- **Validation conditionnelle** : Ajoutez des contraintes dynamiques selon le contexte
-- **Internationalisation** : Adaptez les `errorMessage` selon la langue
-- **Métriques** : Trackez les performances des recherches pour optimiser
+- **Multi-select**: Change `expectMultipleValues: true` for a multi-user field
+- **Conditional validation**: Add dynamic constraints based on context
+- **Internationalization**: Adapt `errorMessage` to the language
+- **Metrics**: Track search performance to optimize
 
 ---
 
-**🎉 Félicitations !** Vous venez de créer votre premier champ intelligent avec le Dynamic Input Field Specification Protocol. 
+**🎉 Congratulations!** You have just created your first smart field with the Dynamic Input Field Specification Protocol.
 
-*Temps estimé : 5-10 minutes • Difficulté : Débutant*
+*Estimated time: 5-10 minutes • Difficulty: Beginner*

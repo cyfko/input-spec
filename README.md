@@ -127,37 +127,31 @@ Ce mécanisme permet la génération automatique d’UI de recherche, la validat
 
 Le protocole v2 apporte une **vraie valeur ajoutée** pour :
 - Générer dynamiquement des formulaires riches, multi-plateformes, avec domaines de valeurs distants ou évolutifs.
-- Garantir la cohérence de validation entre plusieurs langages ou stacks.
 - Offrir un modèle extensible, transmissible, normatif, là où les standards existants sont trop statiques ou trop couplés à une stack.
 - Servir de socle pour la configuration dynamique, l’orchestration et l’auditabilité des modèles d’IA (MCP, MLOps, etc.).
 
 > Ce protocole complète plutôt qu’il ne remplace ces outils : vous pouvez générer plus tard un JSON Schema dérivé pour du gating API.
 
----
 
 ## Le problème résolu
 
-```typescript
 // ❌ Avant : Logique dupliquée et incohérente
 const validateEmailA = (email:string) => /^[^@]+@[^@]+\.[^@]+$/.test(email);
 const validateEmailB = (email:string) => email.includes('@'); // Différent !
-
 // ✅ Après : Spécification centrale
 const emailFieldSpec = {
-  displayName: 'Email', dataType: 'STRING', required: true,
   constraints: [{ name: 'pattern', type: 'pattern', params: { regex: '^[^@]+@[^@]+\\.[^@]+$' }, errorMessage: 'Format email requis' }]
 };
-```
 
 ---
-
 ## ✨ Fonctionnalités clés (v2)
 
-| Domaine | Description | Statut |
 |---------|-------------|--------|
 | Modèle unifié | Champ = métadonnées + contraintes atomiques + `valuesEndpoint` | Stable |
-| Domaine de valeurs | INLINE ou endpoint (pagination + recherche + mode CLOSED/SUGGESTIONS) | Stable |
 | Pipeline validation | REQUIRED → TYPE → MEMBERSHIP → CONTRAINTES ordonnées | Stable |
+# input-spec
+
+[🌐 Choisir la langue / Select language](docs/LANGUAGE.md)
 | Erreurs structurées | Nom de contrainte + message + index multi | Stable |
 | Legacy adapter | Traduction v1 → v2 (TS uniquement) | Stable (déprécié) |
 | Coercion douce | Conversion nombre, booléen, date epoch (TS) | Extension |

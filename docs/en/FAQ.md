@@ -1,48 +1,50 @@
 layout: default
 title: FAQ
 nav_order: 7
-description: "Questions fréquemment posées sur le protocole et ses implémentations."
+description: "Frequently asked questions about the protocol and its implementations."
 
-[🇫🇷 Français](./FAQ.md) | [🇬🇧 English](./en/FAQ.md)
-# ❓ FAQ et Scénarios réels
+[🇫🇷 French](../FAQ.md) | [🇬🇧 English](./FAQ.md)
 
-*Réponses aux questions fréquentes avec exemples concrets côté client et serveur*
+# ❓ FAQ and Real-World Scenarios
 
-## 🎯 Questions générales
+*Answers to frequently asked questions with concrete client and server examples*
 
-### Q: Pourquoi utiliser ce protocole plutôt que de valider côté client uniquement ?
 
-**R:** La validation uniquement côté client présente plusieurs problèmes critiques :
+## 🎯 General Questions
 
-**❌ Problèmes de l'approche client-only :**
-- Sécurité compromise (contournement facile)
-- Duplication de code entre projets
-- Incohérence entre équipes
-- Maintenance dispersée
+### Q: Why use this protocol instead of client-side validation only?
 
-**✅ Avantages du protocole :**
-- **Source unique de vérité** - Les règles sont définies une seule fois côté serveur
-- **Sécurité renforcée** - Validation systématique côté serveur
-- **Cohérence garantie** - Mêmes règles appliquées partout
-- **Maintenance centralisée** - Un changement de règle se propage automatiquement
+**A:** Client-side only validation has several critical issues:
 
-**Exemple concret :**
+**❌ Problems with client-only approach:**
+- Compromised security (easy to bypass)
+- Code duplication across projects
+- Inconsistency between teams
+- Scattered maintenance
+
+**✅ Protocol advantages:**
+- **Single source of truth** – Rules are defined once on the server
+- **Enhanced security** – Systematic server-side validation
+- **Guaranteed consistency** – Same rules applied everywhere
+- **Centralized maintenance** – A rule change propagates automatically
+
+**Concrete example:**
 
 ```typescript
-// ❌ Avant: Validation dupliquée et incohérente
+// ❌ Before: Duplicated and inconsistent validation
 // Client 1 (React)
 const validateEmail = (email) => /^[^@]+@[^@]+\.[^@]+$/.test(email);
 
-// Client 2 (Vue)  
-const validateEmail = (email) => email.includes('@'); // 😱 Incohérent !
+// Client 2 (Vue)
+const validateEmail = (email) => email.includes('@'); // 😱 Inconsistent!
 
-// Serveur
+// Server
 const validateEmail = (email) => /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email);
 ```
 
 ```typescript
-// ✅ Après: Protocole unifié
-// Serveur - Source unique de vérité
+// ✅ After: Unified protocol
+// Server – Single source of truth
 const emailFieldSpec = {
   displayName: "Email",
   dataType: "STRING",
@@ -50,82 +52,123 @@ const emailFieldSpec = {
   constraints: [{
     name: "email",
     pattern: "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
-    errorMessage: "Format d'email invalide"
+    errorMessage: "Invalid email format"
   }]
 };
 
-// Tous les clients utilisent la même spécification
+// All clients use the same specification
 const validator = new FieldValidator();
 const result = await validator.validate(emailFieldSpec, userEmail);
+
+---
+
+### Q: How do clients stay in sync with server-side rules?
+
+**A:** The protocol is designed so that clients always fetch the latest field specifications from the server (via API or static file). This ensures that any rule change is instantly reflected on all clients, without manual updates or redeployment.
+
+**Example:**
+
+```js
+// Client fetches the latest field spec at runtime
+const fieldSpec = await fetch('/api/fields/email').then(r => r.json());
+const result = await validator.validate(fieldSpec, userEmail);
 ```
 
-### Q: Comment gérer les validations métier complexes spécifiques à mon domaine ?
+---
 
-**R:** Le protocole prévoit plusieurs mécanismes d'extension :
+## 🏢 Business Scenarios
 
-#### 1. **Contraintes personnalisées avec ValuesEndpoint**
+### Q: Can the protocol handle complex business rules (e.g., conditional fields, cross-field validation)?
 
-**🖥️ Côté serveur :**
+**A:** Yes! The protocol supports advanced constraints, including conditional logic and cross-field dependencies. You can define rules such as "Field B is required only if Field A has value X" or "Field C must be greater than Field D".
+
+**Example:**
+
+```json
+{
+  "name": "discountCode",
+  "displayName": "Discount Code",
+  "dataType": "STRING",
+  "required": false,
+  "constraints": [
+    {
+      "name": "requiredIf",
+      "field": "hasDiscount",
+      "value": true,
+      "errorMessage": "Discount code required if discount is selected"
+    }
+  ]
+}
+```
+```
+
+### Q: How to handle complex business validations specific to my domain?
+
+**A:** The protocol provides several extension mechanisms:
+
+#### 1. **Custom constraints with ValuesEndpoint**
+
+**🖥️ Server side:**
 ```java
 @RestController
 public class BusinessValidationController {
     
-    @PostMapping("/api/validate/project-code")
-    public ValidationResponse validateProjectCode(@RequestBody ValidateRequest request) {
-        String projectCode = request.getValue();
+  @PostMapping("/api/validate/project-code")
+  public ValidationResponse validateProjectCode(@RequestBody ValidateRequest request) {
+    String projectCode = request.getValue();
         
-        // Logique métier complexe
-        boolean isValid = projectService.isCodeAvailable(projectCode) &&
-                         projectService.hasUserPermission(request.getUserId(), projectCode) &&
-                         projectService.isCodeFormatValid(projectCode);
+    // Complex business logic
+    boolean isValid = projectService.isCodeAvailable(projectCode) &&
+             projectService.hasUserPermission(request.getUserId(), projectCode) &&
+             projectService.isCodeFormatValid(projectCode);
         
-        return ValidationResponse.builder()
-            .isValid(isValid)
-            .message(isValid ? "Code disponible" : "Code projet invalide ou indisponible")
-            .build();
-    }
+    return ValidationResponse.builder()
+      .isValid(isValid)
+      .message(isValid ? "Code available" : "Invalid or unavailable project code")
+      .build();
+  }
     
-    // Spécification du champ avec validation métier
-    @GetMapping("/api/fields/project-code")
-    public InputFieldSpec getProjectCodeSpec() {
-        return InputFieldSpec.builder("Code projet", DataType.STRING)
-            .required(true)
-            .constraints(Arrays.asList(
-                ConstraintDescriptor.builder()
-                    .name("format")
-                    .pattern("^[A-Z]{2,3}-\\d{4}$")
-                    .errorMessage("Format: XX-1234 ou XXX-1234")
-                    .build(),
-                ConstraintDescriptor.builder()
-                    .name("business_validation")
-                    .valuesEndpoint(ValuesEndpoint.builder()
-                        .uri("/api/validate/project-code")
-                        .method("POST")
-                        .build())
-                    .errorMessage("Code projet invalide")
-                    .build()
-            ))
-            .build();
-    }
+  // Field specification with business validation
+  @GetMapping("/api/fields/project-code")
+  public InputFieldSpec getProjectCodeSpec() {
+    return InputFieldSpec.builder("Project code", DataType.STRING)
+      .required(true)
+      .constraints(Arrays.asList(
+        ConstraintDescriptor.builder()
+          .name("format")
+          .pattern("^[A-Z]{2,3}-\\d{4}$")
+          .errorMessage("Format: XX-1234 or XXX-1234")
+          .build(),
+        ConstraintDescriptor.builder()
+          .name("business_validation")
+          .valuesEndpoint(ValuesEndpoint.builder()
+            .uri("/api/validate/project-code")
+            .method("POST")
+            .build())
+          .errorMessage("Invalid project code")
+          .build()
+      ))
+      .build();
+  }
 }
 ```
 
-**💻 Côté client :**
+**💻 Client side:**
 ```typescript
-// Le client appelle automatiquement l'endpoint de validation
+// The client automatically calls the validation endpoint
 const projectCodeField = await loadFieldSpec('project-code');
 const validationResult = await validator.validate(projectCodeField, 'AB-1234');
 
-// Séquence automatique :
-// 1. Validation pattern: ^[A-Z]{2,3}-\d{4}$ ✅
-// 2. Appel POST /api/validate/project-code avec "AB-1234"
-// 3. Réponse serveur validée ou erreur retournée
+// Automatic sequence:
+// 1. Pattern validation: ^[A-Z]{2,3}-\d{4}$ ✅
+// 2. POST call to /api/validate/project-code with "AB-1234"
+// 3. Server response validated or error returned
 ```
 
-#### 2. **Plugin de validation personnalisé**
+#### 2. **Custom validation plugin**
 
 ```typescript
-// Plugin pour validations métier spécifiques
+// Plugin for domain-specific business validations
 class ProjectManagementPlugin implements ProtocolPlugin {
   name = 'project-management';
   version = '1.0.0';
@@ -139,25 +182,25 @@ class ProjectManagementPlugin implements ProtocolPlugin {
   constructor(private projectService: ProjectService) {}
 }
 
-// Utilisation
+// Usage
 const extensionManager = new ProtocolExtensionManager();
 extensionManager.registerPlugin(new ProjectManagementPlugin(projectService));
 ```
 
-### Q: Comment optimiser les performances pour des formulaires avec beaucoup de champs ?
+### Q: How to optimize performance for forms with many fields?
 
-**R:** Plusieurs stratégies d'optimisation sont disponibles :
+**A:** Several optimization strategies are available:
 
-#### 1. **Validation lazy et debouncing intelligent**
+#### 1. **Lazy validation and smart debouncing**
 
 ```typescript
-// Configuration avancée avec optimisations
+// Advanced configuration with optimizations
 const optimizedFormManager = new ProjectFormManager(httpClient, cache, {
-  validationStrategy: 'lazy', // Valider seulement au blur ou à la soumission
+  validationStrategy: 'lazy', // Validate only on blur or submit
   debouncing: {
-    search: 300,    // 300ms pour les recherches
-    validation: 500, // 500ms pour les validations serveur
-    adaptive: true   // Ajustement automatique selon la vitesse de frappe
+    search: 300,    // 300ms for searches
+    validation: 500, // 500ms for server validations
+    adaptive: true   // Auto-adjust based on typing speed
   },
   batching: {
     enabled: true,
@@ -167,34 +210,34 @@ const optimizedFormManager = new ProjectFormManager(httpClient, cache, {
 });
 ```
 
-#### 2. **Cache stratifié par niveau de volatilité**
+#### 2. **Cache stratified by volatility level**
 
 ```typescript
-// Cache avec TTL adaptatif selon le type de données
+// Cache with adaptive TTL based on data type
 const intelligentCache = new IntelligentCacheProvider({
   strategies: {
-    'user_search': { ttl: 5 * 60 * 1000, priority: 'high' },     // 5min - données utilisateurs
-    'enum_values': { ttl: 60 * 60 * 1000, priority: 'medium' },  // 1h - listes statiques  
-    'validation_results': { ttl: 30 * 1000, priority: 'low' }    // 30s - résultats validation
+    'user_search': { ttl: 5 * 60 * 1000, priority: 'high' },     // 5min - user data
+    'enum_values': { ttl: 60 * 60 * 1000, priority: 'medium' },  // 1h - static lists  
+    'validation_results': { ttl: 30 * 1000, priority: 'low' }    // 30s - validation results
   },
-  evictionPolicy: 'LFU' // Least Frequently Used pour les formulaires
+  evictionPolicy: 'LFU' // Least Frequently Used for forms
 });
 ```
 
-#### 3. **Préchargement intelligent**
+#### 3. **Smart preloading**
 
 ```typescript
-// Préchargement basé sur l'analyse du comportement utilisateur
+// Preloading based on user behavior analysis
 class SmartFormPreloader {
   async preloadLikelyFields(currentField: string, userBehavior: UserBehaviorData) {
     const predictions = this.predictNextFields(currentField, userBehavior);
     
-    // Précharger en arrière-plan les 3 champs les plus probables
+    // Preload in background the 3 most likely fields
     const preloadPromises = predictions.slice(0, 3).map(fieldName => 
       this.preloadFieldData(fieldName)
     );
     
-    // Ne pas attendre - exécution en arrière-plan
+    // Do not wait – run in background
     Promise.allSettled(preloadPromises);
   }
   
@@ -208,14 +251,14 @@ class SmartFormPreloader {
 }
 ```
 
-## 🔧 Questions techniques
+## 🔧 Technical Questions
 
-### Q: Comment intégrer le protocole avec React Hook Form ?
+### Q: How to integrate the protocol with React Hook Form?
 
-**R:** Voici un adaptateur complet pour React Hook Form :
+**A:** Here is a complete adapter for React Hook Form:
 
 ```typescript
-// Adaptateur React Hook Form
+// React Hook Form adapter
 import { useForm, Controller } from 'react-hook-form';
 import { FieldValidator, InputFieldSpec } from '@cyfko/input-spec';
 
@@ -234,7 +277,7 @@ export function useProtocolForm<T extends Record<string, any>>(
   
   return {
     ...form,
-    // Méthodes étendues pour le protocole
+    // Extended protocol methods
     validateField: async (fieldName: keyof T) => {
       const fieldSpec = fieldSpecs[fieldName];
       const value = form.getValues(fieldName);
@@ -242,19 +285,19 @@ export function useProtocolForm<T extends Record<string, any>>(
       
       if (!result.isValid) {
         form.setError(fieldName, {
-          message: result.errors[0]?.message || 'Erreur de validation'
+          message: result.errors[0]?.message || 'Validation error'
         });
       }
       
       return result.isValid;
     },
     
-    // Recherche de valeurs pour les champs avec ValuesEndpoint
+    // Value search for fields with ValuesEndpoint
     searchValues: async (fieldName: keyof T, query: string) => {
       const fieldSpec = fieldSpecs[fieldName];
-      // v2: valuesEndpoint est au niveau du champ (plus dans une contrainte)
+      // v2: valuesEndpoint is at the field level (not in a constraint anymore)
       if (!fieldSpec.valuesEndpoint) {
-        throw new Error(`Pas d'endpoint de recherche (valuesEndpoint) pour ${String(fieldName)}`);
+        throw new Error(`No search endpoint (valuesEndpoint) for ${String(fieldName)}`);
       }
 
       return resolver.resolveValues(fieldSpec.valuesEndpoint, { search: query });
@@ -262,7 +305,7 @@ export function useProtocolForm<T extends Record<string, any>>(
   };
 }
 
-// Composant de champ intelligent avec recherche
+// Smart field component with search
 const SmartSelectField: React.FC<{
   name: string;
   fieldSpec: InputFieldSpec;
@@ -274,7 +317,7 @@ const SmartSelectField: React.FC<{
   
   const debouncedSearch = useDebounce(searchQuery, 300);
   
-  // Recherche automatique quand la query change
+  // Auto-search when query changes
   useEffect(() => {
     if (debouncedSearch.length >= 2) {
       searchValues(debouncedSearch);
@@ -702,42 +745,42 @@ public class ValidationPermissionEvaluator implements PermissionEvaluator {
 }
 ```
 
-## 🌐 Scénarios réels d'utilisation
+## 🌐 Real-World Usage Scenarios
 
-### Scénario 1: E-commerce - Formulaire de commande
+### Scenario 1: E-commerce – Order Form
 
-**Contexte :** Boutique en ligne avec validation de l'adresse de livraison en temps réel.
+**Context:** Online store with real-time shipping address validation.
 
-**🖥️ Côté serveur :**
+**🖥️ Server side:**
 ```java
 @RestController
 public class CheckoutController {
     
     @GetMapping("/api/fields/shipping-address")
     public InputFieldSpec getShippingAddressSpec() {
-        return InputFieldSpec.builder("Adresse de livraison", DataType.STRING)
+        return InputFieldSpec.builder("Shipping address", DataType.STRING)
             .required(true)
             .constraints(Arrays.asList(
-                // Validation de format d'adresse
+                // Address format validation
                 ConstraintDescriptor.builder()
                     .name("address_format")
                     .min(10)
                     .max(200)
-                    .errorMessage("L'adresse doit faire entre 10 et 200 caractères")
+                    .errorMessage("Address must be between 10 and 200 characters")
                     .build(),
                 
-                // Validation géographique en temps réel
+                // Real-time geographic validation
                 ConstraintDescriptor.builder()
                     .name("delivery_zone")
                     .valuesEndpoint(ValuesEndpoint.builder()
                         .uri("/api/validate/delivery-address")
                         .method("POST")
-                        .debounceMs(1000) // 1 seconde pour éviter trop d'appels
+                        .debounceMs(1000) // 1 second to avoid too many calls
                         .responseMapping(ResponseMapping.builder()
                             .dataField("isDeliverable")
                             .build())
                         .build())
-                    .errorMessage("Livraison non disponible à cette adresse")
+                    .errorMessage("Delivery not available to this address")
                     .build()
             ))
             .build();
@@ -747,23 +790,23 @@ public class CheckoutController {
     public DeliveryValidationResponse validateDeliveryAddress(
             @RequestBody AddressValidationRequest request) {
         
-        // Intégration avec service de géocodage (Google Maps, etc.)
+        // Integration with geocoding service (Google Maps, etc.)
         GeocodingResult result = geocodingService.validateAddress(request.getAddress());
         
         if (!result.isValid()) {
             return DeliveryValidationResponse.builder()
                 .isDeliverable(false)
-                .message("Adresse non trouvée")
+                .message("Address not found")
                 .build();
         }
         
-        // Vérifier les zones de livraison
+        // Check delivery zones
         boolean inDeliveryZone = deliveryService.isInDeliveryZone(
             result.getLatitude(), 
             result.getLongitude()
         );
         
-        // Calculer les frais de livraison
+        // Calculate delivery fee
         BigDecimal deliveryFee = deliveryService.calculateDeliveryFee(
             result.getLatitude(), 
             result.getLongitude()
@@ -771,7 +814,7 @@ public class CheckoutController {
         
         return DeliveryValidationResponse.builder()
             .isDeliverable(inDeliveryZone)
-            .message(inDeliveryZone ? "Livraison disponible" : "Zone non couverte")
+            .message(inDeliveryZone ? "Delivery available" : "Zone not covered")
             .deliveryFee(deliveryFee)
             .estimatedDeliveryTime(deliveryService.getEstimatedDeliveryTime(result))
             .build();
@@ -779,9 +822,9 @@ public class CheckoutController {
 }
 ```
 
-**💻 Côté client :**
+**💻 Client side:**
 ```typescript
-// Composant React pour l'adresse de livraison
+// React component for shipping address
 const ShippingAddressField: React.FC = () => {
   const [address, setAddress] = useState('');
   const [validationResult, setValidationResult] = useState<ValidationResult | null>(null);
@@ -806,13 +849,13 @@ const ShippingAddressField: React.FC = () => {
       
       setValidationResult(result);
       
-      // Si la validation côté serveur a réussi, extraire les infos de livraison
+      // If server-side validation succeeded, extract delivery info
       if (result.isValid && result.metadata?.deliveryInfo) {
         setDeliveryInfo(result.metadata.deliveryInfo);
       }
       
     } catch (error) {
-      console.error('Erreur de validation adresse:', error);
+      console.error('Address validation error:', error);
     } finally {
       setIsValidating(false);
     }
@@ -820,13 +863,13 @@ const ShippingAddressField: React.FC = () => {
   
   return (
     <div className="shipping-address-field">
-      <label htmlFor="address">Adresse de livraison *</label>
+      <label htmlFor="address">Shipping address *</label>
       
       <textarea
         id="address"
         value={address}
         onChange={(e) => setAddress(e.target.value)}
-        placeholder="Entrez votre adresse complète..."
+        placeholder="Enter your full address..."
         className={validationResult && !validationResult.isValid ? 'error' : ''}
         rows={3}
       />
@@ -834,7 +877,7 @@ const ShippingAddressField: React.FC = () => {
       {isValidating && (
         <div className="validation-status">
           <span className="spinner" />
-          Vérification de l'adresse...
+          Validating address...
         </div>
       )}
       
@@ -851,11 +894,11 @@ const ShippingAddressField: React.FC = () => {
       {deliveryInfo && validationResult?.isValid && (
         <div className="delivery-info">
           <div className="delivery-available">
-            ✅ Livraison disponible
+            ✅ Delivery available
           </div>
           <div className="delivery-details">
-            <span>Frais de livraison: {deliveryInfo.fee}€</span>
-            <span>Délai estimé: {deliveryInfo.estimatedTime}</span>
+            <span>Delivery fee: {deliveryInfo.fee}€</span>
+            <span>Estimated time: {deliveryInfo.estimatedTime}</span>
           </div>
         </div>
       )}
@@ -864,11 +907,11 @@ const ShippingAddressField: React.FC = () => {
 };
 ```
 
-### Scénario 2: Application RH - Formulaire d'embauche
+### Scenario 2: HR Application – Hiring Form
 
-**Contexte :** Validation des candidats avec intégration API externe et règles métier complexes.
+**Context:** Candidate validation with external API integration and complex business rules.
 
-**🖥️ Côté serveur :**
+**🖥️ Server side:**
 ```java
 @RestController  
 public class HiringController {
@@ -1180,18 +1223,18 @@ const CandidateSkillsSelector: React.FC<{
 
 ## 🔚 Conclusion
 
-Cette FAQ démontre la polyvalence du Dynamic Input Field Specification Protocol à travers des scénarios concrets. Chaque exemple montre comment le protocole s'adapte aux besoins métier spécifiques tout en maintenant une architecture cohérente.
+This FAQ demonstrates the versatility of the Dynamic Input Field Specification Protocol through concrete scenarios. Each example shows how the protocol adapts to specific business needs while maintaining a consistent architecture.
 
-### Points clés à retenir :
+### Key takeaways:
 
-1. **🔄 Interaction client/serveur fluide** - Le protocole orchestre automatiquement les échanges
-2. **🎯 Validation métier intégrée** - Les règles complexes sont centralisées côté serveur
-3. **⚡ Performance optimisée** - Debouncing, cache et batching natifs
-4. **🔒 Sécurité renforcée** - Validation et sanitisation à tous les niveaux
-5. **🧩 Extensibilité** - Adaptation facile aux besoins spécifiques
+1. **🔄 Seamless client/server interaction** – The protocol automatically orchestrates exchanges
+2. **🎯 Integrated business validation** – Complex rules are centralized on the server
+3. **⚡ Optimized performance** – Native debouncing, caching, and batching
+4. **🔒 Enhanced security** – Validation and sanitization at every level
+5. **🧩 Extensibility** – Easily adapts to specific requirements
 
-Le protocole transforme la complexité des formulaires dynamiques en une API simple et standardisée, permettant aux équipes de se concentrer sur la logique métier plutôt que sur la plomberie technique.
+The protocol transforms the complexity of dynamic forms into a simple, standardized API, allowing teams to focus on business logic rather than technical plumbing.
 
 ---
 
-*Vous avez d'autres questions ? [Ouvrez une discussion](../../discussions) ou consultez les [exemples complets](../impl/)*
+*Have more questions? [Start a discussion](../../discussions) or check out the [full examples](../impl/)*

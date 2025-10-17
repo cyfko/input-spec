@@ -1,47 +1,50 @@
----
 layout: default
 title: Overview
 nav_order: 2
-description: "Présentation du protocole, objectifs et comparaisons avec les solutions existantes."
----
+description: "Protocol overview, objectives, and comparison with existing solutions."
 
 
-[🇫🇷 Français](./OVERVIEW.md) | [🇬🇧 English](./en/OVERVIEW.md)
+
+[🇫🇷 French](../OVERVIEW.md) | [🇬🇧 English](./OVERVIEW.md)
+
 
 # Dynamic Input Field Specification Protocol v2.1
 
-*Le standard moderne pour des champs de formulaire intelligents, adaptatifs et interopérables*
+*The modern standard for smart, adaptive, and interoperable form fields*
 
 
-## 🚩 Pourquoi ce protocole est unique ?
 
-Le **Dynamic Input Field Specification Protocol v2.1** résout enfin la fragmentation des formulaires dynamiques :
+## 🚩 Why is this protocol unique?
 
-- 🔥 **Standardisation totale** : une seule structure pour décrire contraintes, valeurs, validation et comportement
-- 🧩 **Interopérabilité** : front et back parlent le même langage, sans duplication
-- 🛠️ **Recherche avancée** : support natif des recherches multi-critères, pagination, cache, debouncing
-- 🧑‍💻 **Extensible et agnostique** : pas lié à un framework, ni à une techno
-- 🏗️ **Atomicité des contraintes** : chaque règle est indépendante, claire et télémetrée
+The **Dynamic Input Field Specification Protocol v2.1** finally solves the fragmentation of dynamic forms:
+
+- 🔥 **Total standardization**: a single structure to describe constraints, values, validation, and behavior
+- 🧩 **Interoperability**: frontend and backend speak the same language, no duplication
+- 🛠️ **Advanced search**: native support for multi-criteria search, pagination, caching, debouncing
+- 🧑‍💻 **Extensible and agnostic**: not tied to any framework or technology
+- 🏗️ **Atomic constraints**: each rule is independent, clear, and traceable
 
 
-## 🔍 Qu'est-ce que ce protocole ?
 
-Une **spécification universelle** pour décrire dynamiquement chaque champ de formulaire :
+## 🔍 What is this protocol?
 
-- Métadonnées complètes (label, type, aide, etc.)
-- Contraintes atomiques (regex, min/max, custom, etc.)
-- Source de valeurs (statique ou distante, paginée, filtrée)
-- Validation pipeline ordonné et déterministe
-- Recherche avancée via `searchParams` et `searchParamsSchema` (JSON Schema)
+A **universal specification** to dynamically describe every form field:
 
-### Architecture générale
+- Complete metadata (label, type, help, etc.)
+- Atomic constraints (regex, min/max, custom, etc.)
+- Value sources (static or remote, paginated, filtered)
+- Ordered, deterministic validation pipeline
+- Advanced search via `searchParams` and `searchParamsSchema` (JSON Schema)
+
+
+### General Architecture
 
 ```mermaid
 graph TB
     subgraph "Client Layer"
-        UI[🎨 Interface utilisateur]
-        VALID[✅ Moteur de validation]
-        CACHE[💾 Cache local]
+        UI[🎨 User Interface]
+        VALID[✅ Validation Engine]
+        CACHE[💾 Local Cache]
     end
     
     subgraph "Protocol Core"
@@ -51,9 +54,9 @@ graph TB
     end
     
     subgraph "Server Layer"
-        API[🔌 API de spécifications]
-        VALUES[📊 Sources de données]
-        META[📝 Métadonnées]
+        API[🔌 Spec API]
+        VALUES[📊 Data Sources]
+        META[📝 Metadata]
     end
     
     UI --> SPEC
@@ -72,32 +75,34 @@ graph TB
     class API,VALUES,META server
 ```
 
-## 🚫 Ce que nous ne sommes PAS
 
-- ❌ Un framework de formulaires (React, Angular, Vue…)
-- ❌ Un validateur de données (Joi, Yup, Zod…)
-- ❌ Un SDK ou une librairie imposée
+## 🚫 What we are NOT
 
-> **Nous sommes** un **protocole universel** : il décrit, il ne code pas. Il permet à vos outils, frameworks et langages de collaborer sans friction ni duplication.
+- ❌ A form framework (React, Angular, Vue...)
+- ❌ A data validator (Joi, Yup, Zod...)
+- ❌ An imposed SDK or library
 
-## ✅ Notre valeur ajoutée concrète
+> **We are** a **universal protocol**: it describes, it does not code. It lets your tools, frameworks, and languages collaborate without friction or duplication.
 
-### Pour les développeurs front-end
-- **Fini le copier-coller** de logique de validation entre projets
-- **Formulaires auto-adaptatifs** basés sur les métadonnées serveur
-- **Validation temps réel** avec debouncing et cache automatiques
-- **Composants génériques** réutilisables entre projets
+## ✅ Concrete value added
 
-### Pour les développeurs back-end  
-- **Source unique de vérité** pour les contraintes de validation
-- **API uniforme** pour exposer les métadonnées de champs
-- **Évolutivité** sans casser les clients existants
-- **Intégration simple** avec vos endpoints existants
+### For frontend developers
+- **No more copy-paste** of validation logic between projects
+- **Self-adaptive forms** based on server metadata
+- **Real-time validation** with debouncing and automatic caching
+- **Generic components** reusable across projects
 
-### Pour les équipes
-- **Réduction drastique** de la maintenance de code dupliqué
-- **Cohérence** automatique entre front et back
-- **Onboarding facilité** avec des patterns standards
+### For backend developers
+- **Single source of truth** for validation constraints
+- **Uniform API** to expose field metadata
+- **Scalability** without breaking existing clients
+- **Simple integration** with your existing endpoints
+
+### For teams
+- **Drastic reduction** in duplicated code maintenance
+- **Automatic consistency** between frontend and backend
+- **Easier onboarding** with standard patterns
+- **Faster time-to-market** for new forms
 - **Time-to-market réduit** pour les nouveaux formulaires
 
 

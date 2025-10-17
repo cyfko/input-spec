@@ -31,5 +31,18 @@ collections:
     output: true
     permalink: /:path/
 
+# Multilingual navigation
+defaults:
+  - scope:
+      path: "en"
+    values:
+      navigation: navigation_en
+      lang: en
+  - scope:
+      path: ""
+    values:
+      navigation: navigation
+      lang: fr
+
 # Add a footer
 footer_content: "© 2025 Protocol Documentation. Built with Just the Docs."

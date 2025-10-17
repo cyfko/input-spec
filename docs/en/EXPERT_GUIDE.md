@@ -3,165 +3,166 @@ title: Expert Guide
 nav_order: 5
 description: "Cas avancés, optimisations et implémentations spécifiques au protocole."
 
-[🇫🇷 Français](./EXPERT_GUIDE.md) | [🇬🇧 English](./en/EXPERT_GUIDE.md)
-# 🎓 Guide expert
 
-*Architecture interne, optimisations avancées et contributions au protocole*
+[🇫🇷 French](../EXPERT_GUIDE.md) | [🇬🇧 English](./EXPERT_GUIDE.md)
+# 🎓 Expert Guide
 
-## 🎯 Objectifs de ce guide
+*Internal architecture, advanced optimizations, and protocol contributions*
 
-Ce guide s'adresse aux développeurs expérimentés qui souhaitent :
-- 🔬 **Comprendre l'architecture interne** du protocole et ses implémentations
-- ⚡ **Optimiser les performances** pour des cas d'usage haute charge
-- 🛠️ **Étendre le protocole** avec de nouvelles fonctionnalités
-- 🤝 **Contribuer au développement** de l'écosystème
-- 🔍 **Analyser les compromis techniques** et les choix d'implémentation
+## 🎯 Guide Objectives
 
-## 🏗️ Architecture interne du protocole
+This guide is for experienced developers who want to:
+- 🔬 **Understand the internal architecture** of the protocol and its implementations
+- ⚡ **Optimize performance** for high-load use cases
+- 🛠️ **Extend the protocol** with new features
+- 🤝 **Contribute to the ecosystem's development**
+- 🔍 **Analyze technical trade-offs** and implementation choices
 
-### Vue d'ensemble des composants
+## 🏗️ Internal Protocol Architecture
+
+### Component Overview
 
 ```mermaid
 graph TB
-    subgraph "Protocol Core"
-        SPEC[InputFieldSpec<br/>📋 Spécification centralisée]
-        CONSTRAINT[ConstraintDescriptor<br/>🔒 Règles de validation]
-        ENDPOINT[ValuesEndpoint<br/>🌐 Configuration API]
-        MAPPING[ResponseMapping<br/>📊 Transformation données]
-    end
+  subgraph "Protocol Core"
+    SPEC[InputFieldSpec<br/>📋 Central specification]
+    CONSTRAINT[ConstraintDescriptor<br/>🔒 Validation rules]
+    ENDPOINT[ValuesEndpoint<br/>🌐 API configuration]
+    MAPPING[ResponseMapping<br/>📊 Data transformation]
+  end
     
-    subgraph "Client Layer - TypeScript"
-        TS_VALID[FieldValidator<br/>✅ Moteur validation]
-        TS_RESOLVER[ValuesResolver<br/>🔄 Résolution valeurs]
-        TS_CACHE[CacheProvider<br/>💾 Abstraction cache]
-        TS_HTTP[HttpClient<br/>🌐 Abstraction HTTP]
-    end
+  subgraph "Client Layer - TypeScript"
+    TS_VALID[FieldValidator<br/>✅ Validation engine]
+    TS_RESOLVER[ValuesResolver<br/>🔄 Value resolution]
+    TS_CACHE[CacheProvider<br/>💾 Cache abstraction]
+    TS_HTTP[HttpClient<br/>🌐 HTTP abstraction]
+  end
     
-    subgraph "Client Layer - Java"
-        JAVA_VALID[FieldValidator<br/>✅ Moteur validation]
-        JAVA_CLIENT[ValuesResolver<br/>🔄 Résolution valeurs]
-        JAVA_CACHE[CacheProvider<br/>💾 Abstraction cache]
-        JAVA_HTTP[HttpClient<br/>🌐 Abstraction HTTP]
-    end
+  subgraph "Client Layer - Java"
+    JAVA_VALID[FieldValidator<br/>✅ Validation engine]
+    JAVA_CLIENT[ValuesResolver<br/>🔄 Value resolution]
+    JAVA_CACHE[CacheProvider<br/>💾 Cache abstraction]
+    JAVA_HTTP[HttpClient<br/>🌐 HTTP abstraction]
+  end
     
-    subgraph "Extension Points"
-        ADAPTERS[Framework Adapters<br/>🔌 React, Vue, Angular]
-        CUSTOM[Custom Validators<br/>🎯 Validations métier]
-        PLUGINS[Protocol Plugins<br/>🧩 Extensions tierces]
-    end
+  subgraph "Extension Points"
+    ADAPTERS[Framework Adapters<br/>🔌 React, Vue, Angular]
+    CUSTOM[Custom Validators<br/>🎯 Business validations]
+    PLUGINS[Protocol Plugins<br/>🧩 Third-party extensions]
+  end
     
-    SPEC --> TS_VALID
-    SPEC --> JAVA_VALID
-    CONSTRAINT --> TS_VALID
-    CONSTRAINT --> JAVA_VALID
-    ENDPOINT --> TS_RESOLVER
-    ENDPOINT --> JAVA_CLIENT
+  SPEC --> TS_VALID
+  SPEC --> JAVA_VALID
+  CONSTRAINT --> TS_VALID
+  CONSTRAINT --> JAVA_VALID
+  ENDPOINT --> TS_RESOLVER
+  ENDPOINT --> JAVA_CLIENT
     
-    TS_RESOLVER --> TS_HTTP
-    TS_RESOLVER --> TS_CACHE
-    JAVA_CLIENT --> JAVA_HTTP
-    JAVA_CLIENT --> JAVA_CACHE
+  TS_RESOLVER --> TS_HTTP
+  TS_RESOLVER --> TS_CACHE
+  JAVA_CLIENT --> JAVA_HTTP
+  JAVA_CLIENT --> JAVA_CACHE
     
-    TS_VALID --> ADAPTERS
-    CUSTOM --> TS_VALID
-    CUSTOM --> JAVA_VALID
+  TS_VALID --> ADAPTERS
+  CUSTOM --> TS_VALID
+  CUSTOM --> JAVA_VALID
     
-    classDef core fill:#e1f5fe
-    classDef typescript fill:#3178c6
-    classDef java fill:#ed8b00
-    classDef extension fill:#4caf50
+  classDef core fill:#e1f5fe
+  classDef typescript fill:#3178c6
+  classDef java fill:#ed8b00
+  classDef extension fill:#4caf50
     
-    class SPEC,CONSTRAINT,ENDPOINT,MAPPING core
-    class TS_VALID,TS_RESOLVER,TS_CACHE,TS_HTTP typescript
-    class JAVA_VALID,JAVA_CLIENT,JAVA_CACHE,JAVA_HTTP java
-    class ADAPTERS,CUSTOM,PLUGINS extension
+  class SPEC,CONSTRAINT,ENDPOINT,MAPPING core
+  class TS_VALID,TS_RESOLVER,TS_CACHE,TS_HTTP typescript
+  class JAVA_VALID,JAVA_CLIENT,JAVA_CACHE,JAVA_HTTP java
+  class ADAPTERS,CUSTOM,PLUGINS extension
 ```
 
-### Analyse des choix d'architecture
+### Architecture Choices Analysis
+#### 1. **Protocol/Implementation Separation**
 
-#### 1. **Séparation protocole/implémentation**
+**✅ Strengths:**
+- Maximum interoperability between languages
+- Independent evolution of implementations
+- Standardized compliance testing
 
-**✅ Forces :**
-- Interopérabilité maximale entre langages
-- Évolution indépendante des implémentations
-- Tests de conformité standardisés
-
-**⚠️ Compromis :**
-- Complexité accrue pour des fonctionnalités spécifiques au langage
-- Délai de synchronisation entre spécification et implémentations
+**⚠️ Trade-offs:**
+- Increased complexity for language-specific features
+- Synchronization delay between specification and implementations
 
 ```typescript
-// Exemple : Extension spécifique TypeScript non portable
+// Example: TypeScript-specific extension not portable to Java
 interface TypeScriptSpecificExtension {
-  // Cette extension ne peut pas être portée en Java facilement
+  // This extension cannot be easily ported to Java
   dynamicValidation?: (value: any, context: Record<string, any>) => Promise<boolean>;
 }
 ```
 
-#### 2. **Architecture en couches**
+#### 2. **Layered Architecture**
 
 ```mermaid
 graph TB
-    subgraph "User Interface"
-        REACT[React Components]
-        VUE[Vue Components] 
-        VANILLA[Vanilla JS]
-    end
+  subgraph "User Interface"
+    REACT[React Components]
+    VUE[Vue Components] 
+    VANILLA[Vanilla JS]
+  end
     
-    subgraph "Framework Adapters"
-        REACT_ADAPTER[React Adapter]
-        VUE_ADAPTER[Vue Adapter]
-        FORM_LIB[Form Libraries]
-    end
+  subgraph "Framework Adapters"
+    REACT_ADAPTER[React Adapter]
+    VUE_ADAPTER[Vue Adapter]
+    FORM_LIB[Form Libraries]
+  end
     
-    subgraph "Protocol Implementation"
-        VALIDATOR[Field Validator]
-        RESOLVER[Values Resolver]
-        TYPES[Type System]
-    end
+  subgraph "Protocol Implementation"
+    VALIDATOR[Field Validator]
+    RESOLVER[Values Resolver]
+    TYPES[Type System]
+  end
     
-    subgraph "Infrastructure"
-        HTTP[HTTP Client]
-        CACHE[Cache Provider]
-        STORAGE[Storage Provider]
-    end
+  subgraph "Infrastructure"
+    HTTP[HTTP Client]
+    CACHE[Cache Provider]
+    STORAGE[Storage Provider]
+  end
     
-    REACT --> REACT_ADAPTER
-    VUE --> VUE_ADAPTER
-    VANILLA --> FORM_LIB
+  REACT --> REACT_ADAPTER
+  VUE --> VUE_ADAPTER
+  VANILLA --> FORM_LIB
     
-    REACT_ADAPTER --> VALIDATOR
-    VUE_ADAPTER --> VALIDATOR
-    FORM_LIB --> RESOLVER
+  REACT_ADAPTER --> VALIDATOR
+  VUE_ADAPTER --> VALIDATOR
+  FORM_LIB --> RESOLVER
     
-    VALIDATOR --> HTTP
-    RESOLVER --> CACHE
-    TYPES --> STORAGE
+  VALIDATOR --> HTTP
+  RESOLVER --> CACHE
+  TYPES --> STORAGE
     
-    classDef ui fill:#e8f5e8
-    classDef adapter fill:#fff3e0
-    classDef protocol fill:#e3f2fd
-    classDef infra fill:#fce4ec
+  classDef ui fill:#e8f5e8
+  classDef adapter fill:#fff3e0
+  classDef protocol fill:#e3f2fd
+  classDef infra fill:#fce4ec
     
-    class REACT,VUE,VANILLA ui
-    class REACT_ADAPTER,VUE_ADAPTER,FORM_LIB adapter
-    class VALIDATOR,RESOLVER,TYPES protocol
-    class HTTP,CACHE,STORAGE infra
+  class REACT,VUE,VANILLA ui
+  class REACT_ADAPTER,VUE_ADAPTER,FORM_LIB adapter
+  class VALIDATOR,RESOLVER,TYPES protocol
+  class HTTP,CACHE,STORAGE infra
 ```
 
-**Avantages de cette approche :**
-- **Testabilité** : Chaque couche peut être testée indépendamment
-- **Flexibilité** : Possibilité de remplacer des couches spécifiques
-- **Réutilisabilité** : Le cœur du protocole reste portable
+**Advantages of this approach:**
+- **Testability:** Each layer can be tested independently
+- **Flexibility:** Ability to swap out specific layers
+- **Reusability:** Protocol core remains portable
 
-## 🔬 Implémentation détaillée
+## 🔬 Detailed Implementation
 
-### 1. Moteur de validation - Analyse approfondie
+### 1. Validation Engine – In-depth Analysis
 
-> ⚠️ Compatibilité rétro (v1) : Le moteur présenté ci‑dessous illustre encore certains points d'extension pour `enumValues` afin d'expliquer comment un adapter de migration peut fonctionner. En v2 canonique, les ensembles de valeurs doivent être fournis via `fieldSpec.valuesEndpoint` (INLINE ou distant). Lorsque vous construisez un moteur strictement v2, vous pouvez supprimer toute la logique faisant référence à `enumValues`.
+> ⚠️ Backward compatibility (v1): The engine below still illustrates some extension points for `enumValues` to explain how a migration adapter can work. In canonical v2, value sets must be provided via `fieldSpec.valuesEndpoint` (INLINE or remote). When building a strictly v2 engine, you can remove any logic referring to `enumValues`.
 
 ```typescript
-// TypeScript - Architecture interne du FieldValidator
+
+// TypeScript – Internal architecture of FieldValidator
 export class FieldValidator {
   private static readonly DEFAULT_DATE_FORMAT = 'iso8601';
   private readonly constraintProcessors: Map<string, ConstraintProcessor>;
@@ -177,19 +178,19 @@ export class FieldValidator {
   private initializeProcessors(): Map<string, ConstraintProcessor> {
     const processors = new Map<string, ConstraintProcessor>();
     
-  // Processeurs de base du protocole (v2)
-  processors.set('pattern', new PatternConstraintProcessor());
-  processors.set('min', new MinConstraintProcessor());
-  processors.set('max', new MaxConstraintProcessor());
-  processors.set('format', new FormatConstraintProcessor());
-  // NOTE v2: enumValues est retiré du modèle protocolaire canonique. Un processeur
-  // peut subsister côté implémentation pour compatibilité rétro (adapter v1).
-  // processors.set('enumValues', new LegacyEnumConstraintProcessor()); // Optionnel
+    // Core protocol processors (v2)
+    processors.set('pattern', new PatternConstraintProcessor());
+    processors.set('min', new MinConstraintProcessor());
+    processors.set('max', new MaxConstraintProcessor());
+    processors.set('format', new FormatConstraintProcessor());
+    // NOTE v2: enumValues is removed from the canonical protocol model. A processor
+    // may remain in the implementation for backward compatibility (v1 adapter).
+    // processors.set('enumValues', new LegacyEnumConstraintProcessor()); // Optional
     
     return processors;
   }
   
-  // Méthode de validation avec stratégie de court-circuit optimisée
+  // Optimized short-circuit validation method
   async validate(
     fieldSpec: InputFieldSpec,
     value: any,
@@ -201,22 +202,22 @@ export class FieldValidator {
     const errors: ValidationError[] = [];
     
     try {
-      // 1. Validation de type précoce (fail fast)
+      // 1. Early type validation (fail fast)
       if (!this.isValidType(value, fieldSpec.dataType, fieldSpec.expectMultipleValues)) {
         return this.createTypeError(fieldSpec, value);
       }
       
-      // 2. Validation required (court-circuit si échec)
+      // 2. Required validation (short-circuit on failure)
       if (fieldSpec.required && this.isEmpty(value)) {
         return this.createRequiredError(fieldSpec);
       }
       
-      // 3. Court-circuit si valeur vide et non requise
+      // 3. Short-circuit if value is empty and not required
       if (this.isEmpty(value) && !fieldSpec.required) {
         return new ValidationResult(true, []);
       }
       
-      // 4. Traitement des contraintes avec optimisations
+      // 4. Constraint processing with optimizations
       const constraints = constraintName 
         ? [this.findConstraint(fieldSpec.constraints, constraintName)]
         : fieldSpec.constraints;
@@ -233,17 +234,17 @@ export class FieldValidator {
         
         errors.push(...constraintErrors);
         
-        // Court-circuit optionnel sur première erreur (performance)
+        // Optional short-circuit on first error (performance)
         if (this.options.failFast && constraintErrors.length > 0) {
           break;
         }
       }
       
     } catch (error) {
-      // Gestion robuste des erreurs de validation
+      // Robust error handling for validation
       errors.push(new ValidationError(
         'validation_error',
-        `Erreur interne de validation: ${error.message}`,
+        `Internal validation error: ${error.message}`,
         value
       ));
     }
@@ -260,8 +261,8 @@ export class FieldValidator {
     
     const errors: ValidationError[] = [];
     
-    // Traitement des contraintes par ordre de priorité (optimisation)
-    const processingOrder = this.getConstraintProcessingOrder(constraint);
+  // Process constraints in priority order (optimization)
+  const processingOrder = this.getConstraintProcessingOrder(constraint);
     
     for (const constraintType of processingOrder) {
       const processor = this.constraintProcessors.get(constraintType);
@@ -282,7 +283,7 @@ export class FieldValidator {
         } catch (error) {
           errors.push(new ValidationError(
             constraintType,
-            `Erreur de traitement ${constraintType}: ${error.message}`,
+            `Processing error for ${constraintType}: ${error.message}`,
             value
           ));
         }
@@ -292,25 +293,25 @@ export class FieldValidator {
     return errors;
   }
   
-  // Optimisation : ordre de traitement basé sur la complexité/coût
+  // Optimization: processing order based on complexity/cost
   private getConstraintProcessingOrder(constraint: ConstraintDescriptor): string[] {
     const order = [];
     
-    // 1. Validations locales rapides d'abord
+    // 1. Fast local validations first
     if (constraint.pattern) order.push('pattern');
     if (constraint.min !== undefined) order.push('min');
     if (constraint.max !== undefined) order.push('max');
     if (constraint.format) order.push('format');
     
-    // 2. Validations nécessitant des données externes en dernier
-    // v2: les ensembles de valeurs sont définis via fieldSpec.valuesEndpoint (pas stocké dans la contrainte)
-    // Un adapter de compatibilité pourrait encore pousser 'enumValues' ici.
+    // 2. Validations requiring external data last
+    // v2: value sets are defined via fieldSpec.valuesEndpoint (not stored in the constraint)
+    // A compatibility adapter could still push 'enumValues' here.
     
     return order;
   }
 }
 
-// Interface pour les processeurs de contraintes extensibles
+// Interface for extensible constraint processors
 interface ConstraintProcessor {
   canProcess(constraint: ConstraintDescriptor): boolean;
   process(
@@ -321,7 +322,7 @@ interface ConstraintProcessor {
   ): Promise<ProcessingResult>;
 }
 
-// Exemple de processeur personnalisé
+// Example of a custom processor
 class CustomBusinessLogicProcessor implements ConstraintProcessor {
   canProcess(constraint: ConstraintDescriptor): boolean {
     return constraint.name.startsWith('business_');
@@ -334,7 +335,7 @@ class CustomBusinessLogicProcessor implements ConstraintProcessor {
     context: ValidationContext
   ): Promise<ProcessingResult> {
     
-    // Logique métier spécifique
+    // Specific business logic
     switch (constraint.name) {
       case 'business_unique_project_name':
         return this.validateProjectNameUniqueness(value, context);
@@ -351,7 +352,7 @@ class CustomBusinessLogicProcessor implements ConstraintProcessor {
     projectName: string, 
     context: ValidationContext
   ): Promise<ProcessingResult> {
-    // Implémentation de la validation d'unicité
+    // Implementation of uniqueness validation
     const exists = await context.businessLogic.checkProjectNameExists(projectName);
     
     if (exists) {
@@ -359,7 +360,7 @@ class CustomBusinessLogicProcessor implements ConstraintProcessor {
         isValid: false,
         errors: [new ValidationError(
           'business_unique_project_name',
-          'Ce nom de projet existe déjà',
+          'This project name already exists',
           projectName
         )]
       };
@@ -370,13 +371,13 @@ class CustomBusinessLogicProcessor implements ConstraintProcessor {
 }
 ```
 
-### 2. Système de cache haute performance
+### 2. High-Performance Cache System
 
 ```typescript
-// Cache provider avec algorithmes avancés
+// Cache provider with advanced algorithms
 export class HighPerformanceCacheProvider implements CacheProvider {
   private readonly primaryCache = new Map<string, CacheEntry>();
-  private readonly indexCache = new Map<string, Set<string>>(); // Index pour invalidation en groupe
+  private readonly indexCache = new Map<string, Set<string>>(); // Index for group invalidation
   private readonly writeQueue: CacheWrite[] = [];
   private readonly metrics: CacheMetrics;
   
@@ -386,7 +387,7 @@ export class HighPerformanceCacheProvider implements CacheProvider {
     maxMemoryUsage: 50 * 1024 * 1024, // 50MB
     evictionPolicy: 'LRU',
     writeStrategy: 'write-behind',
-    compressionThreshold: 1024 // Compresser les objets > 1KB
+    compressionThreshold: 1024 // Compress objects > 1KB
   };
   
   constructor(config?: Partial<CacheConfig>) {
@@ -414,14 +415,14 @@ export class HighPerformanceCacheProvider implements CacheProvider {
         return null;
       }
       
-      // Mise à jour LRU
-      entry.lastAccessed = Date.now();
-      entry.accessCount++;
+  // LRU update
+  entry.lastAccessed = Date.now();
+  entry.accessCount++;
       
-      this.metrics.recordHit(key, performance.now() - start);
+  this.metrics.recordHit(key, performance.now() - start);
       
-      // Décompression si nécessaire
-      return this.deserializeValue<T>(entry.value);
+  // Decompress if needed
+  return this.deserializeValue<T>(entry.value);
       
     } catch (error) {
       this.metrics.recordError('get', error);
@@ -448,7 +449,7 @@ export class HighPerformanceCacheProvider implements CacheProvider {
     }
   }
   
-  // Invalidation par pattern pour les données liées
+  // Pattern-based invalidation for related data
   invalidatePattern(pattern: string): void {
     const regex = new RegExp(pattern);
     const keysToDelete: string[] = [];
@@ -463,7 +464,7 @@ export class HighPerformanceCacheProvider implements CacheProvider {
     this.metrics.recordBatchInvalidation(keysToDelete.length);
   }
   
-  // Invalidation par tag pour les groupes logiques
+  // Tag-based invalidation for logical groups
   invalidateByTag(tag: string): void {
     const keys = this.indexCache.get(tag);
     if (keys) {
@@ -477,7 +478,7 @@ export class HighPerformanceCacheProvider implements CacheProvider {
     if (this.config.writeStrategy === 'write-behind') {
       setInterval(() => {
         this.processWriteQueue();
-      }, 100); // Traiter la queue toutes les 100ms
+      }, 100); // Process the queue every 100ms
     }
   }
   
@@ -495,12 +496,12 @@ export class HighPerformanceCacheProvider implements CacheProvider {
   }
   
   private writeDirectly(key: string, entry: CacheEntry): void {
-    // Éviction si nécessaire
+    // Eviction if needed
     if (this.shouldEvict()) {
       this.evictEntries();
     }
     
-    // Enregistrement avec indexation
+    // Store with indexing
     this.primaryCache.set(key, entry);
     this.updateIndexes(key, entry);
     
@@ -513,7 +514,7 @@ export class HighPerformanceCacheProvider implements CacheProvider {
   }
   
   private evictEntries(): void {
-    const entriesToEvict = Math.max(1, Math.floor(this.config.maxSize * 0.1)); // Éviction de 10%
+  const entriesToEvict = Math.max(1, Math.floor(this.config.maxSize * 0.1)); // Evict 10%
     
     switch (this.config.evictionPolicy) {
       case 'LRU':
@@ -541,7 +542,7 @@ export class HighPerformanceCacheProvider implements CacheProvider {
     this.metrics.recordEviction('LRU', count);
   }
   
-  // Métriques détaillées pour le monitoring
+  // Detailed metrics for monitoring
   getDetailedMetrics(): DetailedCacheMetrics {
     return {
       ...this.metrics.getSummary(),
@@ -563,12 +564,12 @@ export class HighPerformanceCacheProvider implements CacheProvider {
 }
 ```
 
-## ⚡ Optimisations avancées
+## ⚡ Advanced Optimizations
 
-### 1. Compilation et optimisation à l'exécution
+### 1. Runtime Compilation and Optimization
 
 ```typescript
-// Compilation dynamique des validations pour des performances maximales
+// Dynamic compilation of validations for maximum performance
 export class CompiledValidator {
   private compiledValidators = new Map<string, CompiledValidationFunction>();
   
@@ -588,14 +589,14 @@ export class CompiledValidator {
   private compileFieldSpec(fieldSpec: InputFieldSpec): CompiledValidationFunction {
     const validationSteps: ValidationStep[] = [];
     
-    // Génération de code optimisé pour chaque contrainte
+    // Generate optimized code for each constraint
     for (const constraint of fieldSpec.constraints) {
       if (constraint.pattern) {
         const regex = new RegExp(constraint.pattern);
         validationSteps.push({
           type: 'pattern',
           validator: (value: string) => regex.test(value),
-          errorMessage: constraint.errorMessage || 'Format invalide'
+          errorMessage: constraint.errorMessage || 'Invalid format'
         });
       }
       
@@ -603,18 +604,18 @@ export class CompiledValidator {
         validationSteps.push(this.compileMinMaxValidation(constraint, fieldSpec));
       }
       
-    // Legacy (migration): prise en charge optionnelle de enumValues pour specs non migrées
+    // Legacy (migration): optional support for enumValues for non-migrated specs
     if (constraint.enumValues) {
       const validValues = new Set(constraint.enumValues.map(ev => ev.value));
         validationSteps.push({
           type: 'enum',
           validator: (value: any) => validValues.has(value),
-          errorMessage: constraint.errorMessage || 'Valeur non autorisée'
+          errorMessage: constraint.errorMessage || 'Value not allowed'
         });
       }
     }
     
-    // Retourner une fonction optimisée
+    // Return an optimized function
     return this.createOptimizedValidator(validationSteps, fieldSpec);
   }
   
@@ -641,16 +642,16 @@ export class CompiledValidator {
           isValid: false,
           errors: [{ 
             constraintName: 'required', 
-            message: 'Ce champ est obligatoire' 
+            message: 'This field is required' 
           }]
         };
       }
       
-      // Exécution des étapes compilées
-      const errors: ValidationError[] = [];
+  // Execute compiled steps
+  const errors: ValidationError[] = [];
       
       if (fieldSpec.expectMultipleValues && Array.isArray(value)) {
-        // Validation optimisée pour les tableaux
+  // Optimized validation for arrays
         for (let i = 0; i < value.length; i++) {
           for (const step of steps) {
             if (!step.validator(value[i])) {
@@ -662,7 +663,7 @@ export class CompiledValidator {
           }
         }
       } else {
-        // Validation pour valeur unique
+  // Validation for single value
         for (const step of steps) {
           if (!step.validator(value)) {
             errors.push({
@@ -707,10 +708,10 @@ interface ValidationStep {
 }
 ```
 
-### 2. Pool de workers pour validations asynchrones
+### 2. Worker Pool for Asynchronous Validations
 
 ```typescript
-// Worker pool pour validation parallèle haute performance
+// Worker pool for high-performance parallel validation
 export class ValidationWorkerPool {
   private workers: Worker[] = [];
   private taskQueue: ValidationTask[] = [];
@@ -730,7 +731,7 @@ export class ValidationWorkerPool {
       };
       
       worker.onerror = (error) => {
-        console.error(`Erreur worker ${i}:`, error);
+        console.error(`Worker error ${i}:`, error);
         this.handleWorkerError(i, error);
       };
       
@@ -747,13 +748,13 @@ export class ValidationWorkerPool {
     const taskId = this.generateTaskId();
     const task: ValidationTask = {
       id: taskId,
-      fieldSpec: JSON.parse(JSON.stringify(fieldSpec)), // Clone pour sérialisation
+  fieldSpec: JSON.parse(JSON.stringify(fieldSpec)), // Clone for serialization
       value,
       priority,
       timestamp: Date.now()
     };
     
-    // Créer la promesse de résultat
+  // Create the result promise
     const resultPromise = new Promise<ValidationResult>((resolve, reject) => {
       task.resolve = resolve;
       task.reject = reject;
@@ -761,7 +762,7 @@ export class ValidationWorkerPool {
     
     this.workerResults.set(taskId, resultPromise);
     
-    // Ajouter à la queue avec priorité
+  // Add to the queue with priority
     this.addToQueue(task);
     this.processQueue();
     
@@ -769,7 +770,7 @@ export class ValidationWorkerPool {
   }
   
   private addToQueue(task: ValidationTask): void {
-    // Insertion avec tri par priorité
+  // Insert with priority sorting
     const priorityOrder = { high: 0, normal: 1, low: 2 };
     
     let insertIndex = this.taskQueue.length;
@@ -784,7 +785,7 @@ export class ValidationWorkerPool {
   }
   
   private processQueue(): void {
-    // Assigner les tâches aux workers disponibles
+  // Assign tasks to available workers
     for (let workerId = 0; workerId < this.workers.length; workerId++) {
       if (!this.activeWorkers.has(workerId) && this.taskQueue.length > 0) {
         const task = this.taskQueue.shift()!;
@@ -804,12 +805,12 @@ export class ValidationWorkerPool {
       value: task.value
     });
     
-    // Timeout de sécurité
+  // Safety timeout
     setTimeout(() => {
       if (this.activeWorkers.has(workerId)) {
         this.handleWorkerTimeout(workerId, task);
       }
-    }, 30000); // 30 secondes timeout
+  }, 30000); // 30 seconds timeout
   }
   
   private handleWorkerMessage(workerId: number, message: any): void {
@@ -826,11 +827,11 @@ export class ValidationWorkerPool {
       }
     }
     
-    // Traiter la prochaine tâche en queue
-    this.processQueue();
+  // Process the next task in the queue
+  this.processQueue();
   }
   
-  // Métriques de performance du pool
+  // Worker pool performance metrics
   getPoolMetrics(): WorkerPoolMetrics {
     return {
       totalWorkers: this.workers.length,
@@ -841,21 +842,21 @@ export class ValidationWorkerPool {
     };
   }
   
-  // Optimisation dynamique de la taille du pool
+  // Dynamic optimization of pool size
   optimizePoolSize(): void {
     const metrics = this.getPoolMetrics();
     
     if (metrics.queueLength > metrics.totalWorkers * 2 && metrics.totalWorkers < 16) {
-      // Augmenter la taille du pool si queue trop longue
-      this.addWorker();
+  // Increase pool size if queue is too long
+  this.addWorker();
     } else if (metrics.avgTaskCompletionTime < 10 && metrics.totalWorkers > 2) {
-      // Réduire si les tâches sont trop rapides (overhead de sérialisation)
-      this.removeWorker();
+  // Reduce if tasks are too fast (serialization overhead)
+  this.removeWorker();
     }
   }
 }
 
-// Worker de validation (fichier séparé: validation-worker.ts)
+// Validation worker (separate file: validation-worker.ts)
 self.onmessage = async (event) => {
   const { type, taskId, fieldSpec, value } = event.data;
   
@@ -889,24 +890,24 @@ self.onmessage = async (event) => {
 ### 1. Système de plugins
 
 ```typescript
-// Architecture de plugins pour étendre le protocole
+// Plugin architecture to extend the protocol
 export interface ProtocolPlugin {
   name: string;
   version: string;
   
-  // Hooks du cycle de vie
+  // Lifecycle hooks
   onFieldSpecLoad?(fieldSpec: InputFieldSpec): InputFieldSpec;
   onValidationStart?(fieldSpec: InputFieldSpec, value: any): void;
   onValidationComplete?(result: ValidationResult): ValidationResult;
   onValuesResolve?(endpoint: ValuesEndpoint, options: FetchValuesOptions): FetchValuesOptions;
   
-  // Extensions de contraintes
+  // Constraint extensions
   customConstraints?: Map<string, ConstraintProcessor>;
   
-  // Extensions de types
+  // Data type extensions
   customDataTypes?: Map<string, DataTypeProcessor>;
   
-  // Méta-informations
+  // Meta-information
   dependencies?: string[];
   conflicts?: string[];
 }
@@ -916,19 +917,19 @@ export class ProtocolExtensionManager {
   private hooks = new Map<string, ProtocolPlugin[]>();
   
   registerPlugin(plugin: ProtocolPlugin): void {
-    // Vérifier les dépendances
-    this.validatePluginDependencies(plugin);
+  // Check dependencies
+  this.validatePluginDependencies(plugin);
     
-    // Vérifier les conflits
-    this.checkPluginConflicts(plugin);
+  // Check conflicts
+  this.checkPluginConflicts(plugin);
     
-    // Enregistrer le plugin
-    this.plugins.set(plugin.name, plugin);
+  // Register the plugin
+  this.plugins.set(plugin.name, plugin);
     
-    // Enregistrer les hooks
-    this.registerPluginHooks(plugin);
+  // Register hooks
+  this.registerPluginHooks(plugin);
     
-    console.log(`Plugin ${plugin.name} v${plugin.version} enregistré`);
+  console.log(`Plugin ${plugin.name} v${plugin.version} registered`);
   }
   
   private validatePluginDependencies(plugin: ProtocolPlugin): void {
@@ -936,7 +937,7 @@ export class ProtocolExtensionManager {
       for (const dependency of plugin.dependencies) {
         if (!this.plugins.has(dependency)) {
           throw new Error(
-            `Plugin ${plugin.name} nécessite la dépendance: ${dependency}`
+            `Plugin ${plugin.name} requires dependency: ${dependency}`
           );
         }
       }
@@ -958,8 +959,8 @@ export class ProtocolExtensionManager {
           result = await hookMethod.call(plugin, result, ...args) || result;
         }
       } catch (error) {
-        console.error(`Erreur dans le plugin ${plugin.name}, hook ${hookName}:`, error);
-        // Continuer avec les autres plugins
+        console.error(`Error in plugin ${plugin.name}, hook ${hookName}:`, error);
+        // Continue with other plugins
       }
     }
     
@@ -981,7 +982,7 @@ export class ProtocolExtensionManager {
   }
 }
 
-// Exemple de plugin pour l'internationalisation
+// Example plugin for internationalization
 export class I18nPlugin implements ProtocolPlugin {
   name = 'i18n';
   version = '1.0.0';
@@ -989,7 +990,7 @@ export class I18nPlugin implements ProtocolPlugin {
   constructor(private locale: string, private translations: Record<string, any>) {}
   
   onFieldSpecLoad(fieldSpec: InputFieldSpec): InputFieldSpec {
-    // Traduire les textes de l'interface
+  // Translate interface texts
     const translated = { ...fieldSpec };
     
     if (this.translations[this.locale]) {
@@ -1001,7 +1002,7 @@ export class I18nPlugin implements ProtocolPlugin {
         translated.displayName = fieldTranslations.displayName || fieldSpec.displayName;
         translated.description = fieldTranslations.description || fieldSpec.description;
         
-        // Traduire les messages d'erreur des contraintes
+  // Translate constraint error messages
         translated.constraints = fieldSpec.constraints.map(constraint => ({
           ...constraint,
           errorMessage: fieldTranslations.constraints?.[constraint.name]?.errorMessage 
@@ -1014,7 +1015,7 @@ export class I18nPlugin implements ProtocolPlugin {
   }
   
   onValidationComplete(result: ValidationResult): ValidationResult {
-    // Traduire les messages d'erreur
+  // Translate error messages
     const translatedErrors = result.errors.map(error => ({
       ...error,
       message: this.translateErrorMessage(error.message, error.constraintName)
@@ -1032,7 +1033,7 @@ export class I18nPlugin implements ProtocolPlugin {
   }
 }
 
-// Plugin pour validation métier personnalisée
+// Plugin for custom business logic validation
 export class BusinessLogicPlugin implements ProtocolPlugin {
   name = 'business-logic';
   version = '1.0.0';
@@ -1046,8 +1047,8 @@ export class BusinessLogicPlugin implements ProtocolPlugin {
   constructor(private businessService: BusinessLogicService) {}
   
   onValidationStart(fieldSpec: InputFieldSpec, value: any): void {
-    // Logger les validations pour audit
-    this.businessService.logValidationAttempt(fieldSpec.displayName, value);
+  // Log validations for audit
+  this.businessService.logValidationAttempt(fieldSpec.displayName, value);
   }
 }
 ```
@@ -1055,7 +1056,7 @@ export class BusinessLogicPlugin implements ProtocolPlugin {
 ### 2. Analyse de performance et profiling
 
 ```typescript
-// Profiler avancé pour analyser les performances
+// Advanced profiler to analyze performance
 export class ValidationProfiler {
   private profiles = new Map<string, PerformanceProfile>();
   private activeProfiles = new Map<string, PerformanceSession>();
@@ -1088,7 +1089,7 @@ export class ValidationProfiler {
   endProfiling(sessionId: string): PerformanceReport {
     const session = this.activeProfiles.get(sessionId);
     if (!session) {
-      throw new Error(`Session de profiling non trouvée: ${sessionId}`);
+  throw new Error(`Profiling session not found: ${sessionId}`);
     }
     
     const totalDuration = performance.now() - session.startTime;
@@ -1116,7 +1117,7 @@ export class ValidationProfiler {
   private identifyBottlenecks(operations: PerformanceOperation[]): Bottleneck[] {
     const bottlenecks: Bottleneck[] = [];
     
-    // Identifier les opérations les plus lentes
+  // Identify the slowest operations
     const sortedOps = [...operations].sort((a, b) => b.duration - a.duration);
     const slowOps = sortedOps.slice(0, 3).filter(op => op.duration > 10);
     
@@ -1125,12 +1126,12 @@ export class ValidationProfiler {
         type: 'slow_operation',
         operation: op.operation,
         impact: 'high',
-        description: `Opération ${op.operation} prend ${op.duration.toFixed(2)}ms`,
+  description: `Operation ${op.operation} takes ${op.duration.toFixed(2)}ms`,
         suggestion: this.getSuggestionForOperation(op.operation)
       });
     }
     
-    // Identifier les opérations répétitives
+  // Identify repetitive operations
     const operationCounts = new Map<string, number>();
     operations.forEach(op => {
       operationCounts.set(op.operation, (operationCounts.get(op.operation) || 0) + 1);
@@ -1142,8 +1143,8 @@ export class ValidationProfiler {
           type: 'repeated_operation',
           operation,
           impact: 'medium',
-          description: `Opération ${operation} répétée ${count} fois`,
-          suggestion: 'Considérer la mise en cache ou le batching'
+          description: `Operation ${operation} repeated ${count} times`,
+          suggestion: 'Consider caching or batching'
         });
       }
     }
@@ -1218,75 +1219,75 @@ interface Bottleneck {
 }
 ```
 
-## 🤝 Contributions au protocole
+## 🤝 Protocol Contributions
 
-### Guide pour contribuer
+### Contribution Guide
 
-#### 1. **Architecture des contributions**
+#### 1. **Contribution Architecture**
 
 ```mermaid
 graph TB
-    subgraph "Types de contributions"
-        SPEC[📋 Spécification protocole]
-        IMPL[💻 Implémentations]
-        DOCS[📖 Documentation]
-        TESTS[🧪 Tests de conformité]
-    end
+  subgraph "Contribution Types"
+    SPEC[📋 Protocol Specification]
+    IMPL[💻 Implementations]
+    DOCS[📖 Documentation]
+    TESTS[🧪 Compliance Tests]
+  end
     
-    subgraph "Processus de validation"
-        RFC[📝 RFC (Request for Comments)]
-        REVIEW[👥 Revue par les pairs]
-        PROTO[🏗️ Prototype]
-        COMPAT[🔄 Tests compatibilité]
-    end
+  subgraph "Validation Process"
+    RFC[📝 RFC (Request for Comments)]
+    REVIEW[👥 Peer Review]
+    PROTO[🏗️ Prototype]
+    COMPAT[🔄 Compatibility Tests]
+  end
     
-    subgraph "Intégration"
-        MERGE[🔀 Intégration]
-        RELEASE[🚀 Release]
-        MIGRATION[📦 Guide migration]
-    end
+  subgraph "Integration"
+    MERGE[🔀 Integration]
+    RELEASE[🚀 Release]
+    MIGRATION[📦 Migration Guide]
+  end
     
-    SPEC --> RFC
-    IMPL --> REVIEW
-    DOCS --> REVIEW
-    TESTS --> COMPAT
+  SPEC --> RFC
+  IMPL --> REVIEW
+  DOCS --> REVIEW
+  TESTS --> COMPAT
     
-    RFC --> PROTO
-    REVIEW --> PROTO
-    PROTO --> COMPAT
-    COMPAT --> MERGE
+  RFC --> PROTO
+  REVIEW --> PROTO
+  PROTO --> COMPAT
+  COMPAT --> MERGE
     
-    MERGE --> RELEASE
-    RELEASE --> MIGRATION
+  MERGE --> RELEASE
+  RELEASE --> MIGRATION
     
-    classDef contribution fill:#e8f5e8
-    classDef validation fill:#fff3e0
-    classDef integration fill:#e3f2fd
+  classDef contribution fill:#e8f5e8
+  classDef validation fill:#fff3e0
+  classDef integration fill:#e3f2fd
     
-    class SPEC,IMPL,DOCS,TESTS contribution
-    class RFC,REVIEW,PROTO,COMPAT validation
-    class MERGE,RELEASE,MIGRATION integration
+  class SPEC,IMPL,DOCS,TESTS contribution
+  class RFC,REVIEW,PROTO,COMPAT validation
+  class MERGE,RELEASE,MIGRATION integration
 ```
 
-#### 2. **Standards de contribution**
+#### 2. **Contribution Standards**
 
 ```typescript
-// Template pour une nouvelle contrainte
+// Template for a new constraint
 export interface NewConstraintProposal {
-  // Métadonnées obligatoires
+  // Required metadata
   name: string;
   version: string;
   author: string;
   description: string;
   
-  // Spécification technique
+  // Technical specification
   constraintSpec: {
     supportedDataTypes: DataType[];
     parameters: ConstraintParameter[];
     behavior: ConstraintBehavior;
   };
   
-  // Tests de conformité obligatoires
+  // Required conformance tests
   conformanceTests: ConformanceTest[];
   
   // Documentation
@@ -1296,7 +1297,7 @@ export interface NewConstraintProposal {
     migration?: MigrationGuide;
   };
   
-  // Compatibilité
+  // Compatibility
   compatibility: {
     minProtocolVersion: string;
     backwardCompatible: boolean;
@@ -1304,7 +1305,7 @@ export interface NewConstraintProposal {
   };
 }
 
-// Tests de conformité standardisés
+// Standardized conformance tests
 export interface ConformanceTest {
   name: string;
   description: string;
@@ -1319,12 +1320,12 @@ export interface ConformanceTest {
   }>;
 }
 
-// Exemple de contribution: constraint "credit_card"
+// Example contribution: "credit_card" constraint
 export const CreditCardConstraintProposal: NewConstraintProposal = {
   name: "credit_card_validation",
   version: "1.0.0",
   author: "community",
-  description: "Validation de numéros de carte de crédit avec algorithme de Luhn",
+  description: "Credit card number validation using Luhn algorithm",
   
   constraintSpec: {
     supportedDataTypes: [DataType.STRING],
@@ -1332,7 +1333,7 @@ export const CreditCardConstraintProposal: NewConstraintProposal = {
       {
         name: "acceptedTypes",
         type: "string[]",
-        description: "Types de cartes acceptées (visa, mastercard, amex, etc.)",
+    description: "Accepted card types (visa, mastercard, amex, etc.)",
         optional: true
       }
     ],
@@ -1346,9 +1347,9 @@ export const CreditCardConstraintProposal: NewConstraintProposal = {
   conformanceTests: [
     {
       name: "visa_card_validation",
-      description: "Validation d'un numéro Visa valide",
+  description: "Validation of a valid Visa card number",
       fieldSpec: {
-        displayName: "Numéro de carte",
+  displayName: "Card number",
         dataType: DataType.STRING,
         expectMultipleValues: false,
         required: true,
@@ -1364,7 +1365,7 @@ export const CreditCardConstraintProposal: NewConstraintProposal = {
         {
           input: "4111111111111111",
           expectedResult: { isValid: true },
-          description: "Numéro Visa valide"
+          description: "Valid Visa card number"
         },
         {
           input: "5555555555554444",
@@ -1372,7 +1373,7 @@ export const CreditCardConstraintProposal: NewConstraintProposal = {
             isValid: false, 
             errors: ["Type de carte non accepté"] 
           },
-          description: "Numéro Mastercard avec restriction Visa"
+          description: "Mastercard number with Visa restriction"
         }
       ]
     }
@@ -1381,15 +1382,15 @@ export const CreditCardConstraintProposal: NewConstraintProposal = {
   documentation: {
     examples: [
       {
-        title: "Validation carte de crédit basique",
-        fieldSpec: "/* voir conformanceTests */",
-        description: "Exemple d'usage standard"
+  title: "Basic credit card validation",
+  fieldSpec: "/* see conformanceTests */",
+  description: "Standard usage example"
       }
     ],
     useCases: [
-      "Formulaires de paiement e-commerce",
-      "Validation de moyens de paiement",
-      "Systèmes de facturation"
+  "E-commerce payment forms",
+  "Payment method validation",
+  "Billing systems"
     ]
   },
   
@@ -1400,10 +1401,10 @@ export const CreditCardConstraintProposal: NewConstraintProposal = {
 };
 ```
 
-#### 3. **Implémentation de référence**
+#### 3. **Reference Implementation**
 
 ```typescript
-// Implémentation de référence pour les nouveaux contributeurs
+// Reference implementation for new contributors
 export class ReferenceConstraintProcessor implements ConstraintProcessor {
   canProcess(constraint: ConstraintDescriptor): boolean {
     return constraint.name === 'credit_card_validation';
@@ -1421,40 +1422,40 @@ export class ReferenceConstraintProcessor implements ConstraintProcessor {
         isValid: false,
         errors: [new ValidationError(
           constraint.name,
-          'Numéro de carte doit être une chaîne de caractères',
+          'Card number must be a string',
           value
         )]
       };
     }
     
-    // Nettoyer le numéro (retirer espaces et tirets)
+    // Clean the number (remove spaces and dashes)
     const cleanNumber = value.replace(/[\s-]/g, '');
     
-    // Vérifier le format de base
+    // Check basic format
     if (!/^\d{13,19}$/.test(cleanNumber)) {
       return {
         isValid: false,
         errors: [new ValidationError(
           constraint.name,
-          constraint.errorMessage || 'Format de numéro de carte invalide',
+          constraint.errorMessage || 'Invalid card number format',
           value
         )]
       };
     }
     
-    // Algorithme de Luhn
+    // Luhn algorithm
     if (!this.validateLuhn(cleanNumber)) {
       return {
         isValid: false,
         errors: [new ValidationError(
           constraint.name,
-          constraint.errorMessage || 'Numéro de carte invalide',
+          constraint.errorMessage || 'Invalid card number',
           value
         )]
       };
     }
     
-    // Vérifier les types acceptés si spécifiés
+    // Check accepted types if specified
     const acceptedTypes = constraint.acceptedTypes;
     if (acceptedTypes && acceptedTypes.length > 0) {
       const cardType = this.detectCardType(cleanNumber);
@@ -1463,7 +1464,7 @@ export class ReferenceConstraintProcessor implements ConstraintProcessor {
           isValid: false,
           errors: [new ValidationError(
             constraint.name,
-            `Type de carte ${cardType} non accepté`,
+            `Card type ${cardType} not accepted`,
             value
           )]
         };
@@ -1495,44 +1496,44 @@ export class ReferenceConstraintProcessor implements ConstraintProcessor {
   }
   
   private detectCardType(number: string): string {
-    // Patterns de détection simplifiés
-    if (/^4/.test(number)) return 'visa';
-    if (/^5[1-5]/.test(number)) return 'mastercard';
-    if (/^3[47]/.test(number)) return 'amex';
-    if (/^6/.test(number)) return 'discover';
+  // Simplified detection patterns
+  if (/^4/.test(number)) return 'visa';
+  if (/^5[1-5]/.test(number)) return 'mastercard';
+  if (/^3[47]/.test(number)) return 'amex';
+  if (/^6/.test(number)) return 'discover';
     
-    return 'unknown';
+  return 'unknown';
   }
 }
 ```
 
-### Roadmap technique
+### Technical Roadmap
 
-#### Version 2.0 (Planifiée)
+#### Version 2.0 (Planned)
 
 ```typescript
-// Nouvelles fonctionnalités prévues
+// Planned new features
 interface ProtocolV2Extensions {
-  // Validation conditionnelle avancée
+  // Advanced conditional validation
   conditionalConstraints: {
-    condition: string; // Expression logique
+    condition: string; // Logical expression
     constraints: ConstraintDescriptor[];
   }[];
   
-  // Internationalisation native
+  // Native internationalization
   i18n: {
     defaultLocale: string;
     translations: Record<string, TranslationSet>;
   };
   
-  // Validation côté serveur intégrée
+  // Integrated server-side validation
   serverValidation: {
     endpoint: string;
     batchSupport: boolean;
     realTimeValidation: boolean;
   };
   
-  // Métriques et analytics intégrés
+  // Integrated metrics and analytics
   analytics: {
     trackPerformance: boolean;
     trackUserBehavior: boolean;
@@ -1541,33 +1542,33 @@ interface ProtocolV2Extensions {
 }
 ```
 
-## 📊 Analyse critique et limites
+## 📊 Critical Analysis and Limitations
 
-### Forces du protocole actuel
+### Strengths of the Current Protocol
 
-1. **✅ Simplicité conceptuelle** - API claire et compréhensible
-2. **✅ Interopérabilité** - Standard cross-language efficace
-3. **✅ Extensibilité** - Architecture plugin bien pensée
-4. **✅ Performance** - Optimisations disponibles pour tous les cas d'usage
+1. **✅ Conceptual Simplicity** - Clear and understandable API
+2. **✅ Interoperability** - Effective cross-language standard
+3. **✅ Extensibility** - Well-designed plugin architecture
+4. **✅ Performance** - Optimizations available for all use cases
 
-### Limites identifiées
+### Identified Limitations
 
-1. **⚠️ Validation conditionnelle complexe** - Limitée aux cas simples
-2. **⚠️ Gestion d'état** - Pas de solution native pour les formulaires multi-étapes
-3. **⚠️ Synchronisation** - Pas de mécanisme de mise à jour temps réel des spécifications
-4. **⚠️ Offline** - Support limité pour les applications déconnectées
+1. **⚠️ Complex Conditional Validation** - Limited to simple cases
+2. **⚠️ State Management** - No native solution for multi-step forms
+3. **⚠️ Synchronization** - No real-time update mechanism for specifications
+4. **⚠️ Offline** - Limited support for offline applications
 
-### Recommandations d'amélioration
+### Recommendations for Improvement
 
 ```typescript
-// Proposition d'amélioration: ValidationContext enrichi
+// Improvement proposal: Enhanced ValidationContext
 interface EnhancedValidationContext {
-  // Contexte actuel
+  // Current context
   formData: Record<string, any>;
   userContext: UserContext;
   businessLogic: BusinessLogicService;
   
-  // Nouvelles capacités proposées
+  // Proposed new capabilities
   formState: FormState; // Multi-step, wizard, etc.
   dependencies: FieldDependencyGraph;
   realTimeSync: RealtimeSyncManager;
@@ -1577,21 +1578,21 @@ interface EnhancedValidationContext {
 
 ## 🎯 Conclusion
 
-Ce guide expert a couvert :
+This expert guide covered:
 
-- 🔬 **Architecture interne** détaillée avec les compromis techniques
-- ⚡ **Optimisations avancées** pour les cas d'usage haute performance  
-- 🔧 **Extension du protocole** via le système de plugins
-- 🤝 **Contribution au projet** avec standards et processus
-- 📊 **Analyse critique** des forces et limitations actuelles
+- 🔬 **Detailed internal architecture** with technical trade-offs
+- ⚡ **Advanced optimizations** for high-performance use cases  
+- 🔧 **Protocol extension** via the plugin system
+- 🤝 **Project contribution** with standards and processes
+- 📊 **Critical analysis** of current strengths and limitations
 
-### Pour aller plus loin
+### To go further
 
-1. 🔍 [Code source TypeScript](../impl/typescript/src/) - Implémentation de référence
-2. ☕ [Code source Java](../impl/java/src/) - Implémentation enterprise
-3. 🧪 [Tests de conformité](../tests/) - Suite de tests standardisés
-4. 💬 [Discussions techniques](../../discussions) - Échanges avec la communauté
+1. 🔍 [TypeScript source code](../impl/typescript/src/) - Reference implementation
+2. ☕ [Java source code](../impl/java/src/) - Enterprise implementation
+3. 🧪 [Compliance tests](../tests/) - Standardized test suite
+4. 💬 [Technical discussions](../../discussions) - Community exchanges
 
 ---
 
-*Temps estimé : 2-4 heures • Difficulté : Expert*
+*Estimated time: 2-4 hours • Difficulty: Expert*
