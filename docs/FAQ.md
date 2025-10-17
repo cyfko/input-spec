@@ -1,8 +1,9 @@
+---
 layout: default
 title: FAQ
 nav_order: 7
 description: "Questions fréquemment posées sur le protocole et ses implémentations."
-
+---
 [🇫🇷 Français](./FAQ.md) | [🇬🇧 English](./en/FAQ.md)
 # ❓ FAQ et Scénarios réels
 

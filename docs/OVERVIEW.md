@@ -1,11 +1,9 @@
 ---
 layout: default
 title: Overview
-nav_order: 2
+nav_order: 1
 description: "Présentation du protocole, objectifs et comparaisons avec les solutions existantes."
 ---
-
-
 [🇫🇷 Français](./OVERVIEW.md) | [🇬🇧 English](./en/OVERVIEW.md)
 
 # Dynamic Input Field Specification Protocol v2.1

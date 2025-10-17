@@ -1,3 +1,10 @@
+---
+layout: default
+title: Notes d'implémentation
+nav_order: 6
+description: "Notes d'implémentation"
+---
+[🇫🇷 Français](./MIGRATION_V1_V2.md) | [🇬🇧 English](./en/MIGRATION_V1_V2.md)
 # Migration v1 → v2
 
 > **TL;DR Migration** : 1) Remplacer `enumValues` par `valuesEndpoint.values` (INLINE + `mode: CLOSED`). 2) Promouvoir tout `valuesEndpoint` enfoui dans une contrainte au niveau racine. 3) Aplatir chaque propriété (`minValue`, `pattern`, etc.) en contrainte atomique `{ name, type, params }`. 4) Supprimer toute structure composite et ajouter `mode` explicite si domaine fermé.

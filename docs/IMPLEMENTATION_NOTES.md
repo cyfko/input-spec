@@ -1,3 +1,10 @@
+---
+layout: default
+title: Notes d'Intégration
+nav_order: 6
+description: "Intégration Frontend (Angular · React · Vue · Svelte)."
+---
+[🇫🇷 Français](./IMPLEMENTATION_NOTES.md) | [🇬🇧 English](./en/IMPLEMENTATION_NOTES.md)
 # Notes d’implémentation (Extensions non normatives)
 
 > Légende des tags : 🔧 Extension non normative | ⚠️ Divergence à résoudre | 🚀 Optimisation / Performance | 🧩 Compatibilité | 📦 Comportement normatif
