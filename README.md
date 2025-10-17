@@ -135,6 +135,7 @@ Le protocole v2 apporte une **vraie valeur ajoutée** pour :
 
 ## Le problème résolu
 
+```ts
 // ❌ Avant : Logique dupliquée et incohérente
 const validateEmailA = (email:string) => /^[^@]+@[^@]+\.[^@]+$/.test(email);
 const validateEmailB = (email:string) => email.includes('@'); // Différent !
@@ -142,22 +143,20 @@ const validateEmailB = (email:string) => email.includes('@'); // Différent !
 const emailFieldSpec = {
   constraints: [{ name: 'pattern', type: 'pattern', params: { regex: '^[^@]+@[^@]+\\.[^@]+$' }, errorMessage: 'Format email requis' }]
 };
+```
 
----
 ## ✨ Fonctionnalités clés (v2)
 
-|---------|-------------|--------|
-| Modèle unifié | Champ = métadonnées + contraintes atomiques + `valuesEndpoint` | Stable |
-| Pipeline validation | REQUIRED → TYPE → MEMBERSHIP → CONTRAINTES ordonnées | Stable |
-# input-spec
-
-[🌐 Choisir la langue / Select language](docs/LANGUAGE.md)
-| Erreurs structurées | Nom de contrainte + message + index multi | Stable |
-| Legacy adapter | Traduction v1 → v2 (TS uniquement) | Stable (déprécié) |
-| Coercion douce | Conversion nombre, booléen, date epoch (TS) | Extension |
-| Short‑circuit | Arrêt sur première erreur (Java) | Extension |
-| Hints performance | `debounceMs`, stratégies cache côté client | Stable |
-| Extensibilité | `custom` + futurs types | Stable |
+| Fonctionnalité         | Description                                                    | Statut  |
+|------------------------|----------------------------------------------------------------|---------|
+| Modèle unifié          | Champ = métadonnées + contraintes atomiques + `valuesEndpoint` | Stable  |
+| Pipeline validation    | REQUIRED → TYPE → MEMBERSHIP → CONTRAINTES ordonnées           | Stable  |
+| Erreurs structurées   | Nom de contrainte + message + index multi           | Stable              |
+| Legacy adapter        | Traduction v1 → v2 (TS uniquement)                  | Stable (déprécié)   |
+| Coercion douce        | Conversion nombre, booléen, date epoch (TS)         | Extension           |
+| Short‑circuit         | Arrêt sur première erreur (Java)                    | Extension           |
+| Hints performance     | `debounceMs`, stratégies cache côté client          | Stable              |
+| Extensibilité         | `custom` + futurs types                             | Stable              |
 
 > Les éléments "Extension" ne sont pas normatifs (hors cœur protocole) et sont documentés dans `docs/IMPLEMENTATION_NOTES.md`.
 
