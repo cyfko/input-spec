@@ -12,7 +12,7 @@ layouts_dir: _layouts
 search_enabled: true
 aux_links:
   "View on GitHub":
-    - "//github.com/USERNAME/REPO"
+    - "//github.com/cyfko/input-spec"
 
 plugins:
   - jekyll-remote-theme
