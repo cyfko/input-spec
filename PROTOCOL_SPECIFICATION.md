@@ -1,20 +1,7 @@
-# Dynamic Input Field Specification Protocol v2.0 (Breaking Change)
 
-> THIS IS A MAJOR REVISION introducing a new constraint model, removal of `enumValues`, and relocation of `valuesEndpoint`.
+# Dynamic Input Field Specification Protocol v2.1 (DRAFT)
 
-## Quick Navigation
-
-| Section | Objet |
-|---------|-------|
-| 1. Introduction | Objectifs & périmètre |
-| 2. Core Entities | `InputFieldSpec`, `ValuesEndpoint`, `ConstraintDescriptor` |
-| 2.5 Registry | Liste des types de contraintes atomiques |
-| 2.6 Pipeline | Ordre normatif de validation |
-| 3. Membership Semantics | Modes CLOSED vs SUGGESTIONS |
-| 4. Error Model | Structure des erreurs de validation |
-| 5. Migration Notes | Résumé v1 → v2 |
-| 6. Extensibility | Ajout de nouveaux types |
-| Appendix A | Legacy v1 (référence uniquement) |
+> THIS IS THE NORMATIVE SPECIFICATION FOR VERSION 2.1. This document is self-contained and does not describe previous versions. For migration or legacy details, see `MIGRATION_V1_V2.md` or `APPENDIX_LEGACY.md`.
 
 
 ## RFC 2119 Terminology
@@ -68,24 +55,63 @@ Represents a single logical input field.
 4. `enumValues` (v1) is removed. Static enumerations MUST use `valuesEndpoint.protocol = "INLINE"`.
 5. Each constraint is atomic: exactly one semantic unit per descriptor.
 
+
 ### 2.2 ValuesEndpoint
 
 Unified representation for value sourcing.
 
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `protocol` | string | ✓ | `INLINE` | `HTTPS` | `HTTP` | `GRPC` (default: `HTTPS` if omitted) |
-| `mode` | string |  | `CLOSED` (default) or `SUGGESTIONS` |
-| `items` | ValueAlias[] | conditional | Required iff `protocol = INLINE` |
-| `uri` | string | conditional | Required if protocol is remote (`HTTPS`/`HTTP`/`GRPC`) |
-| `method` | string |  | `GET` (default) or `POST` |
-| `searchField` | string |  | Remote search field hint |
-| `paginationStrategy` | string |  | `NONE` | `PAGE_NUMBER` (default: `NONE` if absent) |
-| `responseMapping` | ResponseMapping |  | Where to extract data (required for non-INLINE if structure not root array) |
-| `requestParams` | RequestParams |  | Names for query or body parameters |
-| `cacheStrategy` | string |  | `NONE` | `SESSION` | `SHORT_TERM` | `LONG_TERM` |
-| `debounceMs` | number |  | Client hint for search debounce |
-| `minSearchLength` | number |  | Minimum characters before search (default 0) |
+| Field                | Type                  | Required    | Description                                                                                 |
+|----------------------|-----------------------|-------------|---------------------------------------------------------------------------------------------|
+| `protocol`           | string                | ✓           | `INLINE` \| `HTTPS` \| `HTTP` \| `GRPC` (default: `HTTPS` if omitted)                       |
+| `mode`               | string                |             | `CLOSED` (default) or `SUGGESTIONS`                                                        |
+| `items`              | ValueAlias[]          | conditional | Required iff `protocol = INLINE`                                                            |
+| `uri`                | string                | conditional | Required if protocol is remote (`HTTPS`/`HTTP`/`GRPC`)                                      |
+| `method`             | string                |             | `GET` (default) or `POST`                                                                   |
+| `searchField`        | string                |             | (DEPRECATED in v2.1) Simple remote search field hint (use `searchParams` for advanced)      |
+| `searchParams`       | object                |             | Key-value pairs for advanced search/filtering. Used as query params (GET) or body (POST).   |
+| `searchParamsSchema` | object (JSON Schema)  |             | JSON Schema describing the structure, type, and semantics of each search parameter.         |
+| `paginationStrategy` | string                |             | `NONE` \| `PAGE_NUMBER` (default: `NONE` if absent)                                         |
+| `responseMapping`    | ResponseMapping       |             | Where to extract data (required for non-INLINE if structure not root array)                 |
+| `requestParams`      | RequestParams         |             | Names for query or body parameters                                                          |
+| `cacheStrategy`      | string                |             | `NONE` \| `SESSION` \| `SHORT_TERM` \| `LONG_TERM`                                          |
+| `debounceMs`         | number                |             | Client hint for search debounce                                                             |
+| `minSearchLength`    | number                |             | Minimum characters before search (default 0)                                                |
+
+**Membership Semantics**
+* `mode = CLOSED`: Value(s) MUST belong to the provided (static or fetched) set.
+* `mode = SUGGESTIONS`: Value(s) MAY lie outside; no membership failure generated.
+
+**Notes:**
+- `searchField` is kept for backward compatibility but is DEPRECATED in favor of `searchParams` and `searchParamsSchema` as of v2.1.
+- `searchParams` allows for multi-criteria and structured search/filtering.
+- `searchParamsSchema` enables clients (including AI agents) to understand, validate, and document the expected search parameters.
+
+**Example: Advanced Search Parameters**
+```json
+{
+  "protocol": "HTTPS",
+  "uri": "/api/items",
+  "method": "POST",
+  "searchParams": { "name": "foo", "status": "active" },
+  "searchParamsSchema": {
+    "type": "object",
+    "properties": {
+      "name": {
+        "type": "string",
+        "description": "Nom de l’item à rechercher (recherche partielle autorisée)"
+      },
+      "status": {
+        "type": "string",
+        "description": "Statut de l’item (ex: active, archived, pending)",
+        "enum": ["active", "archived", "pending"]
+      }
+    },
+    "required": ["name"]
+  },
+  "paginationStrategy": "PAGE_NUMBER",
+  "responseMapping": { "dataField": "data" }
+}
+```
 
 **Membership Semantics**
 * `mode = CLOSED`: Value(s) MUST belong to the provided (static or fetched) set.
@@ -265,397 +291,6 @@ Multiple errors MAY share the same `constraintName` (e.g. multi-values). Clients
 
 ### 3.6 Suggestions (Non-Closed Domain)
 ```json
-{
-  "displayName": "Country",
-  "dataType": "STRING",
-  "expectMultipleValues": false,
-  "required": false,
-  "valuesEndpoint": {
-    "protocol": "HTTPS",
-    "uri": "/api/countries",
-    "mode": "SUGGESTIONS",
-    "paginationStrategy": "PAGE_NUMBER",
-    "responseMapping": { "dataField": "data" },
-    "requestParams": { "pageParam": "page", "limitParam": "limit", "searchParam": "q", "defaultLimit": 50 }
-  },
-  "constraints": [
-    { "name": "patternAlpha", "type": "pattern", "params": { "regex": "^[A-Za-z\s]+$" }, "errorMessage": "Letters only" }
-  ]
-}
-```
-
----
-
-## 4. Conformance Test Matrix (Extract)
-
-| Scenario | Input | Expected |
-|----------|-------|----------|
-| Closed domain match | value in INLINE items | Valid |
-| Closed domain miss | value not in items | 1 membership error |
-| Suggestions miss | value not in suggestions | Valid (no membership error) |
-| Pattern fail | string violates regex | pattern error |
-| Range fail (number) | value outside min/max | range error |
-| Multi-values partial | array includes 1 invalid | error with index for invalid element |
-| MinLength + Pattern | order respected | first failing constraint MAY short-circuit |
-
----
-
-## 5. Error Handling (v2)
-
-Standard validation response (example):
-```json
-{
-  "isValid": false,
-  "errors": [
-    { "constraintName": "membership", "message": "Value not allowed", "value": "XYZ" },
-    { "constraintName": "patternAlpha", "message": "Letters only", "value": "123" }
-  ]
-}
-```
-
-Clients MAY aggregate errors by `constraintName` or index for display. Servers SHOULD preserve order for deterministic UX.
-
----
-
-## 6. Migration (v1 → v2)
-
-| v1 Concept | v1 Example | v2 Replacement |
-|------------|-----------|----------------|
-| `enumValues` | `"enumValues": [{"value":"A","label":"A"}]` | `valuesEndpoint.protocol = INLINE` + `items` |
-| Mixed constraint (min+max+pattern) | single descriptor with multiple scalar fields | Multiple atomic descriptors (one per rule) |
-| `valuesEndpoint` inside a constraint | embedded in constraint | Top-level `valuesEndpoint` |
-| `pattern` / `min` / `max` fields | inline scalar fields | `constraints[].type` + `params` |
-| `format` passive field | part of constraint or root | Field-level `formatHint` |
-| Array length via `min`/`max` polymorphism | `min:1, max:10` | Use explicit constraints *OR* range / minValue/maxValue applied to length (implementation note) |
-
-**Automated Migration Strategy (Suggested)**
-1. Lift first encountered `valuesEndpoint` (or `enumValues` → create INLINE endpoint) to field level.
-2. If multiple endpoints found → specification error (must be manually resolved).
-3. For each legacy constraint descriptor:
-   * Create a new atomic descriptor per scalar (pattern/min/max/etc.).
-4. Replace `enumValues` entirely.
-5. Move legacy `format` value (if present) to field-level `formatHint`.
-6. Add version marker or serve both under content negotiation if dual support is required temporarily.
-
-**Backward Compatibility**
-Implementations MAY offer a transitional mode parsing both v1 & v2 until deprecation.
-
----
-
-## 7. Security & Performance Notes
-* Membership checks for large remote sets SHOULD be cached respecting `cacheStrategy`.
-* `SUGGESTIONS` mode SHOULD be used for very large or open sets where closed membership is impractical.
-* Clients SHOULD debounce search using `debounceMs` if provided.
-* Servers MUST still re‑validate all constraints (never trust client‑side acceptance).
-
----
-
-## 8. Versioning
-Current protocol version: `2.0.0`.
-
-**Breaking Changes Introduced in 2.0.0**
-* Removal of `enumValues`.
-* Relocation of `valuesEndpoint` to field level.
-* Atomic constraint model (`type` + `params`).
-* Introduction of `INLINE` protocol & `mode` (CLOSED / SUGGESTIONS).
-* Range constraint type.
-
-Additive future extensions (non‑breaking): new constraint types, new pagination strategies, new endpoint modes, hint fields.
-
----
-
-## 9. Glossary
-| Term | Definition |
-|------|------------|
-| Closed Domain | A finite authoritative set of allowed values (INLINE or resolved remote) |
-| Suggestions | Non‑authoritative helper list; values outside remain valid |
-| Atomic Constraint | Single semantic validation rule with its own descriptor |
-| Membership | Validation step ensuring value ∈ domain (closed mode) |
-
----
-
-## 10. Summary
-The v2 protocol unifies dynamic and static domains, enforces deterministic atomic validation, and clarifies precedence while simplifying extensibility. Migration utilities SHOULD focus on systematic mechanical transformation of v1 descriptors into atomic v2 forms.
-
----
-
-© 2025 input-spec – Protocol Specification v2.0
-
-
-## Appendix A: Legacy v1 Specification (Deprecated)
-
-> The following section preserves the original v1-era descriptive text for historical reference. New implementations MUST target the v2 model defined above. This appendix may be removed in a future revision.
-
-## 1. Introduction
-
-This protocol defines a **technology-agnostic method** to specify input field constraints, value sources, and validation rules dynamically.
-
-**Goals:**
-- Define input field specifications at runtime
-- Understand value constraints and sources without hardcoding
-- Enable smart form fields with auto-completion and validation
-- Support searchable, paginated value selection
-- Maintain cross-language interoperability
-
----
-
-## 2. Core Entities
-
-### 2.1 InputFieldSpec
-
-Represents a smart input field with constraints and value sources.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `displayName` | string | ✓ | Human-readable field label |
-| `description` | string | | Detailed explanation of field purpose |
-| `dataType` | string | ✓ | Data type: `STRING`, `NUMBER`, `DATE`, `BOOLEAN` |
-| `expectMultipleValues` | boolean | ✓ | Whether field accepts array of values |
-| `required` | boolean | ✓ | Whether this field is required (moved from constraints for better API design) |
-| `constraints` | ConstraintDescriptor[] | ✓ | Array of constraints with ordered execution |
-
-**Note on types:**
-- `dataType` describes the **singleton element type** only
-- If `expectMultipleValues` is `true`, the field works with arrays of this type
-- **Constraints are executed in order**, allowing for logical sequencing of validation rules
-- The `required` field has been moved to the top-level for better API ergonomics
-
-**Example:**
-```json
-{
-  "displayName": "Task Assignee",
-  "description": "Select user(s) to assign task to",
-  "dataType": "STRING",
-  "expectMultipleValues": false,
-  "required": true,
-  "constraints": [
-    {
-      "name": "format",
-      "description": "User identifier validation",
-      "errorMessage": "Please select a valid user",
-      "valuesEndpoint": {
-        "protocol": "HTTPS",
-        "uri": "/api/users",
-        "searchField": "name",
-        "paginationStrategy": "PAGE_NUMBER",
-        "responseMapping": {
-          "dataField": "data"
-        },
-        "requestParams": {
-          "pageParam": "page",
-          "limitParam": "limit",
-          "searchParam": "search",
-          "defaultLimit": 50
-        }
-      }
-    }
-  ]
-}
-```
-
-### 2.2 ConstraintDescriptor
-
-Describes a single constraint on parameter values.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `name` | string | ✓ | Unique identifier for this constraint (used for validation ordering) |
-| `description` | string | | Human-readable explanation |
-| `errorMessage` | string | | Error message if constraint not satisfied |
-| `defaultValue` | any | | Default value if not provided |
-| `min` | number | | Context-dependent minimum (see below) |
-| `max` | number | | Context-dependent maximum (see below) |
-| `pattern` | string | | Regex pattern (STRING only, applies per element) |
-| `format` | string | | Format hint (e.g., `email`, `url`, `uuid`, `iso8601`) - applies per element |
-| `enumValues` | ValueAlias[] | | Fixed set of allowed values |
-| `valuesEndpoint` | ValuesEndpoint | | Configuration for fetching values dynamically |
-
-**Context-dependent `min` and `max`:**
-
-The semantics of `min` and `max` depend on the field's `dataType` and `expectMultipleValues`:
-
-| dataType | expectMultipleValues | `min` / `max` meaning |
-|----------|----------------------|----------------------|
-| `STRING` | false | Minimum/maximum **character count** of the string |
-| `STRING` | true | Minimum/maximum **number of elements** in the array |
-| `NUMBER` | false | Minimum/maximum **numeric value** |
-| `NUMBER` | true | Minimum/maximum **number of elements** in the array |
-| `DATE` | false | Minimum/maximum **date value** (ISO 8601) |
-| `DATE` | true | Minimum/maximum **number of elements** in the array |
-| `BOOLEAN` | true | Minimum/maximum **number of elements** in the array |
-
-**Important notes:**
-- `pattern` and `format` apply **per element** (whether singleton or in array)
-- When `expectMultipleValues` is `true`, `min`/`max` constrain the **array length**
-- All constraints present must be satisfied (logical AND)
-- **Constraints are processed in array order**, enabling deterministic validation sequencing
-- The `required` validation is now handled at the `InputFieldSpec` level, not per constraint
-
-**Validation order:**
-1. Check field-level `required` (if field is empty and `required=true` → error)
-2. Type validation (implicit from `dataType`)
-3. **Execute constraints in array order:**
-   - For each constraint in the `constraints` array:
-     - Apply `pattern` (if present)
-     - Apply `min` and `max` (interpret based on context)
-     - Apply `format` (semantic hint, optional strict validation)
-     - Apply `enumValues` or `valuesEndpoint` (if present)
-
-**Examples:**
-
-**Text field with length constraint:**
-```json
-{
-  "dataType": "STRING",
-  "expectMultipleValues": false,
-  "required": true,
-  "constraints": [
-    {
-      "name": "value",
-      "min": 3,
-      "max": 20,
-      "pattern": "^[a-zA-Z0-9_]+$",
-      "description": "Username (3-20 alphanumeric characters)",
-      "errorMessage": "Username must be 3-20 characters, alphanumeric with underscores"
-    }
-  ]
-}
-```
-
-**Numeric input with range:**
-```json
-{
-  "dataType": "NUMBER",
-  "expectMultipleValues": false,
-  "required": true,
-  "constraints": [
-    {
-      "name": "value",
-      "min": 0,
-      "max": 150,
-      "description": "Age in years",
-      "errorMessage": "Age must be between 0 and 150"
-    }
-  ]
-}
-```
-
-**Multi-select with length constraint:**
-```json
-{
-  "dataType": "STRING",
-  "expectMultipleValues": true,
-  "required": true,
-  "constraints": [
-    {
-      "name": "value",
-      "min": 1,
-      "max": 10,
-      "description": "Select 1 to 10 tags",
-      "errorMessage": "You must select between 1 and 10 tags"
-    }
-  ]
-}
-```
-
-**Date range:**
-```json
-{
-  "dataType": "DATE",
-  "expectMultipleValues": false,
-  "required": true,
-  "constraints": [
-    {
-      "name": "startDate",
-      "format": "iso8601",
-      "description": "Start date",
-      "errorMessage": "Start date is required"
-    }
-  ]
-}
-```
-
-**Static enum:**
-```json
-{
-  "dataType": "STRING",
-  "expectMultipleValues": false,
-  "required": true,
-  "constraints": [
-    {
-      "name": "status",
-      "errorMessage": "Please select a status",
-      "enumValues": [
-        { "value": "ACTIVE", "label": "Active" },
-        { "value": "INACTIVE", "label": "Inactive" }
-      ]
-    }
-  ]
-}
-```
-
-**Remote values:**
-```json
-{
-  "dataType": "STRING",
-  "expectMultipleValues": false,
-  "required": false,
-  "constraints": [
-    {
-      "name": "assignee",
-      "description": "Assigned user",
-      "errorMessage": "Invalid user selected",
-      "valuesEndpoint": {
-        "protocol": "HTTPS",
-        "uri": "/api/users",
-        "paginationStrategy": "PAGE_NUMBER",
-        "responseMapping": {
-          "dataField": "data"
-        },
-        "requestParams": {
-          "pageParam": "page",
-          "limitParam": "limit",
-          "defaultLimit": 50
-        }
-      }
-    }
-  ]
-}
-```
-
-**Pattern with format hint:**
-```json
-{
-  "dataType": "STRING",
-  "expectMultipleValues": false,
-  "required": true,
-  "constraints": [
-    {
-      "name": "email",
-      "pattern": "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,}$",
-      "format": "email",
-      "description": "Valid email address",
-      "errorMessage": "Please provide a valid email address"
-    }
-  ]
-}
-```
-
-### 2.3 ValuesEndpoint
-
-Configuration for fetching values dynamically from a remote source with search capabilities.
-
-| Field | Type | Required | Description |
-|-------|------|----------|-------------|
-| `protocol` | string | | Protocol indicator for client: `HTTPS`, `HTTP`, `GRPC` (default: `HTTPS`) |
-| `uri` | string | ✓ | Endpoint path or full URL |
-| `method` | string | | HTTP method: `GET`, `POST` (default: `GET`) |
-| `searchField` | string | | Server-side field to search/filter on |
-| `paginationStrategy` | string | | `PAGE_NUMBER`, `NONE` |
-| `responseMapping` | ResponseMapping | ✓ | Where to find data in the response |
-| `requestParams` | RequestParams | | How to send pagination and search parameters |
-| `cacheStrategy` | string | | `NONE`, `SESSION`, `SHORT_TERM` (5min), `LONG_TERM` (1h) |
-| `debounceMs` | integer | | Milliseconds to wait before sending search request (default: 300) |
 | `minSearchLength` | integer | | Minimum characters required before triggering search (default: 0) |
 
 **Pagination Strategies:**
