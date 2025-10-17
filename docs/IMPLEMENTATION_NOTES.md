@@ -3,6 +3,7 @@ layout: default
 title: Notes d'Intégration
 nav_order: 6
 description: "Intégration Frontend (Angular · React · Vue · Svelte)."
+nav_exclude: true
 ---
 [🇫🇷 Français](./IMPLEMENTATION_NOTES.md) | [🇬🇧 English](./en/IMPLEMENTATION_NOTES.md)
 # Notes d’implémentation (Extensions non normatives)

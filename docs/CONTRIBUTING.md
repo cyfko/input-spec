@@ -3,6 +3,7 @@ layout: default
 title: Contributing
 nav_order: 8
 description: "Guide de contribution pour les développeurs et intégrateurs du projet."
+nav_exclude: true
 ---
 [🇫🇷 Français](./CONTRIBUTING.md) | [🇬🇧 English](./en/CONTRIBUTING.md)
 # 🤝 Guide de contribution

@@ -3,6 +3,7 @@ layout: default
 title: Frontend Integration
 nav_order: 3
 description: "Intégration Frontend (Angular · React · Vue · Svelte)."
+nav_exclude: true
 ---
 [🇫🇷 Français](./FRONTEND_INTEGRATION.md) | [🇬🇧 English](./en/FRONTEND_INTEGRATION.md)
 ---

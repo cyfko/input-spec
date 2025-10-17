@@ -3,6 +3,7 @@ layout: default
 title: Quick Start
 nav_order: 2
 description: "Commencez rapidement à utiliser le protocole côté client et serveur."
+nav_exclude: true
 ---
 [🇫🇷 Français](./QUICK_START.md) | [🇬🇧 English](./en/QUICK_START.md)
 # 🚀 Guide de démarrage rapide

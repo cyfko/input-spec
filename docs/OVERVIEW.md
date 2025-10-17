@@ -3,6 +3,7 @@ layout: default
 title: Overview
 nav_order: 1
 description: "Présentation du protocole, objectifs et comparaisons avec les solutions existantes."
+nav_exclude: true
 ---
 [🇫🇷 Français](./OVERVIEW.md) | [🇬🇧 English](./en/OVERVIEW.md)
 

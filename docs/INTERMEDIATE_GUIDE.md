@@ -3,6 +3,7 @@ layout: default
 title: Intermediate Guide
 nav_order: 4
 description: "Fonctionnalités intermédiaires, configuration et scénarios concrets."
+nav_exclude: true
 ---
 [🇫🇷 Français](./INTERMEDIATE_GUIDE.md) | [🇬🇧 English](./en/INTERMEDIATE_GUIDE.md)
 # 🎓 Guide intermédiaire

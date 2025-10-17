@@ -3,6 +3,7 @@ layout: default
 title: Notes d'implémentation
 nav_order: 6
 description: "Notes d'implémentation"
+nav_exclude: true
 ---
 [🇫🇷 Français](./MIGRATION_V1_V2.md) | [🇬🇧 English](./en/MIGRATION_V1_V2.md)
 # Migration v1 → v2
