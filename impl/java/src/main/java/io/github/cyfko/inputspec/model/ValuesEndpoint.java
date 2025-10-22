@@ -4,6 +4,7 @@ import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonInclude;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Declarative description of how allowed / suggested values for a field are obtained.
@@ -41,8 +42,22 @@ public final class ValuesEndpoint {
     public enum HttpMethod { GET, POST }
     /** HTTP method for remote fetching (default GET). */
     private final HttpMethod method; // default GET
-    /** Name of a request parameter used for server-side search/filtering. */
+    /**
+     * Name of a request parameter used for server-side search/filtering.
+     * @deprecated As of v2.1, use {@link #searchParams} for advanced multi-criteria search
+     */
+    @Deprecated
     private final String searchField;
+    /**
+     * Advanced search parameters (key-value pairs) for multi-criteria search.
+     * @since 2.1.0
+     */
+    private final Map<String, Object> searchParams;
+    /**
+     * JSON Schema object describing the structure of searchParams.
+     * @since 2.1.0
+     */
+    private final Map<String, Object> searchParamsSchema;
     /** Pagination strategy if paging supported. */
     private final PaginationStrategy paginationStrategy; // default NONE
     /** Mapping hints to extract values from structured response. */
@@ -63,6 +78,8 @@ public final class ValuesEndpoint {
         this.uri = b.uri;
     this.method = b.method == null ? HttpMethod.GET : b.method;
         this.searchField = b.searchField;
+        this.searchParams = b.searchParams;
+        this.searchParamsSchema = b.searchParamsSchema;
         this.paginationStrategy = b.paginationStrategy;
         this.responseMapping = b.responseMapping;
         this.requestParams = b.requestParams;
@@ -83,6 +100,8 @@ public final class ValuesEndpoint {
             @JsonProperty("uri") String uri,
             @JsonProperty("method") HttpMethod method,
             @JsonProperty("searchField") String searchField,
+            @JsonProperty("searchParams") Map<String, Object> searchParams,
+            @JsonProperty("searchParamsSchema") Map<String, Object> searchParamsSchema,
             @JsonProperty("paginationStrategy") PaginationStrategy paginationStrategy,
             @JsonProperty("responseMapping") ResponseMapping responseMapping,
             @JsonProperty("requestParams") RequestParams requestParams,
@@ -95,6 +114,8 @@ public final class ValuesEndpoint {
         this.uri = uri;
         this.method = method;
         this.searchField = searchField;
+        this.searchParams = searchParams;
+        this.searchParamsSchema = searchParamsSchema;
         this.paginationStrategy = paginationStrategy;
         this.responseMapping = responseMapping;
         this.requestParams = requestParams;
@@ -112,8 +133,22 @@ public final class ValuesEndpoint {
     public String getUri() { return uri; }
     /** @return HTTP method if remote. */
     public HttpMethod getMethod() { return method; }
-    /** @return request search field name or null. */
+    /**
+     * @return request search field name or null.
+     * @deprecated As of v2.1, use {@link #getSearchParams()} for advanced multi-criteria search
+     */
+    @Deprecated
     public String getSearchField() { return searchField; }
+    /**
+     * @return advanced search parameters (key-value pairs) for multi-criteria search.
+     * @since 2.1.0
+     */
+    public Map<String, Object> getSearchParams() { return searchParams; }
+    /**
+     * @return JSON Schema object describing the structure of searchParams.
+     * @since 2.1.0
+     */
+    public Map<String, Object> getSearchParamsSchema() { return searchParamsSchema; }
     /** @return pagination strategy hint. */
     public PaginationStrategy getPaginationStrategy() { return paginationStrategy; }
     /** @return response mapping hints structure. */
@@ -269,6 +304,8 @@ public final class ValuesEndpoint {
         private String uri;
     private HttpMethod method;
         private String searchField;
+        private Map<String, Object> searchParams;
+        private Map<String, Object> searchParamsSchema;
         private PaginationStrategy paginationStrategy;
         private ResponseMapping responseMapping;
         private RequestParams requestParams;
@@ -281,7 +318,14 @@ public final class ValuesEndpoint {
         /** @since 2.0.0 */ public Builder items(List<ValueAlias> items) { this.items = items; return this; }
         /** @since 2.0.0 */ public Builder uri(String uri) { this.uri = uri; return this; }
         /** @since 2.0.0 */ public Builder method(HttpMethod method) { this.method = method; return this; }
-        /** @since 2.0.0 */ public Builder searchField(String searchField) { this.searchField = searchField; return this; }
+        /**
+         * @deprecated As of v2.1, use {@link #searchParams(Map)} for advanced multi-criteria search
+         * @since 2.0.0
+         */
+        @Deprecated
+        public Builder searchField(String searchField) { this.searchField = searchField; return this; }
+        /** @since 2.1.0 */ public Builder searchParams(Map<String, Object> searchParams) { this.searchParams = searchParams; return this; }
+        /** @since 2.1.0 */ public Builder searchParamsSchema(Map<String, Object> searchParamsSchema) { this.searchParamsSchema = searchParamsSchema; return this; }
         /** @since 2.0.0 */ public Builder paginationStrategy(PaginationStrategy paginationStrategy) { this.paginationStrategy = paginationStrategy; return this; }
         /** @since 2.0.0 */ public Builder responseMapping(ResponseMapping responseMapping) { this.responseMapping = responseMapping; return this; }
         /** @since 2.0.0 */ public Builder requestParams(RequestParams requestParams) { this.requestParams = requestParams; return this; }
