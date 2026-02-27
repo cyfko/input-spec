@@ -1,0 +1,87 @@
+package io.github.cyfko.inputspec.samples;
+
+import io.github.cyfko.inputspec.*;
+import io.github.cyfko.inputspec.protocol.*;
+import jakarta.validation.constraints.*;
+import java.math.BigDecimal;
+import java.util.List;
+
+/**
+ * Sample form exercising: enum auto-detection, List<Enum>, OBJECT recursion,
+ * @Email, @Positive, @DecimalMin/@DecimalMax, field without @FieldMeta.
+ */
+@FormSpec(
+    id           = "order-form",
+    displayName  = "Order Form",
+    description  = "Create a new product order",
+    submitUri    = "/api/orders",
+    submitMethod = "POST"
+)
+@CrossConstraint(
+    name         = "shippingDependsOnType",
+    type         = CrossConstraintType.DEPENDS_ON,
+    fields       = {"shippingAddress", "orderType"},
+    sourceValues = {"PHYSICAL"},
+    errorMessage = "Shipping address is required for physical orders"
+)
+public class OrderForm {
+
+    // ─── Enum field (auto-detected → INLINE CLOSED) ─────────────────────────
+
+    public enum OrderType { PHYSICAL, DIGITAL, SUBSCRIPTION }
+
+    @NotNull
+    @FieldMeta(displayName = "Order Type")
+    private OrderType orderType;
+
+    // ─── List<Enum> → multi-value INLINE ─────────────────────────────────────
+
+    public enum Tag { URGENT, FRAGILE, GIFT_WRAP, INSURED }
+
+    @FieldMeta(displayName = "Tags", description = "Select applicable tags")
+    private List<Tag> tags;
+
+    // ─── @Email → pattern constraint ─────────────────────────────────────────
+
+    @NotBlank
+    @Email
+    @FieldMeta(displayName = "Customer Email")
+    private String customerEmail;
+
+    // ─── @Positive → minValue(1) ─────────────────────────────────────────────
+
+    @NotNull
+    @Positive
+    @FieldMeta(displayName = "Quantity")
+    private Integer quantity;
+
+    // ─── @DecimalMin/@DecimalMax ──────────────────────────────────────────────
+
+    @DecimalMin("0.01")
+    @DecimalMax("99999.99")
+    @FieldMeta(displayName = "Unit Price", formatHint = "currency")
+    private BigDecimal unitPrice;
+
+    // ─── Field without @FieldMeta (displayName deduced from field name) ──────
+
+    @Size(min = 10, max = 500)
+    private String shippingAddress;
+
+    // ─── OBJECT recursion with nested @FormSpec ──────────────────────────────
+
+    @FieldMeta(displayName = "Billing Info")
+    private BillingInfo billingInfo;
+
+    @FormSpec(id = "billing-info", displayName = "Billing Information")
+    public static class BillingInfo {
+
+        @NotNull
+        @FieldMeta(displayName = "Card Holder")
+        private String cardHolder;
+
+        @NotNull
+        @Pattern(regexp = "^\\d{16}$")
+        @FieldMeta(displayName = "Card Number", formatHint = "credit-card")
+        private String cardNumber;
+    }
+}

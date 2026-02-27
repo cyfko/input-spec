@@ -198,6 +198,172 @@ class FormSpecProcessorTest {
     }
 
     // ═══════════════════════════════════════════════════════════════════════════
+    //  OrderForm — enum, OBJECT, @Email, @Positive, @DecimalMin/Max
+    // ═══════════════════════════════════════════════════════════════════════════
+
+    @Test
+    @DisplayName("Processes OrderForm: enum auto-detect, OBJECT recursion, @Email, @Positive, @Decimal")
+    void processesOrderForm() throws Exception {
+        boolean compiled = compileSample("OrderForm.java.txt");
+        assertTrue(compiled, "OrderForm must compile successfully");
+
+        Path jsonPath = outputDir.resolve("META-INF/difsp/order-form.json");
+        assertTrue(Files.exists(jsonPath), "JSON spec for order-form must be generated");
+
+        JsonNode root = MAPPER.readTree(jsonPath.toFile());
+        assertEquals("order-form", root.path("id").asText());
+        assertEquals("Order Form", root.path("displayName").path("default").asText());
+        assertEquals("Create a new product order", root.path("description").path("default").asText());
+
+        JsonNode fields = root.path("fields");
+        assertTrue(fields.isArray());
+
+        // ── orderType: enum → INLINE CLOSED auto-detection ─────────────────
+        JsonNode orderType = findField(fields, "orderType");
+        assertNotNull(orderType, "orderType field must exist");
+        assertEquals("STRING", orderType.path("dataType").asText(),
+            "Java enum should map to STRING dataType");
+        assertTrue(orderType.path("required").asBoolean(), "orderType has @NotNull");
+        assertFalse(orderType.path("expectMultipleValues").asBoolean());
+
+        JsonNode otVe = orderType.path("valuesEndpoint");
+        assertFalse(otVe.isMissingNode(), "Enum field must auto-generate valuesEndpoint");
+        assertEquals("INLINE", otVe.path("protocol").asText());
+        assertEquals("CLOSED", otVe.path("mode").asText());
+
+        JsonNode otItems = otVe.path("items");
+        assertTrue(otItems.isArray(), "items must be an array");
+        assertEquals(3, otItems.size(), "OrderType has 3 constants");
+        assertEquals("PHYSICAL", otItems.get(0).path("value").asText());
+        assertEquals("DIGITAL",  otItems.get(1).path("value").asText());
+        assertEquals("SUBSCRIPTION", otItems.get(2).path("value").asText());
+        // Each item should have an i18n label
+        assertFalse(otItems.get(0).path("label").path("default").asText().isEmpty());
+        assertFalse(otItems.get(0).path("label").path("i18nKey").asText().isEmpty());
+
+        // ── tags: List<Enum> → multi-value INLINE ──────────────────────────
+        JsonNode tags = findField(fields, "tags");
+        assertNotNull(tags, "tags field must exist");
+        assertEquals("STRING", tags.path("dataType").asText());
+        assertTrue(tags.path("expectMultipleValues").asBoolean(),
+            "List<Tag> must set expectMultipleValues = true");
+
+        JsonNode tagsVe = tags.path("valuesEndpoint");
+        assertEquals("INLINE", tagsVe.path("protocol").asText());
+        assertEquals(4, tagsVe.path("items").size(), "Tag enum has 4 constants");
+        assertEquals("URGENT", tagsVe.path("items").get(0).path("value").asText());
+        assertEquals("GIFT_WRAP", tagsVe.path("items").get(2).path("value").asText());
+
+        // ── customerEmail: @Email → pattern constraint ─────────────────────
+        JsonNode email = findField(fields, "customerEmail");
+        assertNotNull(email, "customerEmail field must exist");
+        assertEquals("STRING", email.path("dataType").asText());
+        assertTrue(email.path("required").asBoolean(), "@NotBlank → required");
+
+        boolean hasEmailPattern = false;
+        for (JsonNode c : email.path("constraints")) {
+            if ("pattern".equals(c.path("type").asText())
+                    && c.path("params").path("regex").asText().contains("@")) {
+                hasEmailPattern = true;
+            }
+        }
+        assertTrue(hasEmailPattern, "@Email must generate a pattern constraint with @ regex");
+
+        // ── quantity: @Positive → minValue(1) ──────────────────────────────
+        JsonNode qty = findField(fields, "quantity");
+        assertNotNull(qty, "quantity field must exist");
+        assertEquals("NUMBER", qty.path("dataType").asText());
+        assertTrue(qty.path("required").asBoolean());
+
+        boolean hasPositive = false;
+        for (JsonNode c : qty.path("constraints")) {
+            if ("minValue".equals(c.path("type").asText())
+                    && c.path("params").path("value").asInt() == 1) {
+                hasPositive = true;
+            }
+        }
+        assertTrue(hasPositive, "@Positive must generate minValue(1) constraint");
+
+        // ── unitPrice: @DecimalMin/@DecimalMax ─────────────────────────────
+        JsonNode price = findField(fields, "unitPrice");
+        assertNotNull(price, "unitPrice field must exist");
+        assertEquals("NUMBER", price.path("dataType").asText());
+        assertEquals("currency", price.path("formatHint").asText());
+
+        boolean hasDecMin = false, hasDecMax = false;
+        for (JsonNode c : price.path("constraints")) {
+            if ("minValue".equals(c.path("type").asText())
+                    && "0.01".equals(c.path("params").path("value").asText()))
+                hasDecMin = true;
+            if ("maxValue".equals(c.path("type").asText())
+                    && "99999.99".equals(c.path("params").path("value").asText()))
+                hasDecMax = true;
+        }
+        assertTrue(hasDecMin, "@DecimalMin(0.01) must generate minValue constraint");
+        assertTrue(hasDecMax, "@DecimalMax(99999.99) must generate maxValue constraint");
+
+        // ── shippingAddress: no @FieldMeta → displayName deduced ──────────
+        JsonNode shipping = findField(fields, "shippingAddress");
+        assertNotNull(shipping, "shippingAddress field must exist");
+        // displayName should be auto-deduced from camelCase
+        String shippingDn = shipping.path("displayName").path("default").asText();
+        assertTrue(shippingDn.contains("Shipping") || shippingDn.contains("shipping"),
+            "displayName should be deduced from field name, got: " + shippingDn);
+
+        // @Size(min=10, max=500)
+        boolean hasMinLen = false, hasMaxLen = false;
+        for (JsonNode c : shipping.path("constraints")) {
+            if ("minLength".equals(c.path("type").asText())) hasMinLen = true;
+            if ("maxLength".equals(c.path("type").asText())) hasMaxLen = true;
+        }
+        assertTrue(hasMinLen, "@Size(min=10) → minLength");
+        assertTrue(hasMaxLen, "@Size(max=500) → maxLength");
+
+        // ── billingInfo: OBJECT with subFields ────────────────────────────
+        JsonNode billing = findField(fields, "billingInfo");
+        assertNotNull(billing, "billingInfo field must exist");
+        assertEquals("OBJECT", billing.path("dataType").asText());
+
+        JsonNode subFields = billing.path("subFields");
+        assertTrue(subFields.isArray() && subFields.size() == 2,
+            "BillingInfo should have 2 subFields (cardHolder, cardNumber)");
+
+        JsonNode cardHolder = findField(subFields, "cardHolder");
+        assertNotNull(cardHolder);
+        assertEquals("STRING", cardHolder.path("dataType").asText());
+        assertTrue(cardHolder.path("required").asBoolean());
+
+        JsonNode cardNumber = findField(subFields, "cardNumber");
+        assertNotNull(cardNumber);
+        assertEquals("credit-card", cardNumber.path("formatHint").asText());
+        boolean hasCardPattern = false;
+        for (JsonNode c : cardNumber.path("constraints")) {
+            if ("pattern".equals(c.path("type").asText())) {
+                assertTrue(c.path("params").path("regex").asText().contains("\\d{16}"));
+                hasCardPattern = true;
+            }
+        }
+        assertTrue(hasCardPattern, "@Pattern on cardNumber must generate pattern constraint");
+
+        // ── DEPENDS_ON cross-constraint ────────────────────────────────────
+        JsonNode cc = root.path("crossConstraints");
+        assertTrue(cc.isArray() && cc.size() == 1);
+        JsonNode dep = cc.get(0);
+        assertEquals("shippingDependsOnType", dep.path("name").asText());
+        assertEquals("dependsOn", dep.path("type").asText());
+        assertEquals("shippingAddress", dep.path("fields").get(0).asText());
+        assertEquals("orderType", dep.path("fields").get(1).asText());
+        assertEquals("PHYSICAL", dep.path("params").path("sourceValues").get(0).asText());
+
+        // ── Bundle skeleton ────────────────────────────────────────────────
+        Path bundlePath = outputDir.resolve("META-INF/difsp/i18n/order-form.properties");
+        assertTrue(Files.exists(bundlePath), "order-form bundle must be generated");
+        String bundle = Files.readString(bundlePath, StandardCharsets.UTF_8);
+        assertTrue(bundle.contains("order-form.fields.orderType.items.PHYSICAL.label"));
+        assertTrue(bundle.contains("order-form.fields.tags.items.URGENT.label"));
+    }
+
+    // ═══════════════════════════════════════════════════════════════════════════
     //  Compiler helper
     // ═══════════════════════════════════════════════════════════════════════════
 

@@ -88,8 +88,11 @@ public class FormSpecProcessor extends AbstractProcessor {
             try {
                 processTopLevelForm((TypeElement) element);
             } catch (Exception e) {
+                StringWriter sw = new StringWriter();
+                e.printStackTrace(new PrintWriter(sw));
                 messager.printMessage(Diagnostic.Kind.ERROR,
-                    "DIFSP: Failed to process @FormSpec on " + element + ": " + e.getMessage(),
+                    "DIFSP: Failed to process @FormSpec on " + element + ": " + e.getMessage()
+                    + "\n" + sw,
                     element);
             }
         }
@@ -162,23 +165,29 @@ public class FormSpecProcessor extends AbstractProcessor {
     private ObjectNode buildFieldNode(VariableElement field, String formId,
                                        Map<String, String> bundle) {
         String fieldName = field.getSimpleName().toString();
-        FieldMeta meta   = field.getAnnotation(FieldMeta.class);
+
+        // Use AnnotationMirror API (not getAnnotation()) to avoid proxy creation
+        // failures with nested annotation default values (@ValuesSource)
+        AnnotationMirror metaMirror = findAnnotationMirror(field, "io.github.cyfko.inputspec.FieldMeta");
+        Map<String, AnnotationValue> metaVals = metaMirror != null
+            ? getAnnotationValues(metaMirror) : Map.of();
 
         ObjectNode node = MAPPER.createObjectNode();
         node.put("name", fieldName);
 
         // displayName
-        String displayName = (meta != null && !meta.displayName().isEmpty())
-            ? meta.displayName() : camelToLabel(fieldName);
+        String displayName = getMirrorString(metaVals, "displayName", "");
+        if (displayName.isEmpty()) displayName = camelToLabel(fieldName);
         String dnKey = formId + ".fields." + fieldName + ".displayName";
         addBundleEntry(bundle, dnKey, displayName);
         node.set("displayName", i18nNode(displayName, dnKey));
 
         // description
-        if (meta != null && !meta.description().isEmpty()) {
+        String description = getMirrorString(metaVals, "description", "");
+        if (!description.isEmpty()) {
             String dKey = formId + ".fields." + fieldName + ".description";
-            addBundleEntry(bundle, dKey, meta.description());
-            node.set("description", i18nNode(meta.description(), dKey));
+            addBundleEntry(bundle, dKey, description);
+            node.set("description", i18nNode(description, dKey));
         }
 
         // dataType + expectMultipleValues
@@ -191,17 +200,30 @@ public class FormSpecProcessor extends AbstractProcessor {
         node.put("required", required);
 
         // formatHint
-        if (meta != null && !meta.formatHint().isEmpty()) {
-            node.put("formatHint", meta.formatHint());
+        String formatHint = getMirrorString(metaVals, "formatHint", "");
+        if (!formatHint.isEmpty()) {
+            node.put("formatHint", formatHint);
         }
 
-        // valuesEndpoint
-        if (meta != null) {
-            ValuesSource vs = meta.valuesSource();
-            if (!vs.protocol().isEmpty()) {
-                node.set("valuesEndpoint",
-                    buildValuesEndpointNode(vs, fieldName, formId, bundle));
+        // valuesEndpoint — from @ValuesSource inside @FieldMeta
+        boolean hasExplicitValues = false;
+        if (metaMirror != null) {
+            AnnotationValue vsValue = metaVals.get("valuesSource");
+            if (vsValue != null && vsValue.getValue() instanceof AnnotationMirror vsMirror) {
+                Map<String, AnnotationValue> vsVals = getAnnotationValues(vsMirror);
+                String protocol = getMirrorString(vsVals, "protocol", "");
+                if (!protocol.isEmpty()) {
+                    node.set("valuesEndpoint",
+                        buildValuesEndpointFromMirror(vsMirror, vsVals, fieldName, formId, bundle));
+                    hasExplicitValues = true;
+                }
             }
+        }
+
+        // Enum auto-detection → INLINE CLOSED ValuesEndpoint
+        if (!hasExplicitValues && typeInfo.enumElement != null) {
+            node.set("valuesEndpoint",
+                buildEnumValuesEndpointNode(typeInfo.enumElement, fieldName, formId, bundle));
         }
 
         // OBJECT sub-fields (recursive)
@@ -285,6 +307,39 @@ public class FormSpecProcessor extends AbstractProcessor {
             ve.put("cacheStrategy", vs.cacheStrategy());
             if (vs.debounceMs() > 0)     ve.put("debounceMs", vs.debounceMs());
             if (vs.minSearchLength() > 0) ve.put("minSearchLength", vs.minSearchLength());
+        }
+
+        return ve;
+    }
+
+    // ─── Enum auto-detection → INLINE CLOSED ─────────────────────────────────
+
+    /**
+     * Builds an INLINE CLOSED ValuesEndpoint from a Java enum's constants.
+     * Each constant becomes a ValueAlias: value = constant name, label = readable form.
+     */
+    private ObjectNode buildEnumValuesEndpointNode(TypeElement enumType,
+                                                    String fieldName, String formId,
+                                                    Map<String, String> bundle) {
+        ObjectNode ve = MAPPER.createObjectNode();
+        ve.put("protocol", "INLINE");
+        ve.put("mode", "CLOSED");
+
+        ArrayNode itemsArray = ve.putArray("items");
+        for (Element enclosed : enumType.getEnclosedElements()) {
+            if (enclosed.getKind() == ElementKind.ENUM_CONSTANT) {
+                String constName = enclosed.getSimpleName().toString();
+                String label     = camelToLabel(constName.charAt(0)
+                    + constName.substring(1).toLowerCase().replace("_", " "));
+                String labelKey  = formId + ".fields." + fieldName
+                                 + ".items." + constName + ".label";
+                addBundleEntry(bundle, labelKey, label);
+
+                ObjectNode alias = MAPPER.createObjectNode();
+                alias.put("value", constName);
+                alias.set("label", i18nNode(label, labelKey));
+                itemsArray.add(alias);
+            }
         }
 
         return ve;
@@ -609,13 +664,21 @@ public class FormSpecProcessor extends AbstractProcessor {
         }
 
         String dataType = mapJavaTypeToDataType(type);
-        if ("OBJECT".equals(dataType) && type.getKind() == TypeKind.DECLARED) {
+        TypeElement enumElement = null;
+
+        if (type.getKind() == TypeKind.DECLARED) {
             TypeElement te = (TypeElement) typeUtils.asElement(type);
-            if (te != null && te.getAnnotation(FormSpec.class) != null) {
-                nestedClass = te;
+            if (te != null) {
+                if (te.getKind() == ElementKind.ENUM) {
+                    // Java enum → STRING + auto INLINE
+                    dataType = "STRING";
+                    enumElement = te;
+                } else if ("OBJECT".equals(dataType) && te.getAnnotation(FormSpec.class) != null) {
+                    nestedClass = te;
+                }
             }
         }
-        return new FieldTypeInfo(dataType, multiple, nestedClass);
+        return new FieldTypeInfo(dataType, multiple, nestedClass, enumElement);
     }
 
     private String mapJavaTypeToDataType(TypeMirror type) {
@@ -656,8 +719,10 @@ public class FormSpecProcessor extends AbstractProcessor {
                       && !e.getModifiers().contains(Modifier.STATIC))
             .map(e -> (VariableElement) e)
             .sorted(Comparator.comparingInt(f -> {
-                FieldMeta m = f.getAnnotation(FieldMeta.class);
-                return (m != null && m.order() != Integer.MAX_VALUE) ? m.order() : Integer.MAX_VALUE;
+                AnnotationMirror m = findAnnotationMirror(f, "io.github.cyfko.inputspec.FieldMeta");
+                if (m == null) return Integer.MAX_VALUE;
+                Map<String, AnnotationValue> vals = getAnnotationValues(m);
+                return getInt(vals, "order", Integer.MAX_VALUE);
             }))
             .collect(Collectors.toList());
     }
@@ -718,6 +783,7 @@ public class FormSpecProcessor extends AbstractProcessor {
         return def;
     }
 
+    /** Alias for annotation mirror string access (same as getMirrorString). */
     private String getString(Map<String, AnnotationValue> m, String key, String def) {
         AnnotationValue v = m.get(key);
         if (v == null) return def;
@@ -737,7 +803,168 @@ public class FormSpecProcessor extends AbstractProcessor {
             + name.substring(1).replaceAll("([A-Z])", " $1");
     }
 
+    // ─── AnnotationMirror lookup helpers ──────────────────────────────────────
+
+    /** Finds an annotation mirror on an element by its fully-qualified type name. */
+    private AnnotationMirror findAnnotationMirror(Element element, String annotationFqn) {
+        for (AnnotationMirror am : element.getAnnotationMirrors()) {
+            if (am.getAnnotationType().toString().equals(annotationFqn)) return am;
+        }
+        return null;
+    }
+
+    /** Reads a String attribute from a mirror value map, with a default. */
+    private String getMirrorString(Map<String, AnnotationValue> vals, String key, String def) {
+        AnnotationValue v = vals.get(key);
+        if (v == null) return def;
+        Object raw = v.getValue();
+        return (raw != null) ? raw.toString() : def;
+    }
+
+    // ─── ValuesEndpoint from AnnotationMirror ────────────────────────────────
+
+    /**
+     * Builds a ValuesEndpoint JSON node from the @ValuesSource AnnotationMirror.
+     * This avoids proxy creation failures that occur with getAnnotation().
+     */
+    @SuppressWarnings("unchecked")
+    private ObjectNode buildValuesEndpointFromMirror(AnnotationMirror vsMirror,
+                                                     Map<String, AnnotationValue> vsVals,
+                                                     String fieldName, String formId,
+                                                     Map<String, String> bundle) {
+        ObjectNode ve = MAPPER.createObjectNode();
+        String protocol = getMirrorString(vsVals, "protocol", "");
+        ve.put("protocol", protocol);
+
+        // mode — enum value
+        AnnotationValue modeVal = vsVals.get("mode");
+        String mode = (modeVal != null) ? modeVal.getValue().toString() : "CLOSED";
+        ve.put("mode", mode);
+
+        if ("INLINE".equalsIgnoreCase(protocol)) {
+            // ── @Inline[] items from mirror ───────────────────────────────
+            ArrayNode itemsArray = ve.putArray("items");
+            AnnotationValue itemsVal = vsVals.get("items");
+            if (itemsVal != null && itemsVal.getValue() instanceof List<?> itemList) {
+                if (itemList.isEmpty()) {
+                    messager.printMessage(Diagnostic.Kind.WARNING,
+                        "DIFSP: INLINE protocol without items on field '" + fieldName + "'");
+                }
+                for (Object itemObj : itemList) {
+                    AnnotationMirror inlineMirror = extractMirror(itemObj);
+                    if (inlineMirror == null) continue;
+                    Map<String, AnnotationValue> inVals = getAnnotationValues(inlineMirror);
+                    String value = getMirrorString(inVals, "value", "");
+                    String label = getMirrorString(inVals, "label", value);
+                    String labelKey = formId + ".fields." + fieldName
+                                    + ".items." + value + ".label";
+                    addBundleEntry(bundle, labelKey, label);
+
+                    ObjectNode alias = MAPPER.createObjectNode();
+                    alias.put("value", value);
+                    alias.set("label", i18nNode(label, labelKey));
+                    itemsArray.add(alias);
+                }
+            }
+        } else {
+            // ── Remote endpoint ───────────────────────────────────────────
+            ve.put("uri", getMirrorString(vsVals, "uri", ""));
+            ve.put("method", getMirrorString(vsVals, "method", "GET"));
+
+            AnnotationValue pagVal = vsVals.get("pagination");
+            String pagination = (pagVal != null) ? pagVal.getValue().toString() : "NONE";
+            ve.put("paginationStrategy", pagination);
+
+            // ── @SearchParam[] from mirror ────────────────────────────────
+            AnnotationValue spVal = vsVals.get("searchParams");
+            if (spVal != null && spVal.getValue() instanceof List<?> spList && !spList.isEmpty()) {
+                ve.set("searchParamsSchema", buildSearchSchemaFromMirrorList(spList));
+                ObjectNode defaults = buildSearchDefaultsFromMirrorList(spList);
+                if (defaults != null) ve.set("searchParams", defaults);
+            }
+
+            // ── Response mapping ──────────────────────────────────────────
+            String dataField = getMirrorString(vsVals, "dataField", "");
+            if (!dataField.isEmpty()) {
+                ObjectNode responseMapping = ve.putObject("responseMapping");
+                responseMapping.put("dataField", dataField);
+                String totalField = getMirrorString(vsVals, "totalField", "");
+                if (!totalField.isEmpty()) responseMapping.put("totalField", totalField);
+                String hasNextField = getMirrorString(vsVals, "hasNextField", "");
+                if (!hasNextField.isEmpty()) responseMapping.put("hasNextField", hasNextField);
+            }
+
+            // ── requestParams ─────────────────────────────────────────────
+            ObjectNode reqParams = ve.putObject("requestParams");
+            reqParams.put("pageParam", getMirrorString(vsVals, "pageParam", "page"));
+            reqParams.put("limitParam", getMirrorString(vsVals, "limitParam", "limit"));
+            reqParams.put("defaultLimit", getInt(vsVals, "defaultLimit", 20));
+
+            // ── Performance hints ─────────────────────────────────────────
+            ve.put("cacheStrategy", getMirrorString(vsVals, "cacheStrategy", "NONE"));
+            int debounce = getInt(vsVals, "debounceMs", 0);
+            if (debounce > 0) ve.put("debounceMs", debounce);
+            int minSearch = getInt(vsVals, "minSearchLength", 0);
+            if (minSearch > 0) ve.put("minSearchLength", minSearch);
+        }
+
+        return ve;
+    }
+
+    /** Extracts an AnnotationMirror from an AnnotationValue wrapper (used in arrays). */
+    private AnnotationMirror extractMirror(Object annotationValueEntry) {
+        if (annotationValueEntry instanceof AnnotationMirror am) return am;
+        if (annotationValueEntry instanceof AnnotationValue av
+                && av.getValue() instanceof AnnotationMirror am) return am;
+        return null;
+    }
+
+    private ObjectNode buildSearchSchemaFromMirrorList(List<?> spList) {
+        ObjectNode schema = MAPPER.createObjectNode();
+        schema.put("type", "object");
+        ObjectNode properties = schema.putObject("properties");
+        ArrayNode requiredArray = MAPPER.createArrayNode();
+
+        for (Object spObj : spList) {
+            AnnotationMirror spMirror = extractMirror(spObj);
+            if (spMirror == null) continue;
+            Map<String, AnnotationValue> spVals = getAnnotationValues(spMirror);
+            String name = getMirrorString(spVals, "name", "");
+            ObjectNode prop = properties.putObject(name);
+
+            AnnotationValue typeVal = spVals.get("type");
+            String type = (typeVal != null) ? typeVal.getValue().toString().toLowerCase() : "string";
+            prop.put("type", type);
+
+            String desc = getMirrorString(spVals, "description", "");
+            if (!desc.isEmpty()) prop.put("description", desc);
+
+            AnnotationValue reqVal = spVals.get("required");
+            if (reqVal != null && Boolean.TRUE.equals(reqVal.getValue())) {
+                requiredArray.add(name);
+            }
+        }
+
+        if (!requiredArray.isEmpty()) schema.set("required", requiredArray);
+        return schema;
+    }
+
+    private ObjectNode buildSearchDefaultsFromMirrorList(List<?> spList) {
+        ObjectNode defaults = MAPPER.createObjectNode();
+        boolean hasDefaults = false;
+        for (Object spObj : spList) {
+            AnnotationMirror spMirror = extractMirror(spObj);
+            if (spMirror == null) continue;
+            Map<String, AnnotationValue> spVals = getAnnotationValues(spMirror);
+            String name = getMirrorString(spVals, "name", "");
+            String defVal = getMirrorString(spVals, "defaultValue", "");
+            if (!defVal.isEmpty()) { defaults.put(name, defVal); hasDefaults = true; }
+        }
+        return hasDefaults ? defaults : null;
+    }
+
     // ─── Internal records ────────────────────────────────────────────────────
 
-    private record FieldTypeInfo(String dataType, boolean multiple, TypeElement nestedClass) {}
+    private record FieldTypeInfo(String dataType, boolean multiple,
+                                  TypeElement nestedClass, TypeElement enumElement) {}
 }
