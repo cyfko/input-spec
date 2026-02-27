@@ -1,0 +1,10 @@
+io\github\cyfko\inputspec\spring\annotations\ValuesEndpointConfig.class
+io\github\cyfko\inputspec\spring\generator\InputSpecGenerator.class
+io\github\cyfko\inputspec\spring\provider\InputSpecProvider.class
+io\github\cyfko\inputspec\spring\autoconfigure\InputSpecAutoConfiguration.class
+io\github\cyfko\inputspec\spring\annotations\InputField.class
+io\github\cyfko\inputspec\spring\registry\InputSpecRegistry.class
+META-INF\spring-configuration-metadata.json
+io\github\cyfko\inputspec\spring\autoconfigure\InputSpecProperties.class
+io\github\cyfko\inputspec\spring\annotations\InputSpecEnabled.class
+io\github\cyfko\inputspec\spring\controller\InputSpecController.class

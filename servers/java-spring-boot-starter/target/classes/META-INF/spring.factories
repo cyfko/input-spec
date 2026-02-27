@@ -1,0 +1,3 @@
+# Auto-Configuration (Spring Boot 2.x compatibility)
+org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
+io.github.cyfko.inputspec.spring.autoconfigure.InputSpecAutoConfiguration

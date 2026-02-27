@@ -39,9 +39,11 @@ Represents a single logical input field.
 
 | Field | Type | Required | Description |
 |-------|------|----------|-------------|
+| `name` | string | ✓ | Technical unique identifier for the field (e.g., "shippingAddress") |
 | `displayName` | string | ✓ | Human readable label |
 | `description` | string |  | Human readable explanation / help text |
-| `dataType` | string | ✓ | One of: `STRING`, `NUMBER`, `DATE`, `BOOLEAN` |
+| `dataType` | string | ✓ | One of: `STRING`, `NUMBER`, `DATE`, `BOOLEAN`, `OBJECT` |
+| `subFields` | InputFieldSpec[] | conditional | Required iff `dataType = OBJECT`. Defines the nested field schema. |
 | `expectMultipleValues` | boolean | ✓ | Accepts an array (true) or single value (false) |
 | `required` | boolean | ✓ | Field level required flag (applied before constraints) |
 | `valuesEndpoint` | ValuesEndpoint |  | Defines a (possibly closed) value domain (static or remote) |
@@ -197,6 +199,18 @@ function validate(fieldSpec, input): ValidationResult {
 ```
 
 Multiple errors MAY share the same `constraintName` (e.g. multi-values). Clients MAY group them for display.
+
+### 2.8 CrossConstraintDescriptor (Form-Level)
+
+Evaluated after atomic validations to verify cross-field relationships.
+
+| Field | Type | Required | Description |
+|-------|------|----------|-------------|
+| `name` | string | ✓ | Unique identifier for the global constraint |
+| `type` | string | ✓ | Discriminator: `compare`, `mutuallyExclusive`, `requiredIf`, or custom |
+| `targetFields` | string[] | ✓ | Array of `name` identifiers of the fields involved |
+| `params` | any | ✓ | Operator-specific parameters |
+| `errorMessage` | string | ✓ | Global or context-linked error message |
 
 ---
 
@@ -384,13 +398,14 @@ Exemple d’utilisation d’un validateur customisé :
 **GET** `/api/fields`
 
 **Query Parameters:**
-- `dataType` (optional): Filter by data type (`STRING`, `NUMBER`, `DATE`, `BOOLEAN`)
+- `dataType` (optional): Filter by data type (`STRING`, `NUMBER`, `DATE`, `BOOLEAN`, `OBJECT`)
 
 **Response:**
 ```json
 {
   "fields": [InputFieldSpec],
-  "version": "2.0"
+  "crossConstraints": [CrossConstraintDescriptor],
+  "version": "2.1"
 }
 ```
 
@@ -796,6 +811,20 @@ GET /api/users?page=1&limit=50&search=john
 ```
 
 **Step 7:** Server validates and processes input
+
+---
+
+## 10. Internationalization (i18n) & Localization
+
+This protocol treats localization as a transport-layer concern. The `InputFieldSpec` MUST contain pre-translated static strings (`displayName`, `description`, `errorMessage`, `label`).
+
+**Client Responsibilities:**
+- Clients SHOULD emit the standard HTTP `Accept-Language` header (e.g., `Accept-Language: fr-FR, fr;q=0.9, en;q=0.8`) when calling `/api/fields` or any `ValuesEndpoint`.
+
+**Server Responsibilities:**
+- Servers MUST use HTTP Content Negotiation to evaluate the `Accept-Language` header.
+- The server MUST bind the appropriate translations to the metadata *before* serializing the JSON response.
+- If the requested language is unavailable, the server MUST fall back to a default locale (e.g., English) and SHOULD include the standard `Content-Language` header in its response.
 
 ---
 

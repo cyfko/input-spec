@@ -1,0 +1,54 @@
+{
+  "groups": [
+    {
+      "name": "input-spec",
+      "type": "io.github.cyfko.inputspec.spring.autoconfigure.InputSpecProperties",
+      "sourceType": "io.github.cyfko.inputspec.spring.autoconfigure.InputSpecProperties"
+    }
+  ],
+  "properties": [
+    {
+      "name": "input-spec.auto-scan",
+      "type": "java.lang.Boolean",
+      "description": "Whether to automatically scan for {@link io.github.cyfko.inputspec.spring.annotations.InputSpecEnabled} entities.",
+      "sourceType": "io.github.cyfko.inputspec.spring.autoconfigure.InputSpecProperties"
+    },
+    {
+      "name": "input-spec.base-path",
+      "type": "java.lang.String",
+      "description": "Base path prefix for all input-spec endpoints. <p> Default: empty (inherits from server context path) <\/p>",
+      "sourceType": "io.github.cyfko.inputspec.spring.autoconfigure.InputSpecProperties"
+    },
+    {
+      "name": "input-spec.cors-allowed-origins",
+      "type": "java.lang.String[]",
+      "description": "CORS allowed origins (if enableCors is true).",
+      "sourceType": "io.github.cyfko.inputspec.spring.autoconfigure.InputSpecProperties"
+    },
+    {
+      "name": "input-spec.enable-cors",
+      "type": "java.lang.Boolean",
+      "description": "Whether to enable CORS for input-spec endpoints.",
+      "sourceType": "io.github.cyfko.inputspec.spring.autoconfigure.InputSpecProperties"
+    },
+    {
+      "name": "input-spec.enabled",
+      "type": "java.lang.Boolean",
+      "description": "Whether input-spec auto-configuration is enabled.",
+      "sourceType": "io.github.cyfko.inputspec.spring.autoconfigure.InputSpecProperties"
+    },
+    {
+      "name": "input-spec.endpoint-suffix",
+      "type": "java.lang.String",
+      "description": "Endpoint suffix for input-spec endpoints. <p> Default: \"\/input-spec\" <\/p> <p> Example: If entity is \"User\", endpoint will be \"\/users\/input-spec\" <\/p>",
+      "sourceType": "io.github.cyfko.inputspec.spring.autoconfigure.InputSpecProperties"
+    },
+    {
+      "name": "input-spec.entity-scan-packages",
+      "type": "java.lang.String[]",
+      "description": "Base packages to scan for entities. <p> If empty, uses the application's main package. <\/p>",
+      "sourceType": "io.github.cyfko.inputspec.spring.autoconfigure.InputSpecProperties"
+    }
+  ],
+  "hints": []
+}

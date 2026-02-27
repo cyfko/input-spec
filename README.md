@@ -1,7 +1,9 @@
-
+---
 # Dynamic Input Field Specification Protocol (v2.1.0)
 
-*Protocole agnostique pour décrire, valider et alimenter dynamiquement des champs de saisie – version 2 unifiée (atomic constraints + domaine de valeurs centralisé).* 
+Comprehensive guide for client and server implementations of dynamic input fields.
+
+[🌐 Choisir la langue / Select language](docs/LANGUAGE.md)
 
 [![Spec Docs](https://img.shields.io/badge/spec-v2.0.0-blue)](./PROTOCOL_SPECIFICATION.md)
 [![TypeScript Library](https://img.shields.io/badge/TypeScript-2.0.0-3178c6)](./impl/typescript/)
@@ -13,55 +15,63 @@
 [![Impl Notes](https://img.shields.io/badge/impl-notes-informational)](./docs/IMPLEMENTATION_NOTES.md)
 [![Docs Site](https://img.shields.io/badge/docs-online-blueviolet)](https://cyfko.github.io/input-spec/)
 
-> La branche principale reflète la spécification **v2**. Le modèle v1 (composite constraints, `enumValues`) est **déprécié**. Voir `docs/MIGRATION_V1_V2.md`.
+---
 
-## 🎯 Vue d'ensemble
+## Introduction
 
-Définissez côté serveur les champs (métadonnées, contraintes, domaine de valeurs) et laissez les clients appliquer une validation déterministe et fournir une UX riche (autocomplete, pagination, filtrage) sans logique dupliquée.
+Ce protocole vise à standardiser la spécification, la validation et l’intégration des champs dynamiques dans les formulaires, pour tous types d’applications (web, mobile, IA, etc.). Il sert de socle pour la configuration dynamique, l’orchestration et l’auditabilité des modèles d’IA (MCP, MLOps, etc.).
+
+> Ce protocole complète plutôt qu’il ne remplace ces outils : vous pouvez générer plus tard un JSON Schema dérivé pour du gating API.
 
 ---
 
-## 🚀 Pourquoi choisir le protocole Dynamic Input Field Specification v2 ?
+## Problème résolu
 
-### Valeur ajoutée unique
-
-- **Unification dynamique des domaines de valeurs**  
-  Permet de décrire aussi bien des listes statiques (`INLINE`) que des domaines dynamiques (endpoints paginés, suggestions, recherche avancée multi-critères) via un unique champ `valuesEndpoint` au niveau du champ.  
-  → *Impossible avec JSON Schema, OpenAPI, Zod, Yup, etc.*
-
-- **Pipeline de validation déterministe et normatif**  
-  L’ordre de validation est strictement défini : `required` → type → membership (si `valuesEndpoint.mode = CLOSED`) → contraintes atomiques ordonnées.  
-  → *Assure la cohérence des erreurs et la reproductibilité cross-langages.*
-
-- **Contraintes atomiques extensibles**  
-  Chaque contrainte est atomique (`type` du registre, `params` dédiés), ce qui permet d’ajouter des règles métier ou des extensions custom sans casser la rétrocompatibilité.
-
-- **Séparation stricte entre données, validation et UI**  
-  Le protocole ne spécifie aucun rendu, mais fournit tous les hints nécessaires (`formatHint`, `errorMessage`, `description`) pour générer dynamiquement des interfaces riches, multi-plateformes.
-
-- **Gestion native des domaines ouverts/fermés**  
-  `valuesEndpoint.mode` distingue un domaine fermé (`CLOSED`) d’un domaine ouvert à suggestions (`SUGGESTIONS`), couvrant des cas avancés (tags, recherche utilisateur, etc.) sans hack.
-
-- **Interopérabilité multi-langages et multi-frameworks**  
-  La spec est conçue pour être consommée aussi bien côté backend (Java, Node, Python…) que frontend (React, Angular, Vue, Svelte…), sans duplication de logique.
-
-- **Migration et évolutivité**  
-  Migration mécanique v1→v2 prévue, extensibilité future (nouvelles contraintes, pagination, etc.) sans breaking change.
+```ts
+// ❌ Avant : Logique dupliquée et incohérente
+const validateEmailA = (email:string) => /^[^@]+@[^@]+\.[^@]+$/.test(email);
+const validateEmailB = (email:string) => email.includes('@'); // Différent !
+// ✅ Après : Spécification centrale
+const emailFieldSpec = {
+  constraints: [{ name: 'pattern', type: 'pattern', params: { regex: '^[^@]+@[^@]+\.[^@]+$' }, errorMessage: 'Format email requis' }]
+};
+```
 
 ---
 
+## Fonctionnalités principales
 
-### 📎 [Liste des contraintes atomiques (Registry)](./PROTOCOL_SPECIFICATION.md#25-registry)
+| Fonctionnalité        | Description                                         | Statut              |
+|-----------------------|-----------------------------------------------------|---------------------|
+| Modèle unifié         | Champ = métadonnées + contraintes atomiques + `valuesEndpoint` | Stable  |
+| Pipeline validation   | REQUIRED → TYPE → MEMBERSHIP → CONTRAINTES ordonnées           | Stable  |
+| Erreurs structurées   | Nom de contrainte + message + index multi           | Stable              |
+| Legacy adapter        | Traduction v1 → v2 (TS uniquement)                  | Stable (déprécié)   |
+| Coercion douce        | Conversion nombre, booléen, date epoch (TS)         | Extension           |
+| Short‑circuit         | Arrêt sur première erreur (Java)                    | Extension           |
+| Hints performance     | `debounceMs`, stratégies cache côté client          | Stable              |
+| Extensibilité         | `custom` + futurs types                             | Stable              |
 
-### 🔍 Recherche avancée : `searchParams` et `searchParamsSchema`
+---
 
-Depuis la version 2.1, le protocole permet de décrire des paramètres de recherche avancés pour les endpoints distants via :
-- `searchParams` : objet clé/valeur transmis en query (GET) ou body (POST)
-- `searchParamsSchema` : schéma JSON Schema décrivant chaque clé (type, description, enum, etc.)
+## Extensions
 
-**Exemple :**
-```json
-{
+> Les éléments "Extension" ne sont pas normatifs (hors cœur protocole) et sont documentés dans `docs/IMPLEMENTATION_NOTES.md`.
+
+---
+
+## Pour aller plus loin
+
+- [Documentation complète](docs/)
+- [Guide d’implémentation](docs/IMPLEMENTATION_NOTES.md)
+- [FAQ](docs/FAQ.md)
+- [Contribution](docs/CONTRIBUTING.md)
+
+---
+
+## Version & Updates
+
+**Version protocole**: 2.1.0 • **Dernière mise à jour**: Octobre 2025
   "protocol": "HTTPS",
   "uri": "/api/items",
   "method": "POST",
