@@ -1,9 +1,5 @@
-C:\Users\KOSSI\Desktop\kunrin\input-spec\impl\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\annotations\ValuesEndpointConfig.java
-C:\Users\KOSSI\Desktop\kunrin\input-spec\impl\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\autoconfigure\InputSpecProperties.java
-C:\Users\KOSSI\Desktop\kunrin\input-spec\impl\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\autoconfigure\InputSpecAutoConfiguration.java
-C:\Users\KOSSI\Desktop\kunrin\input-spec\impl\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\registry\InputSpecRegistry.java
-C:\Users\KOSSI\Desktop\kunrin\input-spec\impl\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\annotations\InputSpecEnabled.java
-C:\Users\KOSSI\Desktop\kunrin\input-spec\impl\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\annotations\InputField.java
-C:\Users\KOSSI\Desktop\kunrin\input-spec\impl\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\provider\InputSpecProvider.java
-C:\Users\KOSSI\Desktop\kunrin\input-spec\impl\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\controller\InputSpecController.java
-C:\Users\KOSSI\Desktop\kunrin\input-spec\impl\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\generator\InputSpecGenerator.java
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\InputSpecAutoConfiguration.java
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\SubmitResponse.java
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\FormHandlerRegistry.java
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\InputSpecProperties.java
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java-spring-boot-starter\src\main\java\io\github\cyfko\inputspec\spring\FormHandler.java
