@@ -1,34 +1,47 @@
-/**
- * DIFSP protocol value sets — single source of truth.
- *
- * These enums are the canonical representation of every closed value set
- * defined in the protocol specification. They are used at three levels:
- *
- *   1. Annotations     (@FormSpec, @ValuesSource, …)  — SOURCE retention
- *   2. Runtime models  (InputFieldSpec, ValuesEndpoint, …) — Jackson deserialization
- *   3. Validator       (FormSpecValidator switch expressions) — exhaustiveness check
- *
- * Jackson deserialization uses @JsonCreator on each enum to handle:
- *   - case-insensitive matching
- *   - camelCase JSON values that differ from the Java UPPER_SNAKE name
- *     (e.g. "fieldComparison" → FIELD_COMPARISON)
- *   - unknown values gracefully via an UNKNOWN sentinel where the protocol
- *     mandates tolerance of future extensions
- */
 package io.github.cyfko.inputspec.protocol;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonValue;
 
-// ─── DataType ─────────────────────────────────────────────────────────────────
-
 /**
- * The primitive type of a field value (§2.1 — InputFieldSpec.dataType).
- * OBJECT fields carry subFields; all others are scalar or array-of-scalar.
+ * The primitive type of a field value (§2.1 — {@code InputFieldSpec.dataType}).
+ *
+ * <p>Determines how the client should render the field and how the validator
+ * interprets constraint parameters. {@code OBJECT} fields carry
+ * {@link io.github.cyfko.inputspec.model.InputFieldSpec#subFields() subFields};
+ * all other types are scalar or array-of-scalar when
+ * {@link io.github.cyfko.inputspec.model.InputFieldSpec#expectMultipleValues() expectMultipleValues}
+ * is {@code true}.</p>
+ *
+ * @see io.github.cyfko.inputspec.model.InputFieldSpec
  */
 public enum DataType {
-    STRING, NUMBER, BOOLEAN, DATE, OBJECT;
 
+    /** Free-form text — the default type for most fields. */
+    STRING,
+
+    /** Numeric value — integer or decimal, validated by {@code minValue}/{@code maxValue}. */
+    NUMBER,
+
+    /** True/false value — rendered as a checkbox or toggle. */
+    BOOLEAN,
+
+    /** Calendar date — validated by {@code minDate}/{@code maxDate} constraints. */
+    DATE,
+
+    /** Composite type — the field contains nested {@code subFields} (recursive structure). */
+    OBJECT;
+
+    /**
+     * Deserializes a JSON string to the corresponding {@code DataType}.
+     *
+     * <p>Case-insensitive. Returns {@link #STRING} as a safe fallback
+     * for {@code null} or unrecognized values — an unknown type is
+     * treated as an opaque string by the client.</p>
+     *
+     * @param v the JSON string value (may be {@code null})
+     * @return the matching enum constant, or {@link #STRING} as default
+     */
     @JsonCreator
     public static DataType fromJson(String v) {
         if (v == null) return STRING;
@@ -38,8 +51,7 @@ public enum DataType {
             case "BOOLEAN" -> BOOLEAN;
             case "DATE"    -> DATE;
             case "OBJECT"  -> OBJECT;
-            default        -> STRING; // safe fallback — unknown type treated as opaque string
+            default        -> STRING;
         };
     }
 }
-

@@ -12,7 +12,7 @@ import java.lang.annotation.*;
  * Fields without @FieldMeta are still included if they carry Jakarta annotations;
  * {@code displayName} defaults to the camel-cased Java field name.
  *
- * <h3>i18n</h3>
+ * <p><b>i18n:</b></p>
  * {@code displayName} and {@code description} serve as default fallback texts.
  * Translations are resolved from:
  * <pre>

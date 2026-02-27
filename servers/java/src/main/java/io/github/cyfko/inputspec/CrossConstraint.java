@@ -11,7 +11,7 @@ import io.github.cyfko.inputspec.protocol.CrossConstraintType;
  *
  * Maps to CrossConstraintDescriptor in the protocol spec (§2.10).
  *
- * <h3>i18n</h3>
+ * <p><b>i18n:</b></p>
  * {@code errorMessage} serves as the default fallback text.
  * Translations are resolved from the form bundle under:
  * <pre>

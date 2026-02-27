@@ -13,7 +13,7 @@ import java.lang.annotation.*;
  *   <li>{@code META-INF/difsp/i18n/{formId}.properties} — bundle skeleton with default texts</li>
  * </ul>
  *
- * <h3>i18n resolution</h3>
+ * <p><b>i18n resolution:</b></p>
  * All human-readable texts ({@code displayName}, {@code description}, error messages, …)
  * are resolved at runtime by looking up the bundle:
  * <pre>

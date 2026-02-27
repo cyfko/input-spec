@@ -7,7 +7,7 @@ import java.lang.annotation.*;
  *
  * Used as a nested element inside {@literal @}FieldMeta.
  *
- * <h3>INLINE example (static enumeration)</h3>
+ * <p><b>INLINE example (static enumeration):</b></p>
  * <pre>
  * {@literal @}FieldMeta(
  *     displayName  = "Status",
@@ -22,7 +22,7 @@ import java.lang.annotation.*;
  * )
  * </pre>
  *
- * <h3>Remote paginated example with typed search params</h3>
+ * <p><b>Remote paginated example with typed search params:</b></p>
  * <pre>
  * {@literal @}FieldMeta(
  *     displayName  = "Assigned To",
