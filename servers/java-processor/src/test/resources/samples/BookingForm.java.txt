@@ -1,0 +1,97 @@
+package io.github.cyfko.inputspec.samples;
+
+import io.github.cyfko.inputspec.*;
+import io.github.cyfko.inputspec.SearchParam.SchemaType;
+import io.github.cyfko.inputspec.ValuesSource.PaginationStrategy;
+import io.github.cyfko.inputspec.ValuesSource.ValuesMode;
+import io.github.cyfko.inputspec.protocol.*;
+import jakarta.validation.constraints.*;
+import java.time.LocalDate;
+
+@FormSpec(
+    id           = "booking-form",
+    displayName  = "Booking Form",
+    submitUri    = "/api/bookings",
+    submitMethod = "POST"
+)
+@CrossConstraint(
+    name         = "dateRange",
+    type         = CrossConstraintType.FIELD_COMPARISON,
+    fields       = {"endDate", "startDate"},
+    operator     = ComparisonOperator.GT,
+    errorMessage = "End date must be after start date"
+)
+@CrossConstraint(
+    name         = "oneDiscountOnly",
+    type         = CrossConstraintType.MUTUALLY_EXCLUSIVE,
+    fields       = {"promoCode", "giftCard"},
+    max          = 1,
+    errorMessage = "Cannot combine a promo code and a gift card"
+)
+public class BookingForm {
+
+    @NotNull
+    @FieldMeta(
+        displayName  = "Assigned To",
+        description  = "Select the user to assign this booking to",
+        valuesSource = @ValuesSource(
+            protocol     = "HTTPS",
+            uri          = "/api/users",
+            mode         = ValuesMode.CLOSED,
+            pagination   = PaginationStrategy.PAGE_NUMBER,
+            dataField    = "data",
+            totalField   = "total",
+            hasNextField = "hasNext",
+            searchParams = {
+                @SearchParam(
+                    name        = "name",
+                    type        = SchemaType.STRING,
+                    description = "Partial user name for search"
+                )
+            },
+            cacheStrategy = "SESSION"
+        )
+    )
+    private String assigneeId;
+
+    @NotNull
+    @FutureOrPresent
+    @FieldMeta(displayName = "Start Date")
+    private LocalDate startDate;
+
+    @NotNull
+    @FieldMeta(displayName = "End Date")
+    private LocalDate endDate;
+
+    @Size(min = 2, max = 50)
+    @FieldMeta(
+        displayName  = "Room Type",
+        valuesSource = @ValuesSource(
+            protocol = "INLINE",
+            mode     = ValuesMode.CLOSED,
+            items    = {
+                @Inline(value = "SINGLE", label = "Single Room"),
+                @Inline(value = "DOUBLE", label = "Double Room"),
+                @Inline(value = "SUITE",  label = "Suite"),
+                @Inline(value = "FAMILY", label = "Family Room")
+            }
+        )
+    )
+    private String roomType;
+
+    @Size(max = 20)
+    @Pattern(regexp = "^[A-Z0-9\\-]+$")
+    @FieldMeta(
+        displayName = "Promo Code",
+        description = "Optional promotional code (uppercase alphanumeric)"
+    )
+    private String promoCode;
+
+    @Size(max = 20)
+    @FieldMeta(displayName = "Gift Card Number")
+    private String giftCard;
+
+    @Min(1) @Max(10)
+    @FieldMeta(displayName = "Number of Guests")
+    private Integer guests;
+}
