@@ -44,7 +44,7 @@ public class BookingForm {
     @NotBlank
     @Size(min = 2, max = 100)
     @FieldMeta(displayName = "Guest Name", description = "Full name as it appears on your ID")
-    String guestName;
+    private String guestName;
 
     /**
      * Contact email for booking confirmation.
@@ -52,7 +52,7 @@ public class BookingForm {
     @NotBlank
     @Email
     @FieldMeta(displayName = "Email", description = "We'll send the booking confirmation here")
-    String email;
+    private String email;
 
     /**
      * Desired check-in date (must be in the future).
@@ -60,7 +60,7 @@ public class BookingForm {
     @NotNull
     @Future
     @FieldMeta(displayName = "Check-in Date", description = "Date of arrival (ISO-8601)")
-    String checkIn;
+    private String checkIn;
 
     /**
      * Desired check-out date (must be in the future and after check-in).
@@ -68,7 +68,7 @@ public class BookingForm {
     @NotNull
     @Future
     @FieldMeta(displayName = "Check-out Date", description = "Date of departure (ISO-8601)")
-    String checkOut;
+    private String checkOut;
 
     public enum RoomType {
         STANDARD, DELUXE, SUITE
@@ -83,7 +83,7 @@ public class BookingForm {
         displayName = "Room Type",
         description = "Select your preferred room category"
     )
-    RoomType roomType;
+    private RoomType roomType;
 
     /**
      * Number of guests (1 to 10).
@@ -92,12 +92,35 @@ public class BookingForm {
     @Min(1)
     @Max(10)
     @FieldMeta(displayName = "Number of Guests", description = "How many people will be staying")
-    Integer guests;
+    private Integer guests;
 
     /**
      * Optional special requests or notes.
      */
     @Size(max = 500)
     @FieldMeta(displayName = "Special Requests", description = "Any special requirements (optional)")
-    String specialRequests;
+    private String specialRequests;
+
+    // ─── Getters & Setters ───────────────────────────────────────────────────
+
+    public String getGuestName() { return guestName; }
+    public void setGuestName(String guestName) { this.guestName = guestName; }
+
+    public String getEmail() { return email; }
+    public void setEmail(String email) { this.email = email; }
+
+    public String getCheckIn() { return checkIn; }
+    public void setCheckIn(String checkIn) { this.checkIn = checkIn; }
+
+    public String getCheckOut() { return checkOut; }
+    public void setCheckOut(String checkOut) { this.checkOut = checkOut; }
+
+    public RoomType getRoomType() { return roomType; }
+    public void setRoomType(RoomType roomType) { this.roomType = roomType; }
+
+    public Integer getGuests() { return guests; }
+    public void setGuests(Integer guests) { this.guests = guests; }
+
+    public String getSpecialRequests() { return specialRequests; }
+    public void setSpecialRequests(String specialRequests) { this.specialRequests = specialRequests; }
 }

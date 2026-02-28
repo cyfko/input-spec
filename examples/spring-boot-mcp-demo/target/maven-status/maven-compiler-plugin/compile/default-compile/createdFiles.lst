@@ -1,5 +1,6 @@
+io\github\cyfko\inputspec\demo\BookingForm$RoomType.class
+io\github\cyfko\inputspec\demo\DemoApplication.class
 io\github\cyfko\inputspec\demo\BookingForm.class
 io\github\cyfko\inputspec\demo\BookingHandler.class
-io\github\cyfko\inputspec\demo\DemoApplication.class
 META-INF\difsp\hotel-booking.json
 META-INF\difsp\i18n\hotel-booking.properties

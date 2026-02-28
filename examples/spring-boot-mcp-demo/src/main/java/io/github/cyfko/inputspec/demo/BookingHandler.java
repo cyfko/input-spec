@@ -34,6 +34,7 @@ public class BookingHandler {
      *
      * <p>InputSpec guarantees at this point:</p>
      * <ul>
+     *   <li>The framework automatically instantiated the {@code BookingForm} and mapped all fields</li>
      *   <li>All required fields are present and non-empty</li>
      *   <li>Email is valid, dates are in the future</li>
      *   <li>Check-out is after check-in (cross-constraint)</li>
@@ -41,19 +42,13 @@ public class BookingHandler {
      *   <li>Guest count is between 1 and 10</li>
      * </ul>
      *
-     * @param data the validated form data
+     * @param form the fully mapped and validated form object
      * @return accepted with booking confirmation, or rejected if room unavailable
      */
     @FormHandler("hotel-booking")
-    public SubmitResponse handleBooking(Map<String, Object> data) {
-        String guestName = (String) data.get("guestName");
-        String roomType  = ((BookingForm.RoomType) data.get("roomType")).name();
-        String checkIn   = (String) data.get("checkIn");
-        String checkOut  = (String) data.get("checkOut");
-        int guests       = ((Number) data.get("guests")).intValue();
-
+    public SubmitResponse handleBooking(BookingForm form) {
         // Simulate domain logic: reject SUITE for > 4 guests
-        if ("SUITE".equals(roomType) && guests > 4) {
+        if (form.getRoomType() == BookingForm.RoomType.SUITE && form.getGuests() > 4) {
             return SubmitResponse.rejected(
                 "Suites accommodate a maximum of 4 guests. "
                 + "Please choose a different room type or reduce the number of guests."
@@ -65,19 +60,19 @@ public class BookingHandler {
 
         Map<String, Object> confirmation = Map.of(
             "bookingId", bookingId,
-            "guestName", guestName,
-            "roomType", roomType,
-            "checkIn", checkIn,
-            "checkOut", checkOut,
-            "guests", guests,
+            "guestName", form.getGuestName(),
+            "roomType", form.getRoomType(),
+            "checkIn", form.getCheckIn(),
+            "checkOut", form.getCheckOut(),
+            "guests", form.getGuests(),
             "status", "CONFIRMED",
             "createdAt", Instant.now().toString()
         );
 
         bookings.put(bookingId, confirmation);
 
-        System.out.println("✅ Booking " + bookingId + " confirmed for " + guestName
-            + " (" + roomType + ", " + checkIn + " → " + checkOut + ", " + guests + " guests)");
+        System.out.println("✅ Booking " + bookingId + " confirmed for " + form.getGuestName()
+            + " (" + form.getRoomType() + ", " + form.getCheckIn() + " → " + form.getCheckOut() + ", " + form.getGuests() + " guests)");
 
         return SubmitResponse.ok(confirmation);
     }

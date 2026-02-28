@@ -84,7 +84,7 @@ The AI agent will:
 
 | File | Purpose |
 |------|---------|
-| `BookingForm.java` | `@FormSpec` with 7 fields, Jakarta constraints, INLINE values, cross-constraint |
+| `BookingForm.java` | `@FormSpec` with 7 fields, Jakarta constraints, Enums (auto-mapped to INLINE CLOSED), cross-constraint |
 | `BookingHandler.java` | `@FormHandler` with domain logic (rejects SUITE > 4 guests) |
 | `application.yml` | MCP enabled (`inputspec.mcp.enabled: true`) |
 
@@ -95,5 +95,5 @@ The AI agent will:
    BookingForm.java           ──→     (compile-time)        ──→   + i18n skeleton
 
    @FormHandler("hotel-booking")      FormHandlerRegistry         REST + MCP endpoints
-   BookingHandler.java        ──→     (startup scan)        ──→   /api/forms/** + MCP tools
+   handle(BookingForm form)   ──→     (Jackson auto-bind)   ──→   /api/forms/** + MCP tools
 ```

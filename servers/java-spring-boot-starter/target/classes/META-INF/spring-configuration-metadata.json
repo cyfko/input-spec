@@ -9,7 +9,7 @@
       "name": "inputspec.mcp",
       "type": "io.github.cyfko.inputspec.spring.InputSpecProperties$Mcp",
       "sourceType": "io.github.cyfko.inputspec.spring.InputSpecProperties",
-      "sourceMethod": "getMcp()"
+      "sourceMethod": "public io.github.cyfko.inputspec.spring.InputSpecProperties.Mcp getMcp() "
     }
   ],
   "properties": [
@@ -17,22 +17,19 @@
       "name": "inputspec.base-path",
       "type": "java.lang.String",
       "description": "Base path for all InputSpec REST endpoints. Default: {@code \/api\/forms}",
-      "sourceType": "io.github.cyfko.inputspec.spring.InputSpecProperties",
-      "defaultValue": "\/api\/forms"
+      "sourceType": "io.github.cyfko.inputspec.spring.InputSpecProperties"
     },
     {
       "name": "inputspec.enabled",
       "type": "java.lang.Boolean",
       "description": "Whether InputSpec auto-configuration is enabled. Default: {@code true}",
-      "sourceType": "io.github.cyfko.inputspec.spring.InputSpecProperties",
-      "defaultValue": true
+      "sourceType": "io.github.cyfko.inputspec.spring.InputSpecProperties"
     },
     {
       "name": "inputspec.mcp.enabled",
       "type": "java.lang.Boolean",
       "description": "Whether MCP Tool Server integration is enabled. Default: {@code false} (opt-in). <p>When enabled, the following MCP tools are registered:<\/p> <ul> <li>{@code inputspec_list_forms} — discover available forms<\/li> <li>{@code inputspec_get_form} — get full form specification<\/li> <li>{@code inputspec_validate_form} — validate data without submitting<\/li> <li>{@code inputspec_submit_form} — validate and submit data<\/li> <\/ul>",
-      "sourceType": "io.github.cyfko.inputspec.spring.InputSpecProperties$Mcp",
-      "defaultValue": false
+      "sourceType": "io.github.cyfko.inputspec.spring.InputSpecProperties$Mcp"
     }
   ],
   "hints": []
