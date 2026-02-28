@@ -27,17 +27,18 @@ Compare les valeurs de deux champs en utilisant des opérateurs standards (`EQUA
 ```java
 import io.github.cyfko.inputspec.FormSpec;
 import io.github.cyfko.inputspec.CrossConstraint;
+import io.github.cyfko.inputspec.protocol.CrossConstraintType;
+import io.github.cyfko.inputspec.protocol.ComparisonOperator;
 
 @FormSpec(
-    id = "booking-form",
-    crossConstraints = {
-        @CrossConstraint(
-            type = CrossConstraint.Type.FIELD_COMPARISON,
-            fields = {"checkOut", "checkIn"}, // Le champ de sortie est premier, la référence est seconde
-            operator = CrossConstraint.Operator.GREATER_THAN,
-            errorMessage = "La date de départ doit être strictement postérieure à l'arrivée."
-        )
-    }
+    id = "booking-form"
+)
+@CrossConstraint(
+    name = "validDates",
+    type = CrossConstraintType.FIELD_COMPARISON,
+    fields = {"checkOut", "checkIn"}, // Le champ de sortie est premier, la référence est seconde
+    operator = ComparisonOperator.GT,
+    errorMessage = "La date de départ doit être strictement postérieure à l'arrivée."
 )
 public class BookingForm {
     private LocalDate checkIn;
@@ -50,16 +51,17 @@ public class BookingForm {
 L'obligation ou la visibilité d'un champ bascule en fonction de la valeur d'un autre champ.
 
 ```java
+import io.github.cyfko.inputspec.protocol.CrossConstraintType;
+
 @FormSpec(
-    id = "payment-form",
-    crossConstraints = {
-        @CrossConstraint(
-            type = CrossConstraint.Type.DEPENDS_ON,
-            fields = {"creditCardNumber", "paymentMethod"}, // Champ cible, Champ source
-            expectedValue = "CREDIT_CARD",
-            errorMessage = "Le numéro de carte est requis lors d'un paiement par carte."
-        )
-    }
+    id = "payment-form"
+)
+@CrossConstraint(
+    name = "cardNumberRequired",
+    type = CrossConstraintType.DEPENDS_ON,
+    fields = {"creditCardNumber", "paymentMethod"}, // Champ cible, Champ source
+    sourceValues = {"CREDIT_CARD"},
+    errorMessage = "Le numéro de carte est requis lors d'un paiement par carte."
 )
 public class PaymentForm {
     private String paymentMethod; // ex: "PAYPAL" ou "CREDIT_CARD"
@@ -72,15 +74,16 @@ public class PaymentForm {
 Garantit qu'au maximum *un seul* des champs spécifiés peut être renseigné.
 
 ```java
+import io.github.cyfko.inputspec.protocol.CrossConstraintType;
+
 @FormSpec(
-    id = "contact-preferences",
-    crossConstraints = {
-        @CrossConstraint(
-            type = CrossConstraint.Type.MUTUALLY_EXCLUSIVE,
-            fields = {"homePhone", "mobilePhone"},
-            errorMessage = "Veuillez fournir SOIT un téléphone fixe, SOIT un mobile, pas les deux."
-        )
-    }
+    id = "contact-preferences"
+)
+@CrossConstraint(
+    name = "onePhoneOnly",
+    type = CrossConstraintType.MUTUALLY_EXCLUSIVE,
+    fields = {"homePhone", "mobilePhone"},
+    errorMessage = "Veuillez fournir SOIT un téléphone fixe, SOIT un mobile, pas les deux."
 )
 public class ContactPreferences {
     private String homePhone;
@@ -93,15 +96,16 @@ public class ContactPreferences {
 Garantit qu'*au minimum un* des champs spécifiés est renseigné.
 
 ```java
+import io.github.cyfko.inputspec.protocol.CrossConstraintType;
+
 @FormSpec(
-    id = "contact-methods",
-    crossConstraints = {
-        @CrossConstraint(
-            type = CrossConstraint.Type.AT_LEAST_ONE,
-            fields = {"email", "phoneNumber"},
-            errorMessage = "Vous devez fournir soit une adresse e-mail soit un numéro de téléphone pour que nous puissions vous joindre."
-        )
-    }
+    id = "contact-methods"
+)
+@CrossConstraint(
+    name = "atLeastOneContact",
+    type = CrossConstraintType.AT_LEAST_ONE,
+    fields = {"email", "phoneNumber"},
+    errorMessage = "Vous devez fournir soit une adresse e-mail soit un numéro de téléphone pour que nous puissions vous joindre."
 )
 public class ContactMethods {
     private String email;

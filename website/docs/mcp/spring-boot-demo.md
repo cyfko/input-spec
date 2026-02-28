@@ -18,15 +18,14 @@ The `BookingForm` is a simple POJO enriched with standard Jakarta validation (fo
 @FormSpec(
     id = "hotel-booking",
     displayName = "Hotel Booking",
-    submitUri = "/api/forms/hotel-booking/submit",
-    crossConstraints = {
-        @CrossConstraint(
-            type = CrossConstraint.Type.FIELD_COMPARISON,
-            operator = CrossConstraint.Operator.GREATER_THAN,
-            fields = {"checkOut", "checkIn"},
-            errorMessage = "Check-out must be after check-in."
-        )
-    }
+    submitUri = "/api/forms/hotel-booking/submit"
+)
+@CrossConstraint(
+    name = "checkOutAfterCheckIn",
+    type = CrossConstraintType.FIELD_COMPARISON,
+    operator = ComparisonOperator.GT,
+    fields = {"checkOut", "checkIn"},
+    errorMessage = "Check-out must be after check-in."
 )
 public class BookingForm {
     // fields...
