@@ -6,7 +6,6 @@ import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.github.cyfko.inputspec.*;
 import io.github.cyfko.inputspec.SearchParam.SchemaType;
-import io.github.cyfko.inputspec.protocol.ComparisonOperator;
 import io.github.cyfko.inputspec.protocol.CrossConstraintType;
 
 import javax.annotation.processing.*;
