@@ -1,3 +1,24 @@
+# Changelog
+
+All notable changes to the `input-spec` core Java library will be documented in this file.
+
+## [3.0.0] - 2026-02-28
+
+### Added
+- **Date Validation Robustness**: `FormSpecValidator` natively accepts short ISO dates (e.g., `YYYY-MM-DD`) alongside full `OffsetDateTime`s, by falling back to `LocalDateTime` and `LocalDate` (at UTC midnight) parsing logic.
+- **Enum to INLINE Auto-Mapping**: The Annotation Processor natively infers Java `Enum` types mapped to `@FieldMeta` and outputs `INLINE CLOSED` JSON values lists with auto-capitalized labels.
+- **Cross-Constraints**: Full engine support for inter-field rules (`FIELD_COMPARISON`, `AT_LEAST_ONE`, `MUTUALLY_EXCLUSIVE`, `DEPENDS_ON`).
+- **Custom Handlers**: Exposed API (`registerCustomHandler`) to supply bespoke validation callbacks for custom constraint namespaces.
+- **I18n Skeleton Generation**: Annotation processor generates `[form-id].properties` skeletons, automatically mapping keys based on the schema and field names.
+- **MCP Tool Server Integration**: A brand new Spring Boot starter `input-spec-spring-boot-starter` (released at `1.0.0`) brings `@FormHandler` reflection routing and enables exposing InputSpec forms as Model Context Protocol (MCP) Tools to AI agents.
+
+### Changed
+- **[BREAKING] Major API Refactoring**: Form validation processing and handler response models have drastically changed to enforce stronger type safety and developer experience.
+- **[BREAKING] SubmitResponse API**: Dropped loosely typed arguments for strongly-typed static factories (`SubmitResponse.ok(Map)`, `SubmitResponse.rejected(String)`).
+- **Core Versioning Alignment**: `input-spec` and `input-spec-processor` are now strictly synchronized at version `3.x.x` for semantic clarity.
+
+---
+
 ## 2.0.0 (2025-10-06)
 
 Breaking release aligning Java implementation with Protocol v2.0.
