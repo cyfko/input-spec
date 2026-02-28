@@ -21,7 +21,7 @@
     <properties>
         <java.version>21</java.version>
         <input-spec.version>3.0.0-SNAPSHOT</input-spec.version>
-        <input-spec-processor.version>3.0.0-SNAPSHOT</input-spec-processor.version>
+        <input-spec-processor.version>1.0.0-SNAPSHOT</input-spec-processor.version>
         <input-spec-starter.version>1.0.0-SNAPSHOT</input-spec-starter.version>
         <spring-ai.version>1.0.0</spring-ai.version>
     </properties>
