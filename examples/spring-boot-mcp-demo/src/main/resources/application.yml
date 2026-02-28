@@ -1,0 +1,21 @@
+spring:
+  application:
+    name: inputspec-mcp-demo
+  main:
+    banner-mode: off
+
+# ─── InputSpec Configuration ─────────────────────────────────────────────────
+inputspec:
+  base-path: /api/forms    # REST endpoint base path
+  enabled: true             # Enable REST endpoints
+  mcp:
+    enabled: true            # Enable MCP Tool Server for AI agents
+
+# ─── MCP Server Configuration ───────────────────────────────────────────────
+spring.ai.mcp.server:
+  name: inputspec-demo
+  version: 1.0.0
+
+# ─── Server Configuration ───────────────────────────────────────────────────
+server:
+  port: 8080

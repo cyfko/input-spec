@@ -1,0 +1,92 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project xmlns="http://maven.apache.org/POM/4.0.0"
+         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+    <modelVersion>4.0.0</modelVersion>
+
+    <parent>
+        <groupId>org.springframework.boot</groupId>
+        <artifactId>spring-boot-starter-parent</artifactId>
+        <version>3.4.0</version>
+        <relativePath/>
+    </parent>
+
+    <groupId>io.github.cyfko.inputspec.examples</groupId>
+    <artifactId>spring-boot-mcp-demo</artifactId>
+    <version>1.0.0</version>
+
+    <name>InputSpec MCP Demo</name>
+    <description>Demo Spring Boot app: hotel booking form with AI agent support via MCP</description>
+
+    <properties>
+        <java.version>21</java.version>
+        <input-spec.version>3.0.0-SNAPSHOT</input-spec.version>
+        <input-spec-processor.version>1.0.0-SNAPSHOT</input-spec-processor.version>
+        <input-spec-starter.version>2.1.0</input-spec-starter.version>
+        <spring-ai.version>1.0.0</spring-ai.version>
+    </properties>
+
+    <dependencies>
+        <!-- ═══ InputSpec ═══════════════════════════════════════════════ -->
+
+        <!-- InputSpec Spring Boot Starter (REST endpoints + @FormHandler) -->
+        <dependency>
+            <groupId>io.github.cyfko</groupId>
+            <artifactId>input-spec-spring-boot-starter</artifactId>
+            <version>${input-spec-starter.version}</version>
+        </dependency>
+
+        <!-- InputSpec API (annotations: @FormSpec, @FieldMeta, etc.) -->
+        <dependency>
+            <groupId>io.github.cyfko</groupId>
+            <artifactId>input-spec</artifactId>
+            <version>${input-spec.version}</version>
+        </dependency>
+
+        <!-- ═══ MCP (AI Agent integration) ═════════════════════════════ -->
+
+        <!-- Spring AI MCP Server — exposes @Tool methods to AI agents -->
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-starter-mcp-server-webmvc</artifactId>
+            <version>${spring-ai.version}</version>
+        </dependency>
+
+        <!-- ═══ Jakarta Validation (compile-time constraint mapping) ═══ -->
+
+        <dependency>
+            <groupId>jakarta.validation</groupId>
+            <artifactId>jakarta.validation-api</artifactId>
+        </dependency>
+    </dependencies>
+
+    <build>
+        <plugins>
+            <!-- Spring Boot Maven Plugin -->
+            <plugin>
+                <groupId>org.springframework.boot</groupId>
+                <artifactId>spring-boot-maven-plugin</artifactId>
+            </plugin>
+
+            <!-- Java Compiler — register the InputSpec annotation processor -->
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-compiler-plugin</artifactId>
+                <configuration>
+                    <source>${java.version}</source>
+                    <target>${java.version}</target>
+                    <compilerArgs>
+                        <arg>-parameters</arg>
+                    </compilerArgs>
+                    <annotationProcessorPaths>
+                        <path>
+                            <groupId>io.github.cyfko</groupId>
+                            <artifactId>input-spec-processor</artifactId>
+                            <version>${input-spec-processor.version}</version>
+                        </path>
+                    </annotationProcessorPaths>
+                </configuration>
+            </plugin>
+        </plugins>
+    </build>
+</project>

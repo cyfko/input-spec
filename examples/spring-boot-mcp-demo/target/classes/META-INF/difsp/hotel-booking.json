@@ -1,0 +1,198 @@
+{
+  "id" : "hotel-booking",
+  "displayName" : {
+    "default" : "Hotel Booking",
+    "i18nKey" : "hotel-booking.displayName"
+  },
+  "description" : {
+    "default" : "Book a hotel room with your preferred dates and room type.",
+    "i18nKey" : "hotel-booking.description"
+  },
+  "fields" : [ {
+    "name" : "guestName",
+    "displayName" : {
+      "default" : "Guest Name",
+      "i18nKey" : "hotel-booking.fields.guestName.displayName"
+    },
+    "description" : {
+      "default" : "Full name as it appears on your ID",
+      "i18nKey" : "hotel-booking.fields.guestName.description"
+    },
+    "dataType" : "STRING",
+    "expectMultipleValues" : false,
+    "required" : true,
+    "constraints" : [ {
+      "name" : "size-min",
+      "type" : "minLength",
+      "params" : {
+        "value" : 2
+      }
+    }, {
+      "name" : "size-max",
+      "type" : "maxLength",
+      "params" : {
+        "value" : 100
+      }
+    } ]
+  }, {
+    "name" : "email",
+    "displayName" : {
+      "default" : "Email",
+      "i18nKey" : "hotel-booking.fields.email.displayName"
+    },
+    "description" : {
+      "default" : "We'll send the booking confirmation here",
+      "i18nKey" : "hotel-booking.fields.email.description"
+    },
+    "dataType" : "STRING",
+    "expectMultipleValues" : false,
+    "required" : true,
+    "constraints" : [ {
+      "name" : "email",
+      "type" : "pattern",
+      "params" : {
+        "regex" : "^[^@\\s]+@[^@\\s]+\\.[^@\\s]+$"
+      }
+    } ]
+  }, {
+    "name" : "checkIn",
+    "displayName" : {
+      "default" : "Check-in Date",
+      "i18nKey" : "hotel-booking.fields.checkIn.displayName"
+    },
+    "description" : {
+      "default" : "Date of arrival (ISO-8601)",
+      "i18nKey" : "hotel-booking.fields.checkIn.description"
+    },
+    "dataType" : "STRING",
+    "expectMultipleValues" : false,
+    "required" : true,
+    "constraints" : [ {
+      "name" : "future",
+      "type" : "minDate",
+      "params" : {
+        "iso" : "$NOW"
+      }
+    } ]
+  }, {
+    "name" : "checkOut",
+    "displayName" : {
+      "default" : "Check-out Date",
+      "i18nKey" : "hotel-booking.fields.checkOut.displayName"
+    },
+    "description" : {
+      "default" : "Date of departure (ISO-8601)",
+      "i18nKey" : "hotel-booking.fields.checkOut.description"
+    },
+    "dataType" : "STRING",
+    "expectMultipleValues" : false,
+    "required" : true,
+    "constraints" : [ {
+      "name" : "future",
+      "type" : "minDate",
+      "params" : {
+        "iso" : "$NOW"
+      }
+    } ]
+  }, {
+    "name" : "roomType",
+    "displayName" : {
+      "default" : "Room Type",
+      "i18nKey" : "hotel-booking.fields.roomType.displayName"
+    },
+    "description" : {
+      "default" : "Select your preferred room category",
+      "i18nKey" : "hotel-booking.fields.roomType.description"
+    },
+    "dataType" : "STRING",
+    "expectMultipleValues" : false,
+    "required" : true,
+    "valuesEndpoint" : {
+      "protocol" : "INLINE",
+      "mode" : "CLOSED",
+      "items" : [ {
+        "value" : "STANDARD",
+        "label" : {
+          "default" : "Standard Room",
+          "i18nKey" : "hotel-booking.fields.roomType.items.STANDARD.label"
+        }
+      }, {
+        "value" : "DELUXE",
+        "label" : {
+          "default" : "Deluxe Room",
+          "i18nKey" : "hotel-booking.fields.roomType.items.DELUXE.label"
+        }
+      }, {
+        "value" : "SUITE",
+        "label" : {
+          "default" : "Suite",
+          "i18nKey" : "hotel-booking.fields.roomType.items.SUITE.label"
+        }
+      } ]
+    },
+    "constraints" : [ ]
+  }, {
+    "name" : "guests",
+    "displayName" : {
+      "default" : "Number of Guests",
+      "i18nKey" : "hotel-booking.fields.guests.displayName"
+    },
+    "description" : {
+      "default" : "How many people will be staying",
+      "i18nKey" : "hotel-booking.fields.guests.description"
+    },
+    "dataType" : "NUMBER",
+    "expectMultipleValues" : false,
+    "required" : true,
+    "constraints" : [ {
+      "name" : "min",
+      "type" : "minValue",
+      "params" : {
+        "value" : 1
+      }
+    }, {
+      "name" : "max",
+      "type" : "maxValue",
+      "params" : {
+        "value" : 10
+      }
+    } ]
+  }, {
+    "name" : "specialRequests",
+    "displayName" : {
+      "default" : "Special Requests",
+      "i18nKey" : "hotel-booking.fields.specialRequests.displayName"
+    },
+    "description" : {
+      "default" : "Any special requirements (optional)",
+      "i18nKey" : "hotel-booking.fields.specialRequests.description"
+    },
+    "dataType" : "STRING",
+    "expectMultipleValues" : false,
+    "required" : false,
+    "constraints" : [ {
+      "name" : "size-max",
+      "type" : "maxLength",
+      "params" : {
+        "value" : 500
+      }
+    } ]
+  } ],
+  "crossConstraints" : [ {
+    "name" : "checkOutAfterCheckIn",
+    "type" : "fieldComparison",
+    "fields" : [ "checkOut", "checkIn" ],
+    "params" : {
+      "operator" : "gt"
+    },
+    "errorMessage" : {
+      "default" : "Check-out date must be after check-in date",
+      "i18nKey" : "hotel-booking.crossConstraints.checkOutAfterCheckIn.errorMessage"
+    }
+  } ],
+  "submitEndpoint" : {
+    "protocol" : "HTTPS",
+    "uri" : "/api/bookings",
+    "method" : "POST"
+  }
+}
