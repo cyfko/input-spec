@@ -9,10 +9,13 @@ io\github\cyfko\inputspec\spring\InputSpecAutoConfiguration.class
 META-INF\spring-configuration-metadata.json
 io\github\cyfko\inputspec\spring\FormHandlerRegistry.class
 io\github\cyfko\inputspec\spring\McpSubmitResult.class
+io\github\cyfko\inputspec\spring\FormValidatorRegistry$FormValidatorConfigurationException.class
+io\github\cyfko\inputspec\spring\FormValidatorRegistry.class
 io\github\cyfko\inputspec\spring\InputSpecMcpTools$FormInfo.class
 io\github\cyfko\inputspec\spring\FormHandlerRegistry$FormHandlerInvocationException.class
 io\github\cyfko\inputspec\spring\FormHandler.class
 io\github\cyfko\inputspec\spring\InputSpecProperties$Mcp.class
 io\github\cyfko\inputspec\spring\FormHandlerRegistry$FormHandlerConfigurationException.class
+io\github\cyfko\inputspec\spring\util\AopUtilsHelper.class
 io\github\cyfko\inputspec\spring\InputSpecMcpAutoConfiguration.class
 io\github\cyfko\inputspec\spring\InputSpecMcpTools.class

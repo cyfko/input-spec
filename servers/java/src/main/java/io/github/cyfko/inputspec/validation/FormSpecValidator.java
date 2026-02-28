@@ -5,6 +5,8 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.github.cyfko.inputspec.cache.BundleResolver;
 import io.github.cyfko.inputspec.model.*;
 import io.github.cyfko.inputspec.protocol.ComparisonOperator;
+import io.github.cyfko.inputspec.protocol.ConstraintType;
+import io.github.cyfko.inputspec.protocol.CrossConstraintType;
 import io.github.cyfko.inputspec.protocol.DataType;
 
 import java.math.BigDecimal;
@@ -38,8 +40,19 @@ public class FormSpecValidator {
 
     private final Map<String, CustomConstraintHandler>      customHandlers      = new HashMap<>();
     private final Map<String, CustomCrossConstraintHandler> customCrossHandlers = new HashMap<>();
+    private final Map<String, GlobalFormValidatorHandler>   globalHandlers      = new HashMap<>();
 
     // ─── Custom handler registration ─────────────────────────────────────────
+
+    /**
+     * Registers a global form validator handler for an entire form (Phase 3).
+     *
+     * @param formId  the form ID
+     * @param handler the handler to invoke
+     */
+    public void registerGlobalFormHandler(String formId, GlobalFormValidatorHandler handler) {
+        globalHandlers.put(Objects.requireNonNull(formId), Objects.requireNonNull(handler));
+    }
 
     /**
      * Registers a handler for a {@code custom} constraint key (§2.6).
@@ -69,21 +82,48 @@ public class FormSpecValidator {
 
     public ValidationResult validateForm(FormSpecModel spec, Map<String, Object> values, Locale locale) {
         List<ValidationError> errors = new ArrayList<>();
-        boolean allFieldsValid = true;
 
+        // ─── PHASE 1: Standard Stateless Validation ───
         for (InputFieldSpec field : spec.fields()) {
-            Object value = values.get(field.name());
-            List<ValidationError> fieldErrors = validateField(field, value, field.name(), spec.id(), locale);
-            if (!fieldErrors.isEmpty()) {
-                errors.addAll(fieldErrors);
-                allFieldsValid = false;
+            errors.addAll(validateFieldInternal(field, values.get(field.name()), field.name(), spec.id(), locale, false));
+        }
+
+        if (spec.crossConstraints() != null) {
+            for (CrossConstraintDescriptor cc : spec.crossConstraints()) {
+                if (cc.type() != CrossConstraintType.CUSTOM) {
+                    evaluateCrossConstraint(cc, values, spec.id(), locale).ifPresent(errors::add);
+                }
             }
         }
 
-        if (allFieldsValid && spec.crossConstraints() != null) {
+        if (!errors.isEmpty()) {
+            return new ValidationResult(false, Collections.unmodifiableList(errors));
+        }
+
+        // ─── PHASE 2: Custom Constraints Validation ───
+        for (InputFieldSpec field : spec.fields()) {
+            errors.addAll(validateFieldInternal(field, values.get(field.name()), field.name(), spec.id(), locale, true));
+        }
+
+        if (spec.crossConstraints() != null) {
             for (CrossConstraintDescriptor cc : spec.crossConstraints()) {
-                evaluateCrossConstraint(cc, values, spec.id(), locale)
-                    .ifPresent(errors::add);
+                if (cc.type() == CrossConstraintType.CUSTOM) {
+                    evaluateCrossConstraint(cc, values, spec.id(), locale).ifPresent(errors::add);
+                }
+            }
+        }
+
+        if (!errors.isEmpty()) {
+            return new ValidationResult(false, Collections.unmodifiableList(errors));
+        }
+
+        // ─── PHASE 3: Global Form Validation ───
+        GlobalFormValidatorHandler globalHandler = globalHandlers.get(spec.id());
+        if (globalHandler != null) {
+            Map<String, String> globalMap = globalHandler.validate(values);
+            if (globalMap != null && !globalMap.isEmpty()) {
+                globalMap.forEach((path, msg) ->
+                    errors.add(ValidationError.field(path, "global", msg, values.get(path))));
             }
         }
 
@@ -97,29 +137,46 @@ public class FormSpecValidator {
     public List<ValidationError> validateField(InputFieldSpec spec, Object value,
                                                 String path, String formId, Locale locale) {
         List<ValidationError> errors = new ArrayList<>();
+        
+        // Phase 1: Standard constraints
+        errors.addAll(validateFieldInternal(spec, value, path, formId, locale, false));
+        if (!errors.isEmpty()) return errors;
+        
+        // Phase 2: Custom constraints
+        errors.addAll(validateFieldInternal(spec, value, path, formId, locale, true));
+        return errors;
+    }
 
-        // 1. REQUIRED
-        if (spec.required() && isEmpty(value)) {
-            errors.add(ValidationError.field(path, "required",
-                "This field is required", value));
-            return errors;
-        }
-        if (isEmpty(value)) return errors;
+    private List<ValidationError> validateFieldInternal(InputFieldSpec spec, Object value,
+                                                String path, String formId, Locale locale, boolean customOnly) {
+        List<ValidationError> errors = new ArrayList<>();
 
-        // 2. TYPE
-        if (!matchesType(value, spec.dataType(), spec.expectMultipleValues())) {
-            errors.add(ValidationError.field(path, "type",
-                "Expected type " + spec.dataType().name().toLowerCase()
-                + (spec.expectMultipleValues() ? "[]" : ""), value));
-            return errors;
-        }
+        if (!customOnly) {
+            // 1. REQUIRED
+            if (spec.required() && isEmpty(value)) {
+                errors.add(ValidationError.field(path, "required",
+                    "This field is required", value));
+                return errors;
+            }
+            if (isEmpty(value)) return errors;
 
-        // 3. INLINE CLOSED membership (synchronous)
-        if (spec.valuesEndpoint() != null
-                && spec.valuesEndpoint().isInline()
-                && spec.valuesEndpoint().isClosed()) {
-            errors.addAll(checkInlineMembership(spec, value, path));
-            if (!errors.isEmpty()) return errors;
+            // 2. TYPE
+            if (!matchesType(value, spec.dataType(), spec.expectMultipleValues())) {
+                errors.add(ValidationError.field(path, "type",
+                    "Expected type " + spec.dataType().name().toLowerCase()
+                    + (spec.expectMultipleValues() ? "[]" : ""), value));
+                return errors;
+            }
+
+            // 3. INLINE CLOSED membership (synchronous)
+            if (spec.valuesEndpoint() != null
+                    && spec.valuesEndpoint().isInline()
+                    && spec.valuesEndpoint().isClosed()) {
+                errors.addAll(checkInlineMembership(spec, value, path));
+                if (!errors.isEmpty()) return errors;
+            }
+        } else {
+            if (isEmpty(value)) return errors;
         }
 
         // 4. OBJECT RECURSION
@@ -130,22 +187,22 @@ public class FormSpecValidator {
                     int idx = i;
                     for (InputFieldSpec sub : spec.subFields()) {
                         Object subVal = getNestedValue(items.get(i), sub.name());
-                        errors.addAll(validateField(sub, subVal,
-                            path + "[" + idx + "]." + sub.name(), formId, locale));
+                        errors.addAll(validateFieldInternal(sub, subVal,
+                            path + "[" + idx + "]." + sub.name(), formId, locale, customOnly));
                     }
                 }
             } else {
                 for (InputFieldSpec sub : spec.subFields()) {
-                    errors.addAll(validateField(sub, getNestedValue(value, sub.name()),
-                        path + "." + sub.name(), formId, locale));
+                    errors.addAll(validateFieldInternal(sub, getNestedValue(value, sub.name()),
+                        path + "." + sub.name(), formId, locale, customOnly));
                 }
             }
-            errors.addAll(runConstraints(spec, value, path, formId, locale));
+            errors.addAll(runConstraints(spec, value, path, formId, locale, customOnly));
             return errors;
         }
 
         // 5. ORDERED CONSTRAINTS
-        errors.addAll(runConstraints(spec, value, path, formId, locale));
+        errors.addAll(runConstraints(spec, value, path, formId, locale, customOnly));
         return errors;
     }
 
@@ -181,11 +238,14 @@ public class FormSpecValidator {
     // ─── Constraints pipeline ─────────────────────────────────────────────────
 
     private List<ValidationError> runConstraints(InputFieldSpec spec, Object value,
-                                                 String path, String formId, Locale locale) {
+                                                 String path, String formId, Locale locale, boolean customOnly) {
         List<ValidationError> errors = new ArrayList<>();
         if (spec.expectMultipleValues()) {
             List<?> items = asList(value);
             for (ConstraintDescriptor c : spec.constraints()) {
+                if (customOnly && c.type() != ConstraintType.CUSTOM) continue;
+                if (!customOnly && c.type() == ConstraintType.CUSTOM) continue;
+
                 applyArrayLevel(c, items, path, formId, locale).ifPresent(errors::add);
                 for (int i = 0; i < items.size(); i++) {
                     final int idx = i;
@@ -198,6 +258,9 @@ public class FormSpecValidator {
             }
         } else {
             for (ConstraintDescriptor c : spec.constraints()) {
+                if (customOnly && c.type() != ConstraintType.CUSTOM) continue;
+                if (!customOnly && c.type() == ConstraintType.CUSTOM) continue;
+
                 applyConstraint(c, value, spec.dataType(), path, formId, locale)
                     .ifPresent(errors::add);
             }

@@ -214,6 +214,77 @@ class FormSpecValidatorTest {
     }
 
     @Test
+    @DisplayName("Execution Phase 1: Standard constraints prevent CUSTOM constraints from running")
+    void phase1_preventsPhase2() throws Exception {
+        // Register a custom handler that always fails (to prove it never ran)
+        validator.registerCustomHandler("alwaysFail", (value, params) -> 
+            Optional.of("This should not be reached!"));
+
+        // Field requires minLength=5 (Standard) AND custom "alwaysFail"
+        String fieldJson = """
+            {
+              "name": "code",
+              "displayName": "Code",
+              "dataType": "STRING",
+              "expectMultipleValues": false,
+              "required": true,
+              "constraints": [
+                {
+                  "name": "lenCheck",
+                  "type": "minLength",
+                  "params": { "value": 5 }
+                },
+                {
+                  "name": "customCheck",
+                  "type": "custom",
+                  "params": { "key": "alwaysFail" }
+                }
+              ]
+            }
+            """;
+        InputFieldSpec spec = mapper.readValue(fieldJson, InputFieldSpec.class);
+
+        // Value is 2 chars (fails standard minLength)
+        List<ValidationError> errors = validator.validateField(spec, "AB", "code");
+        
+        // We should ONLY see the standard error, not the custom one, because Phase 1 failed fast
+        assertEquals(1, errors.size());
+        assertEquals("lenCheck", errors.get(0).constraintName());
+    }
+
+    @Test
+    @DisplayName("Execution Phase 3: Global validators only run if Fields are flawless")
+    void phase3_onlyRunsIfFieldsPass() throws Exception {
+        // Form with one standard field (required)
+        String formJson = """
+            {
+              "id": "global-test-form",
+              "fields": [
+                { "name": "email", "dataType": "STRING", "required": true, "constraints": [] }
+              ]
+            }
+            """;
+        FormSpecModel form = mapper.readValue(formJson, FormSpecModel.class);
+
+        // Register a global handler that always fails
+        validator.registerGlobalFormHandler("global-test-form", values -> 
+            Map.of("global", "This global error should not be reached!"));
+
+        // 1. Missing required field -> fails Phase 1
+        ValidationResult result1 = validator.validateForm(form, Map.of());
+        assertFalse(result1.isValid());
+        assertEquals(1, result1.errors().size());
+        assertEquals("required", result1.errors().get(0).constraintName());
+
+        // 2. Flawless field -> proceeds to Phase 3 (Global Validation fails)
+        ValidationResult result2 = validator.validateForm(form, Map.of("email", "test@test.com"));
+        assertFalse(result2.isValid());
+        assertEquals(1, result2.errors().size());
+        assertEquals("global", result2.errors().get(0).constraintName());
+        assertEquals("This global error should not be reached!", result2.errors().get(0).message());
+    }
+
+    @Test
     @DisplayName("Fix3: Unregistered custom handler is silently tolerated")
     void customHandler_unregisteredIsTolerated() throws Exception {
         String fieldJson = """

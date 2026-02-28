@@ -36,6 +36,13 @@ import jakarta.validation.constraints.*;
     operator = io.github.cyfko.inputspec.protocol.ComparisonOperator.GT,
     errorMessage = "Check-out date must be after check-in date"
 )
+@CrossConstraint(
+    name = "suiteGuestLimit",
+    type = CrossConstraintType.CUSTOM,
+    fields = {"roomType", "guests"},
+    customKey = "validateSuiteGuestLimit",
+    errorMessage = "Suites accommodate a maximum of 4 guests."
+)
 public class BookingForm {
 
     /**

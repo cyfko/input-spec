@@ -57,58 +57,74 @@ When the InputSpec processor encounters this annotation, it exports a `CUSTOM` c
 
 The frontend knows it cannot validate a `custom` rule locally. It will simply wait until the user clicks "Submit" to see if the server rejects it.
 
-## Registering a Backend Handler
+## Registering a Backend Handler (Spring Boot)
 
-To truly secure this, when the JSON is submitted to the backend, the `FormSpecValidator` must know how to execute the custom logic. 
+To execute this validation logic on the backend, you simply define a Spring Component and annotate a method with `@FormValidator`, passing the `customKey` as its value.
 
-You do this by registering a callback matching the `customKey`:
+> [!TIP]
+> The method must accept your `@FormSpec` annotated POJO. Return `Optional<String>` to denote an error message. If the optional is empty, validation is considered successful.
 
 ```java
-import io.github.cyfko.inputspec.validation.FormSpecValidator;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import io.github.cyfko.inputspec.validation.FormValidator;
+import org.springframework.stereotype.Service;
 import java.util.Optional;
 
-@Configuration
-public class InputSpecConfig {
+@Service
+public class UserValidationService {
 
     private final UserRepository userRepository;
 
-    public InputSpecConfig(UserRepository userRepository) {
+    public UserValidationService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    @Bean
-    public FormSpecValidator formSpecValidator() {
-        FormSpecValidator validator = new FormSpecValidator();
+    // Maps to the customKey defined in @CrossConstraint
+    @FormValidator("checkUniqueUsername")
+    public Optional<String> validateConstraint(RegistrationForm form) {
+        if (form.getUsername() == null) {
+            return Optional.empty(); // Let the standard @NotNull deal with missing values
+        }
         
-        // Register the custom logic for our specific key
-        validator.registerCustomCrossHandler("checkUniqueUsername", (fieldValues, params) -> {
-            Object value = fieldValues.get("username");
-            if (value == null) return Optional.empty(); // Let @NotNull handle missing values
-            
-            String username = String.valueOf(value);
-            if (userRepository.existsByUsername(username)) {
-                return Optional.of("This username is already taken."); // Returns an error message
-            }
-            return Optional.empty(); // Valid
-        });
-
-        return validator;
+        if (userRepository.existsByUsername(form.getUsername())) {
+            return Optional.of("This username is already taken."); // Error message
+        }
+        
+        return Optional.empty(); // Valid
     }
 }
 ```
 
-## The Workflow
+## Global Form Validation
 
-1.  **Frontend**: Reads the JSON. Sees `type: "CUSTOM"`. The frontend knows it cannot validate this immediately. It waits until the user clicks "Submit".
-2.  **Submission**: The JSON hits the backend via `/api/forms/registration`.
-3.  **Core Validation**: `FormSpecValidator` runs standard rules (length, email, etc.).
-4.  **Custom Validation**: `FormSpecValidator` hits the `CUSTOM` rule. It looks up the associated lambda in its registry using the `customKey` string (`checkUniqueUsername`). It executes the database query.
-5.  **Rejection**: If the lambda returns an `Optional.of("Error")`, the request is immediately aborted, returning a `400 Bad Request` with the precise error message attached to the `uniqueUser` rule. Your `@FormHandler` method *is never called*.
+Sometimes, validation rules are so complex or cross-cutting that they don't apply to specific fields, but to the entire form payload as a whole. You can execute global business logic by registering a form-level validator.
 
-### Why is this better than normal Spring Validation?
+To do this, use `@FormValidator` but provide the **Form ID** as the value, and return a `Map<String, String>` where the keys are the specific field paths causing errors, and the values are their messages.
 
-In a standard Spring Boot app, you'd write a standard `@ConstraintValidator`. That works fine.
+```java
+@Service
+public class BookingValidationService {
 
-However, explicitly registering the custom handler with InputSpec ensures that the validation pipeline remains centralized within the `FormSpecValidator`. This guarantees that your form submissions, whether coming from a web browser or an **AI MCP Agent**, go through the exact same rigorous, predictable rule pipeline before instantiating your POJOs.
+    // Maps to the form's defined ID: @FormSpec(id = "booking-form")
+    @FormValidator("booking-form")
+    public Map<String, String> validateEntireForm(BookingForm form) {
+        Map<String, String> errors = new HashMap<>();
+
+        // Perform complex API lookups or calculations spanning multiple fields
+        if (form.getDiscountCode() != null && !isEligible(form.getUserId(), form.getDiscountCode())) {
+            errors.put("discountCode", "You are not eligible for this discount.");
+        }
+
+        return errors; // Return an empty map if valid
+    }
+}
+```
+
+## The 3-Phase Execution Pipeline
+
+InputSpec enforces a strict execution pipeline to prevent your complex API calls from executing on obviously invalid payloads. Your methods are only invoked when it is safe to do so.
+
+1.  **Phase 1 (Standard Validation)**: Runs fundamental checks (length, required, static cross-comparisons). It fails immediately if any of these basic rules are broken.
+2.  **Phase 2 (Custom Constraint Validation)**: If Phase 1 succeeds, it evaluates your `CUSTOM` cross-constraints (methods returning `Optional<String>`). It collects all field errors and aborts if any are found.
+3.  **Phase 3 (Global Validation)**: Only if Phase 1 and Phase 2 are flawless does the form-level `@FormValidator` (method returning `Map<String, String>`) execute to perform cross-cutting business logic.
+
+If all phases succeed, the validated payload is officially delegated to your `@FormHandler` endpoint connection.

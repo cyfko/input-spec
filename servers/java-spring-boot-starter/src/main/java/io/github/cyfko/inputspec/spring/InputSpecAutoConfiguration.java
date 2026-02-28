@@ -82,6 +82,14 @@ public class InputSpecAutoConfiguration {
 
     @Bean
     @ConditionalOnMissingBean
+    public FormValidatorRegistry formValidatorRegistry(ApplicationContext ctx,
+                                                       FormSpecValidator validator,
+                                                       ObjectMapper mapper) {
+        return new FormValidatorRegistry(ctx, validator, mapper);
+    }
+
+    @Bean
+    @ConditionalOnMissingBean
     public InputSpecController inputSpecController(FormSpecCache cache,
                                                     FormSpecValidator validator,
                                                     FormHandlerRegistry registry) {

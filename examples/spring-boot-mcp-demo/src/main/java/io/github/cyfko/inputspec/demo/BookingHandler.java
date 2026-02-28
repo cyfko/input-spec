@@ -47,14 +47,6 @@ public class BookingHandler {
      */
     @FormHandler("hotel-booking")
     public SubmitResponse handleBooking(BookingForm form) {
-        // Simulate domain logic: reject SUITE for > 4 guests
-        if (form.getRoomType() == BookingForm.RoomType.SUITE && form.getGuests() > 4) {
-            return SubmitResponse.rejected(
-                "Suites accommodate a maximum of 4 guests. "
-                + "Please choose a different room type or reduce the number of guests."
-            );
-        }
-
         // Create the booking
         String bookingId = UUID.randomUUID().toString().substring(0, 8).toUpperCase();
 

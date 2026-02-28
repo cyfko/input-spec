@@ -57,58 +57,74 @@ Lorsque le processeur InputSpec rencontre cette annotation, il exporte une contr
 
 Le frontend sait qu'il ne peut pas valider une règle `custom` localement. Il attendra simplement que l'utilisateur clique sur "Soumettre" pour voir si le serveur la rejette.
 
-## Enregistrer un Handler Backend
+## Enregistrer un Handler Backend (Spring Boot)
 
-Pour sécuriser véritablement cette logique, lorsque le JSON est soumis au backend, le `FormSpecValidator` doit savoir comment exécuter la logique personnalisée.
+Pour exécuter cette logique de validation sur le backend, il vous suffit de définir un composant Spring et d'annoter une méthode avec `@FormValidator`, en passant la propriété `customKey` comme valeur.
 
-Vous faites cela en enregistrant un callback qui correspond au `customKey` :
+> [!TIP]
+> La méthode doit accepter en paramètre votre POJO annoté `@FormSpec`. Retournez `Optional<String>` pour indiquer un message d'erreur. Si l'Optional est vide, la validation est considérée comme un succès.
 
 ```java
-import io.github.cyfko.inputspec.validation.FormSpecValidator;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
+import io.github.cyfko.inputspec.validation.FormValidator;
+import org.springframework.stereotype.Service;
 import java.util.Optional;
 
-@Configuration
-public class InputSpecConfig {
+@Service
+public class UserValidationService {
 
     private final UserRepository userRepository;
 
-    public InputSpecConfig(UserRepository userRepository) {
+    public UserValidationService(UserRepository userRepository) {
         this.userRepository = userRepository;
     }
 
-    @Bean
-    public FormSpecValidator formSpecValidator() {
-        FormSpecValidator validator = new FormSpecValidator();
+    // Correspond au customKey déclaré dans la @CrossConstraint
+    @FormValidator("checkUniqueUsername")
+    public Optional<String> validateConstraint(RegistrationForm form) {
+        if (form.getUsername() == null) {
+            return Optional.empty(); // Laisser le @NotNull standard gérer l'absence de valeur
+        }
         
-        // Enregistre la logique spécifique pour notre clé
-        validator.registerCustomCrossHandler("checkUniqueUsername", (fieldValues, params) -> {
-            Object value = fieldValues.get("username");
-            if (value == null) return Optional.empty(); // Laisser @NotNull s'en charger
-            
-            String username = String.valueOf(value);
-            if (userRepository.existsByUsername(username)) {
-                return Optional.of("Ce nom d'utilisateur est déjà pris."); // Retourne un message d'erreur
-            }
-            return Optional.empty(); // Valide
-        });
-
-        return validator;
+        if (userRepository.existsByUsername(form.getUsername())) {
+            return Optional.of("Ce nom d'utilisateur est déjà pris."); // Message d'erreur
+        }
+        
+        return Optional.empty(); // Valide
     }
 }
 ```
 
-## Le Flux de Travail
+## Validation Globale de Formulaire
 
-1.  **Frontend** : Lit le JSON. Voit `type: "CUSTOM"`. Le frontend sait qu'il ne peut pas valider cela immédiatement. Il attend que l'utilisateur clique sur "Soumettre".
-2.  **Soumission** : Le JSON arrive au backend via `/api/forms/registration`.
-3.  **Validation Principale** : `FormSpecValidator` exécute les règles standards (longueur, e-mail, etc.).
-4.  **Validation Personnalisée** : `FormSpecValidator` atteint la règle `CUSTOM`. Il cherche le lambda associé dans son registre en utilisant la chaîne `customKey` (`checkUniqueUsername`). Il exécute la requête en base de données.
-5.  **Rejet** : Si le lambda retourne `Optional.of("Erreur")`, la requête est immédiatement annulée, renvoyant un `400 Bad Request` avec le message d'erreur précis attaché à la contrainte `uniqueUser`. Votre méthode `@FormHandler` *n'est jamais appelée*.
+Parfois, les règles de validation sont tellement complexes ou transversales qu'elles ne s'appliquent pas à des champs spécifiques en particulier, mais au payload global du formulaire dans son ensemble. Vous pouvez exécuter une logique métier globale en enregistrant un validateur au niveau du formulaire.
 
-### Pourquoi est-ce préférable à la validation Spring habituelle ?
+Pour le faire, utilisez `@FormValidator` mais fournissez l'**ID du Formulaire** (Form ID) comme valeur, et retournez une `Map<String, String>` où les clés représentent les champs spécifiques causant une erreur, et les valeurs représentent leurs messages.
 
-Dans une application Spring Boot classique, vous écririez un `@ConstraintValidator` standard. Cela fonctionne très bien.
+```java
+@Service
+public class BookingValidationService {
 
-Cependant, enregistrer explicitement le handler personnalisé avec InputSpec garantit que le pipeline de validation reste centralisé au sein du `FormSpecValidator`. Cela assure que vos soumissions de formulaires, qu'elles proviennent d'un navigateur web ou d'un **Agent IA (MCP)**, passent par exactement le même pipeline de règles rigoureux et prévisible avant d'instancier vos POJOs.
+    // Correspond à l'ID du formulaire défini : @FormSpec(id = "booking-form")
+    @FormValidator("booking-form")
+    public Map<String, String> validateEntireForm(BookingForm form) {
+        Map<String, String> errors = new HashMap<>();
+
+        // Exécute des appels API complexes ou des calculs impliquant plusieurs champs
+        if (form.getDiscountCode() != null && !isEligible(form.getUserId(), form.getDiscountCode())) {
+            errors.put("discountCode", "Vous n'êtes pas éligible à ce code promotionnel.");
+        }
+
+        return errors; // Retourne une Map vide si le formulaire est valide
+    }
+}
+```
+
+## Le Pipeline d'Exécution en 3 Phases
+
+InputSpec impose un pipeline d'exécution très strict pour empêcher vos API complexes d'être appelées sur des données massivement invalides. Vos méthodes ne sont invoquées que lorsqu'il est complètement sûr de le faire.
+
+1.  **Phase 1 (Validation Standard)** : Exécute les vérifications fondamentales (longueur, réquis, comparaisons croisées standards). Elle échoue immédiatement si une de ces règles basiques est brisée (fail-fast).
+2.  **Phase 2 (Validation de Contraintes Custom)** : Seulement si la Phase 1 est un succès éclatant, elle évalue vos contraintes croisées de type `CUSTOM` (méthodes renvoyant `Optional<String>`). Elle collecte toutes les erreurs détectées et avorte si elle en trouve au moins une.
+3.  **Phase 3 (Validation Globale)** : Exclusivement si les Phases 1 et 2 n'ont repéré aucune anomalie, le validateur global `@FormValidator` (méthode renvoyant `Map<String, String>`) se met en action pour accomplir les logiques métiers transversales.
+
+Si toutes les phases sont réussies, le payload validé est officiellement délégué au contrôleur qui connecte votre `@FormHandler`.
