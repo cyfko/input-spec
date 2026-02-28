@@ -4,7 +4,7 @@
 
     <groupId>io.github.cyfko</groupId>
     <artifactId>input-spec</artifactId>
-    <version>3.0.0-SNAPSHOT</version>
+    <version>3.0.0</version>
     <packaging>jar</packaging>
 
     <name>Dynamic Input Field Specification Protocol - Java Implementation</name>
@@ -30,7 +30,8 @@
         <connection>scm:git:git://github.com/cyfko/input-spec.git</connection>
         <developerConnection>scm:git:git@github.com:cyfko/input-spec.git</developerConnection>
         <url>https://github.com/cyfko/input-spec/tree/main</url>
-    </scm>
+      <tag>input-spec-3.0.0</tag>
+  </scm>
 
     <properties>
         <java.version>21</java.version>
