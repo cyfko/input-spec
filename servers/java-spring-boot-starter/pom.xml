@@ -51,6 +51,7 @@
 
         <!-- Spring boot Versions -->
         <spring-boot.version>3.4.0</spring-boot.version>
+        <spring-ai.version>1.0.0</spring-ai.version>
     </properties>
 
     <dependencies>
@@ -90,6 +91,15 @@
             <artifactId>spring-boot-starter-test</artifactId>
             <version>${spring-boot.version}</version>
             <scope>test</scope>
+        </dependency>
+
+        <!-- ═══ Optional: MCP Tool Server (AI Agent integration) ═══════ -->
+
+        <dependency>
+            <groupId>org.springframework.ai</groupId>
+            <artifactId>spring-ai-model</artifactId>
+            <version>${spring-ai.version}</version>
+            <optional>true</optional>
         </dependency>
     </dependencies>
 
