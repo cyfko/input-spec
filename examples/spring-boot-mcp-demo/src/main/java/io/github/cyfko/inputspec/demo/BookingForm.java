@@ -70,24 +70,20 @@ public class BookingForm {
     @FieldMeta(displayName = "Check-out Date", description = "Date of departure (ISO-8601)")
     String checkOut;
 
+    public enum RoomType {
+        STANDARD, DELUXE, SUITE
+    }
+
     /**
      * Room type — the guest must choose from the available options.
+     * The processor automatically infers an INLINE CLOSED values source from this enum.
      */
     @NotNull
     @FieldMeta(
         displayName = "Room Type",
-        description = "Select your preferred room category",
-        valuesSource = @ValuesSource(
-            protocol = "INLINE",
-            mode = ValuesSource.ValuesMode.CLOSED,
-            items = {
-                @Inline(value = "STANDARD", label = "Standard Room"),
-                @Inline(value = "DELUXE",   label = "Deluxe Room"),
-                @Inline(value = "SUITE",    label = "Suite")
-            }
-        )
+        description = "Select your preferred room category"
     )
-    String roomType;
+    RoomType roomType;
 
     /**
      * Number of guests (1 to 10).

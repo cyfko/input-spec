@@ -47,7 +47,7 @@ public class BookingHandler {
     @FormHandler("hotel-booking")
     public SubmitResponse handleBooking(Map<String, Object> data) {
         String guestName = (String) data.get("guestName");
-        String roomType  = (String) data.get("roomType");
+        String roomType  = ((BookingForm.RoomType) data.get("roomType")).name();
         String checkIn   = (String) data.get("checkIn");
         String checkOut  = (String) data.get("checkOut");
         int guests       = ((Number) data.get("guests")).intValue();
