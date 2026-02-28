@@ -17,57 +17,57 @@ These rules cannot be resolved statically by a JSON parser. They require server-
 
 ## Defining Custom Constraints in Java
 
-First, define your custom rule using standard Jakarta Bean Validation annotation patterns.
+Because InputSpec generates protocol schemas at *compile time*, it cannot automatically execute generic Jakarta `@ConstraintValidator` logic. Instead, you declare custom validation rules using a **Custom Cross-Constraint**, which can apply to one or more fields.
 
 ```java
-import jakarta.validation.Constraint;
-import jakarta.validation.Payload;
-import java.lang.annotation.*;
+import io.github.cyfko.inputspec.FormSpec;
+import io.github.cyfko.inputspec.CrossConstraint;
+import io.github.cyfko.inputspec.protocol.CrossConstraintType;
 
-@Documented
-@Constraint(validatedBy = UniqueUsernameValidator.class) // Standard Jakarta validator
-@Target({ElementType.FIELD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface UniqueUsername {
-    String message() default "This username is already taken";
-    Class<?>[] groups() default {};
-    Class<? extends Payload>[] payload() default {};
-}
-```
-
-And define the form:
-
-```java
+@FormSpec(
+    id = "registration"
+)
+@CrossConstraint(
+    name = "uniqueUser",
+    type = CrossConstraintType.CUSTOM,
+    customKey = "checkUniqueUsername", // The routing key for the backend
+    fields = {"username"},
+    errorMessage = "This username is already taken"
+)
 public class RegistrationForm {
-    @UniqueUsername
     private String username;
 }
 ```
 
-## Bridging to InputSpec JSON
+## The Generated JSON
 
-When the InputSpec processor encounters `@UniqueUsername`, it doesn't know what it is natively. It defaults to exporting a `CUSTOM` constraint to the JSON file:
+When the InputSpec processor encounters this annotation, it exports a `CUSTOM` cross-constraint to the JSON file:
 
 ```json
 {
-  "type": "CUSTOM",
-  "namespace": "com.example.validators.UniqueUsername",
-  "message": "This username is already taken"
+  "name": "uniqueUser",
+  "type": "custom",
+  "fields": ["username"],
+  "params": {
+    "key": "checkUniqueUsername"
+  },
+  "errorMessage": "This username is already taken"
 }
 ```
 
-However, the frontend has no idea how to validate `com.example.validators.UniqueUsername`.
+The frontend knows it cannot validate a `custom` rule locally. It will simply wait until the user clicks "Submit" to see if the server rejects it.
 
 ## Registering a Backend Handler
 
 To truly secure this, when the JSON is submitted to the backend, the `FormSpecValidator` must know how to execute the custom logic. 
 
-You do this by registering a callback:
+You do this by registering a callback matching the `customKey`:
 
 ```java
 import io.github.cyfko.inputspec.validation.FormSpecValidator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import java.util.Optional;
 
 @Configuration
 public class InputSpecConfig {
@@ -82,14 +82,16 @@ public class InputSpecConfig {
     public FormSpecValidator formSpecValidator() {
         FormSpecValidator validator = new FormSpecValidator();
         
-        // Register the custom logic for our specific namespace
-        validator.registerCustomHandler("com.example.validators.UniqueUsername", (value, context) -> {
-            if (value == null) return; // Let @NotNull handle this
+        // Register the custom logic for our specific key
+        validator.registerCustomCrossHandler("checkUniqueUsername", (fieldValues, params) -> {
+            Object value = fieldValues.get("username");
+            if (value == null) return Optional.empty(); // Let @NotNull handle missing values
             
-            String username = (String) value;
+            String username = String.valueOf(value);
             if (userRepository.existsByUsername(username)) {
-                context.addError("username", "This username is already taken.");
+                return Optional.of("This username is already taken."); // Returns an error message
             }
+            return Optional.empty(); // Valid
         });
 
         return validator;
@@ -102,8 +104,8 @@ public class InputSpecConfig {
 1.  **Frontend**: Reads the JSON. Sees `type: "CUSTOM"`. The frontend knows it cannot validate this immediately. It waits until the user clicks "Submit".
 2.  **Submission**: The JSON hits the backend via `/api/forms/registration`.
 3.  **Core Validation**: `FormSpecValidator` runs standard rules (length, email, etc.).
-4.  **Custom Validation**: `FormSpecValidator` hits the `CUSTOM` rule. It looks up the associated lambda in its registry using the namespace string. It executes the database query.
-5.  **Rejection**: If the lambda adds an error to the context, the request is immediately aborted, returning a `400 Bad Request` with the precise `username` error message. Your `@FormHandler` method *is never called*.
+4.  **Custom Validation**: `FormSpecValidator` hits the `CUSTOM` rule. It looks up the associated lambda in its registry using the `customKey` string (`checkUniqueUsername`). It executes the database query.
+5.  **Rejection**: If the lambda returns an `Optional.of("Error")`, the request is immediately aborted, returning a `400 Bad Request` with the precise error message attached to the `uniqueUser` rule. Your `@FormHandler` method *is never called*.
 
 ### Why is this better than normal Spring Validation?
 

@@ -17,57 +17,57 @@ Ces règles ne peuvent pas être résolues statiquement par un simple interprét
 
 ## Définir des Contraintes Personnalisées en Java
 
-Tout d'abord, définissez votre règle personnalisée en utilisant les modèles d'annotations standards de Jakarta Bean Validation.
+Puisque InputSpec génère les schémas du protocole *à la compilation*, il ne peut pas exécuter automatiquement la logique générique d'un `@ConstraintValidator` Jakarta. Vous devez donc déclarer vos règles de validation personnalisées en utilisant une **Contrainte Croisée Personnalisée** (Custom Cross-Constraint), qui peut s'appliquer à un ou plusieurs champs.
 
 ```java
-import jakarta.validation.Constraint;
-import jakarta.validation.Payload;
-import java.lang.annotation.*;
+import io.github.cyfko.inputspec.FormSpec;
+import io.github.cyfko.inputspec.CrossConstraint;
+import io.github.cyfko.inputspec.protocol.CrossConstraintType;
 
-@Documented
-@Constraint(validatedBy = UniqueUsernameValidator.class) // Validateur Jakarta standard
-@Target({ElementType.FIELD})
-@Retention(RetentionPolicy.RUNTIME)
-public @interface UniqueUsername {
-    String message() default "Ce nom d'utilisateur est déjà pris";
-    Class<?>[] groups() default {};
-    Class<? extends Payload>[] payload() default {};
-}
-```
-
-Et définissez le formulaire :
-
-```java
+@FormSpec(
+    id = "registration"
+)
+@CrossConstraint(
+    name = "uniqueUser",
+    type = CrossConstraintType.CUSTOM,
+    customKey = "checkUniqueUsername", // La clé de routage pour le backend
+    fields = {"username"},
+    errorMessage = "Ce nom d'utilisateur est déjà pris"
+)
 public class RegistrationForm {
-    @UniqueUsername
     private String username;
 }
 ```
 
-## La passerelle vers le JSON InputSpec
+## Le JSON Généré
 
-Lorsque le processeur InputSpec rencontre `@UniqueUsername`, il ne sait pas ce que c'est nativement. Il exporte alors par défaut une contrainte de type `CUSTOM` dans le fichier JSON :
+Lorsque le processeur InputSpec rencontre cette annotation, il exporte une contrainte croisée `CUSTOM` dans le fichier JSON :
 
 ```json
 {
-  "type": "CUSTOM",
-  "namespace": "com.example.validators.UniqueUsername",
-  "message": "Ce nom d'utilisateur est déjà pris"
+  "name": "uniqueUser",
+  "type": "custom",
+  "fields": ["username"],
+  "params": {
+    "key": "checkUniqueUsername"
+  },
+  "errorMessage": "Ce nom d'utilisateur est déjà pris"
 }
 ```
 
-Cependant, le frontend n'a aucune idée de la façon de valider `com.example.validators.UniqueUsername`.
+Le frontend sait qu'il ne peut pas valider une règle `custom` localement. Il attendra simplement que l'utilisateur clique sur "Soumettre" pour voir si le serveur la rejette.
 
 ## Enregistrer un Handler Backend
 
 Pour sécuriser véritablement cette logique, lorsque le JSON est soumis au backend, le `FormSpecValidator` doit savoir comment exécuter la logique personnalisée.
 
-Vous faites cela en enregistrant un callback ("handler") :
+Vous faites cela en enregistrant un callback qui correspond au `customKey` :
 
 ```java
 import io.github.cyfko.inputspec.validation.FormSpecValidator;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import java.util.Optional;
 
 @Configuration
 public class InputSpecConfig {
@@ -82,14 +82,16 @@ public class InputSpecConfig {
     public FormSpecValidator formSpecValidator() {
         FormSpecValidator validator = new FormSpecValidator();
         
-        // Enregistre la logique spécifique pour notre namespace
-        validator.registerCustomHandler("com.example.validators.UniqueUsername", (value, context) -> {
-            if (value == null) return; // Laisser @NotNull s'en charger
+        // Enregistre la logique spécifique pour notre clé
+        validator.registerCustomCrossHandler("checkUniqueUsername", (fieldValues, params) -> {
+            Object value = fieldValues.get("username");
+            if (value == null) return Optional.empty(); // Laisser @NotNull s'en charger
             
-            String username = (String) value;
+            String username = String.valueOf(value);
             if (userRepository.existsByUsername(username)) {
-                context.addError("username", "Ce nom d'utilisateur est déjà pris.");
+                return Optional.of("Ce nom d'utilisateur est déjà pris."); // Retourne un message d'erreur
             }
+            return Optional.empty(); // Valide
         });
 
         return validator;
@@ -102,8 +104,8 @@ public class InputSpecConfig {
 1.  **Frontend** : Lit le JSON. Voit `type: "CUSTOM"`. Le frontend sait qu'il ne peut pas valider cela immédiatement. Il attend que l'utilisateur clique sur "Soumettre".
 2.  **Soumission** : Le JSON arrive au backend via `/api/forms/registration`.
 3.  **Validation Principale** : `FormSpecValidator` exécute les règles standards (longueur, e-mail, etc.).
-4.  **Validation Personnalisée** : `FormSpecValidator` atteint la règle `CUSTOM`. Il cherche le lambda associé dans son registre en utilisant la chaîne `namespace`. Il exécute la requête en base de données.
-5.  **Rejet** : Si le lambda ajoute une erreur au contexte, la requête est immédiatement annulée, renvoyant un `400 Bad Request` avec le message d'erreur précis sur `username`. Votre méthode `@FormHandler` *n'est jamais appelée*.
+4.  **Validation Personnalisée** : `FormSpecValidator` atteint la règle `CUSTOM`. Il cherche le lambda associé dans son registre en utilisant la chaîne `customKey` (`checkUniqueUsername`). Il exécute la requête en base de données.
+5.  **Rejet** : Si le lambda retourne `Optional.of("Erreur")`, la requête est immédiatement annulée, renvoyant un `400 Bad Request` avec le message d'erreur précis attaché à la contrainte `uniqueUser`. Votre méthode `@FormHandler` *n'est jamais appelée*.
 
 ### Pourquoi est-ce préférable à la validation Spring habituelle ?
 
