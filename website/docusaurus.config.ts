@@ -58,7 +58,7 @@ const config: Config = {
       title: 'InputSpec',
       logo: {
         alt: 'InputSpec Logo',
-        src: 'img/logo.svg',
+        src: 'img/logo.png',
       },
       items: [
         {
