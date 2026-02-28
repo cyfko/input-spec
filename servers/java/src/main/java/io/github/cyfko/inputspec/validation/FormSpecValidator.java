@@ -289,7 +289,7 @@ public class FormSpecValidator {
             }
 
             case MIN_DATE -> {
-                OffsetDateTime val = OffsetDateTime.parse(str);
+                OffsetDateTime val = parseDate(str);
                 OffsetDateTime min = resolveDate(p.path("iso").asText());
                 yield val.isBefore(min)
                     ? Optional.of(err(path, c,
@@ -299,7 +299,7 @@ public class FormSpecValidator {
             }
 
             case MAX_DATE -> {
-                OffsetDateTime val = OffsetDateTime.parse(str);
+                OffsetDateTime val = parseDate(str);
                 OffsetDateTime max = resolveDate(p.path("iso").asText());
                 yield val.isAfter(max)
                     ? Optional.of(err(path, c,
@@ -310,7 +310,7 @@ public class FormSpecValidator {
 
             case RANGE -> {
                 if (dataType == DataType.DATE) {
-                    OffsetDateTime v   = OffsetDateTime.parse(str);
+                    OffsetDateTime v   = parseDate(str);
                     OffsetDateTime min = resolveDate(p.path("min").asText());
                     OffsetDateTime max = resolveDate(p.path("max").asText());
                     yield (v.isBefore(min) || v.isAfter(max))
@@ -471,7 +471,7 @@ public class FormSpecValidator {
             case NUMBER  -> v instanceof Number && !Double.isNaN(((Number) v).doubleValue());
             case BOOLEAN -> v instanceof Boolean;
             case DATE    -> {
-                try { OffsetDateTime.parse(v.toString()); yield true; }
+                try { parseDate(v.toString()); yield true; }
                 catch (Exception e) { yield false; }
             }
             case OBJECT  -> v instanceof Map;
@@ -487,7 +487,7 @@ public class FormSpecValidator {
             cmp = new BigDecimal(a.toString()).compareTo(new BigDecimal(b.toString()));
         } catch (NumberFormatException e) {
             try {
-                cmp = OffsetDateTime.parse(a.toString()).compareTo(OffsetDateTime.parse(b.toString()));
+                cmp = parseDate(a.toString()).compareTo(parseDate(b.toString()));
             } catch (Exception ex) { return false; }
         }
         return switch (op) {
@@ -521,7 +521,19 @@ public class FormSpecValidator {
     }
 
     private OffsetDateTime resolveDate(String iso) {
-        return "$NOW".equals(iso) ? OffsetDateTime.now() : OffsetDateTime.parse(iso);
+        return "$NOW".equals(iso) ? OffsetDateTime.now() : parseDate(iso);
+    }
+
+    private OffsetDateTime parseDate(String dateStr) {
+        try {
+            return OffsetDateTime.parse(dateStr);
+        } catch (Exception e1) {
+            try {
+                return java.time.LocalDateTime.parse(dateStr).atOffset(java.time.ZoneOffset.UTC);
+            } catch (Exception e2) {
+                return java.time.LocalDate.parse(dateStr).atStartOfDay().atOffset(java.time.ZoneOffset.UTC);
+            }
+        }
     }
 
     // ─── Result types (protocol §2.8 / §2.10) ────────────────────────────────
