@@ -1,0 +1,56 @@
+-J-Duser.language=
+-J-Duser.country=
+@options
+@packages
+-classpath
+'C:/Users/KOSSI/.m2/repository/io/github/cyfko/input-spec/3.0.0/input-spec-3.0.0.jar;C:/Users/KOSSI/.m2/repository/com/fasterxml/jackson/core/jackson-core/2.17.2/jackson-core-2.17.2.jar;C:/Users/KOSSI/.m2/repository/com/fasterxml/jackson/core/jackson-databind/2.17.2/jackson-databind-2.17.2.jar;C:/Users/KOSSI/.m2/repository/com/fasterxml/jackson/core/jackson-annotations/2.17.2/jackson-annotations-2.17.2.jar'
+-encoding
+'UTF-8'
+-protected
+-quiet
+-source
+'21'
+-sourcepath
+'C:/Users/KOSSI/Desktop/kunrin/input-spec/servers/java/spi/src/main/java;C:/Users/KOSSI/Desktop/kunrin/input-spec/servers/java/spi/target/generated-sources/annotations'
+-author
+-bottom
+'Copyright &#169; 2026. All rights reserved.'
+-charset
+'UTF-8'
+-d
+'C:/Users/KOSSI/Desktop/kunrin/input-spec/servers/java/spi/target/reports/apidocs'
+-docencoding
+'UTF-8'
+-Xdoclint:none
+-doctitle
+'InputSpec — Processor SPI 1.0.0-SNAPSHOT API'
+-use
+-version
+-windowtitle
+'InputSpec — Processor SPI 1.0.0-SNAPSHOT API'
+io.github.cyfko.inputspec.spi
+C:\Users\KOSSI\.m2\repository\io\github\cyfko\input-spec\3.0.0\input-spec-3.0.0.jar = 1772296229858
+C:\Users\KOSSI\.m2\repository\com\fasterxml\jackson\core\jackson-core\2.17.2\jackson-core-2.17.2.jar = 1737381174884
+C:\Users\KOSSI\.m2\repository\com\fasterxml\jackson\core\jackson-databind\2.17.2\jackson-databind-2.17.2.jar = 1737381179238
+C:\Users\KOSSI\.m2\repository\com\fasterxml\jackson\core\jackson-annotations\2.17.2\jackson-annotations-2.17.2.jar = 1737381179995
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\src\main\java = 1772447086653
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\generated-sources\annotations = 1773331010826
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\allclasses-index.html = 1773331016570
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\allpackages-index.html = 1773331016606
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\copy.svg = 1773331016843
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\element-list = 1773331016158
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\help-doc.html = 1773331016789
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\index-all.html = 1773331016720
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\index.html = 1773331016768
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\link.svg = 1773331016848
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\member-search-index.js = 1773331016662
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\module-search-index.js = 1773331016632
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\overview-tree.html = 1773331016501
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\package-search-index.js = 1773331016641
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\script.js = 1773331016830
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\search-page.js = 1773331016869
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\search.html = 1773331016745
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\search.js = 1773331016855
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\stylesheet.css = 1773331016812
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\tag-search-index.js = 1773331016689
+C:\Users\KOSSI\Desktop\kunrin\input-spec\servers\java\spi\target\reports\apidocs\type-search-index.js = 1773331016650

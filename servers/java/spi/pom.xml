@@ -1,18 +1,19 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<project xmlns="http://maven.apache.org/POM/4.0.0"
-         xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
-         xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/xsd/maven-4.0.0.xsd">
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>io.github.cyfko</groupId>
-    <artifactId>input-spec-processor</artifactId>
+    <artifactId>input-spec-spi</artifactId>
     <version>1.0.0-SNAPSHOT</version>
     <packaging>jar</packaging>
 
-    <name>DIFSP Annotation Processor</name>
-    <description>Compile-time annotation processor for the Dynamic Input Field Specification Protocol v2.1.
-        Reads @FormSpec, @FieldMeta, @ValuesSource, @CrossConstraint annotations and generates
-        META-INF/input-spec/{formId}.json + i18n bundle skeletons.</description>
+    <name>InputSpec — Processor SPI</name>
+    <description>Extension points for the InputSpec annotation processor.
+        FieldTransformer and FormContributor allow third-party processors
+        to plug into InputSpec's FormSpec generation pipeline without
+        coupling to InputSpec internals.
+        Zero runtime dependencies.
+    </description>
     <url>https://github.com/cyfko/input-spec</url>
 
     <licenses>
@@ -34,7 +35,8 @@
         <connection>scm:git:git://github.com/cyfko/input-spec.git</connection>
         <developerConnection>scm:git:git@github.com:cyfko/input-spec.git</developerConnection>
         <url>https://github.com/cyfko/input-spec/tree/main</url>
-    </scm>
+      <tag>HEAD</tag>
+  </scm>
 
     <properties>
         <java.version>21</java.version>
@@ -51,34 +53,22 @@
         <maven-release-plugin.version>3.1.1</maven-release-plugin.version>
         <central-publishing-plugin.version>0.7.0</central-publishing-plugin.version>
 
-        <!-- Project requirements -->
-        <input-spec-spi.version>1.0.0-SNAPSHOT</input-spec-spi.version>
-        <jackson.version>2.17.2</jackson.version>
-
-        <!-- Test support -->
         <junit.version>5.10.0</junit.version>
     </properties>
 
     <dependencies>
+        <!-- core API -->
         <dependency>
             <groupId>io.github.cyfko</groupId>
-            <artifactId>input-spec-spi</artifactId>
-            <version>${input-spec-spi.version}</version>
+            <artifactId>input-spec</artifactId>
+            <version>3.0.0</version>
         </dependency>
 
-        <!-- Test -->
+        <!-- Test Dependency -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter</artifactId>
             <version>${junit.version}</version>
-            <scope>test</scope>
-        </dependency>
-
-        <!-- Jakarta Validation API — needed on classpath when compiling sample sources -->
-        <dependency>
-            <groupId>jakarta.validation</groupId>
-            <artifactId>jakarta.validation-api</artifactId>
-            <version>3.0.2</version>
             <scope>test</scope>
         </dependency>
     </dependencies>
@@ -95,7 +85,6 @@
                     <target>${java.version}</target>
                     <compilerArgs>
                         <arg>-parameters</arg>
-                        <arg>-proc:none</arg>
                     </compilerArgs>
                 </configuration>
             </plugin>

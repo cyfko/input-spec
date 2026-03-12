@@ -21,6 +21,7 @@ import static org.junit.jupiter.api.Assertions.*;
  * validates the generated JSON and bundle skeleton.
  */
 class FormSpecProcessorTest {
+    private static final String RESOURCE_FOLDER = "input-spec";
 
     private static final ObjectMapper MAPPER = new ObjectMapper();
 
@@ -53,7 +54,7 @@ class FormSpecProcessorTest {
         assertTrue(compiled, "Sample source must compile successfully");
 
         // ── Verify generated JSON ──────────────────────────────────────────
-        Path jsonPath = outputDir.resolve("META-INF/difsp/booking-form.json");
+        Path jsonPath = outputDir.resolve("META-INF/input-spec/booking-form.json");
         assertTrue(Files.exists(jsonPath), "JSON spec must be generated");
 
         JsonNode root = MAPPER.readTree(jsonPath.toFile());
@@ -187,7 +188,7 @@ class FormSpecProcessorTest {
         assertEquals("POST", submit.path("method").asText());
 
         // ── Verify bundle skeleton ─────────────────────────────────────────
-        Path bundlePath = outputDir.resolve("META-INF/difsp/i18n/booking-form.properties");
+        Path bundlePath = outputDir.resolve("META-INF/input-spec/i18n/booking-form.properties");
         assertTrue(Files.exists(bundlePath), "Bundle skeleton must be generated");
 
         String bundleContent = Files.readString(bundlePath, StandardCharsets.UTF_8);
@@ -207,7 +208,7 @@ class FormSpecProcessorTest {
         boolean compiled = compileSample("OrderForm.java.txt");
         assertTrue(compiled, "OrderForm must compile successfully");
 
-        Path jsonPath = outputDir.resolve("META-INF/difsp/order-form.json");
+        Path jsonPath = outputDir.resolve("META-INF/input-spec/order-form.json");
         assertTrue(Files.exists(jsonPath), "JSON spec for order-form must be generated");
 
         JsonNode root = MAPPER.readTree(jsonPath.toFile());
@@ -356,7 +357,7 @@ class FormSpecProcessorTest {
         assertEquals("PHYSICAL", dep.path("params").path("sourceValues").get(0).asText());
 
         // ── Bundle skeleton ────────────────────────────────────────────────
-        Path bundlePath = outputDir.resolve("META-INF/difsp/i18n/order-form.properties");
+        Path bundlePath = outputDir.resolve("META-INF/input-spec/i18n/order-form.properties");
         assertTrue(Files.exists(bundlePath), "order-form bundle must be generated");
         String bundle = Files.readString(bundlePath, StandardCharsets.UTF_8);
         assertTrue(bundle.contains("order-form.fields.orderType.items.PHYSICAL.label"));

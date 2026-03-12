@@ -1,0 +1,9 @@
+io\github\cyfko\inputspec\spi\DefaultFieldContext.class
+io\github\cyfko\inputspec\spi\SpiDispatcher.class
+io\github\cyfko\inputspec\spi\FormContributor.class
+io\github\cyfko\inputspec\spi\FieldTransformer.class
+io\github\cyfko\inputspec\spi\DefaultFormContext.class
+io\github\cyfko\inputspec\spi\FormContext.class
+io\github\cyfko\inputspec\spi\SpiDispatcher$TransformResult.class
+io\github\cyfko\inputspec\spi\DefaultFormContext$Builder.class
+io\github\cyfko\inputspec\spi\FieldContext.class
