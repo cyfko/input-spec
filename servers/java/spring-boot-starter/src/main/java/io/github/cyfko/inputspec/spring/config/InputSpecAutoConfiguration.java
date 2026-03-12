@@ -1,9 +1,12 @@
-package io.github.cyfko.inputspec.spring;
+package io.github.cyfko.inputspec.spring.config;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.cyfko.inputspec.cache.BundleResolver;
 import io.github.cyfko.inputspec.cache.FormSpecCache;
 import io.github.cyfko.inputspec.model.FormSpecModel;
+import io.github.cyfko.inputspec.spring.bootstrap.FormHandlerRegistry;
+import io.github.cyfko.inputspec.spring.bootstrap.FormValidatorRegistry;
+import io.github.cyfko.inputspec.spring.SubmitResponse;
 import io.github.cyfko.inputspec.validation.FormSpecValidator;
 import io.github.cyfko.inputspec.validation.FormSpecValidator.ValidationResult;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
@@ -43,7 +46,7 @@ import java.util.stream.Collectors;
  * </ul>
  *
  * <p>Add to {@code META-INF/spring/org.springframework.boot.autoconfigure.AutoConfiguration.imports}:
- * <pre>io.github.cyfko.inputspec.spring.InputSpecAutoConfiguration</pre>
+ * <pre>io.github.cyfko.inputspec.spring.config.InputSpecAutoConfiguration</pre>
  */
 @AutoConfiguration
 @ConditionalOnWebApplication
@@ -75,8 +78,8 @@ public class InputSpecAutoConfiguration {
     @Bean
     @ConditionalOnMissingBean
     public FormHandlerRegistry formHandlerRegistry(ApplicationContext ctx,
-                                                    FormSpecCache cache,
-                                                    ObjectMapper mapper) {
+                                                   FormSpecCache cache,
+                                                   ObjectMapper mapper) {
         return new FormHandlerRegistry(ctx, cache, mapper);
     }
 
@@ -200,12 +203,12 @@ public class InputSpecAutoConfiguration {
             }
 
             // 3. Delegate to @FormHandler
-            FormHandlerRegistry.ResolvedHandler handler = registry.find(id)
+            FormHandlerRegistry.HandlerResolution handler = registry.find(id)
                 .orElseThrow(() -> new IllegalStateException(
                     "No @FormHandler found for form '" + id +
                     "' — this should have been caught at startup"));
 
-            return switch (handler.invoke(values)) {
+            return switch (handler.invoke(id, values)) {
                 case SubmitResponse.Accepted a when a.body() != null ->
                     ResponseEntity.status(HttpStatus.CREATED).body(a.body());
 

@@ -1,7 +1,9 @@
-package io.github.cyfko.inputspec.spring;
+package io.github.cyfko.inputspec.spring.config;
 
 import io.github.cyfko.inputspec.cache.BundleResolver;
 import io.github.cyfko.inputspec.cache.FormSpecCache;
+import io.github.cyfko.inputspec.spring.bootstrap.FormHandlerRegistry;
+import io.github.cyfko.inputspec.spring.ai.InputSpecMcpTools;
 import io.github.cyfko.inputspec.validation.FormSpecValidator;
 import org.springframework.boot.autoconfigure.AutoConfiguration;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnClass;

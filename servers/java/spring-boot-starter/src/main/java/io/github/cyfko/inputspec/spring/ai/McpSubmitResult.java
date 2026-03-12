@@ -1,5 +1,6 @@
-package io.github.cyfko.inputspec.spring;
+package io.github.cyfko.inputspec.spring.ai;
 
+import io.github.cyfko.inputspec.spring.SubmitResponse;
 import io.github.cyfko.inputspec.validation.FormSpecValidator.ValidationError;
 
 import java.util.List;

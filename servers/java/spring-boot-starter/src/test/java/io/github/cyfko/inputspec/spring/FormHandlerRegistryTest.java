@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.cyfko.inputspec.FormSpec;
 import io.github.cyfko.inputspec.cache.FormSpecCache;
 import io.github.cyfko.inputspec.model.FormSpecModel;
+import io.github.cyfko.inputspec.spring.bootstrap.FormHandlerRegistry;
 import org.junit.jupiter.api.*;
 import org.springframework.context.ApplicationContext;
 
@@ -101,7 +102,7 @@ class FormHandlerRegistryTest {
         var registry = registryWith(new GoodService());
         var handler  = registry.find("sample-form").orElseThrow();
 
-        SubmitResponse result = handler.invoke(Map.of("name", "Alice"));
+        SubmitResponse result = handler.invoke("sample-form", Map.of("name", "Alice"));
 
         assertThat(result).isInstanceOf(SubmitResponse.Accepted.class);
         var body = ((SubmitResponse.Accepted) result).body();
@@ -121,7 +122,7 @@ class FormHandlerRegistryTest {
         var registry = registryWith(new RejectingService());
         var handler  = registry.find("sample-form").orElseThrow();
 
-        SubmitResponse result = handler.invoke(Map.of("name", "Bob"));
+        SubmitResponse result = handler.invoke("sample-form", Map.of("name", "Bob"));
 
         assertThat(result).isInstanceOf(SubmitResponse.Rejected.class);
         var errors = ((SubmitResponse.Rejected) result).errors();

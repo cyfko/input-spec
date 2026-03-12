@@ -1,4 +1,4 @@
-package io.github.cyfko.inputspec.spring;
+package io.github.cyfko.inputspec.spring.config;
 
 import org.springframework.boot.context.properties.ConfigurationProperties;
 

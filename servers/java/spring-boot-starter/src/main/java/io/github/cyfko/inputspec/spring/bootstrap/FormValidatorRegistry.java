@@ -1,4 +1,4 @@
-package io.github.cyfko.inputspec.spring;
+package io.github.cyfko.inputspec.spring.bootstrap;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.cyfko.inputspec.validation.FormSpecValidator;

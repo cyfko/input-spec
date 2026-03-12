@@ -2,6 +2,7 @@ package io.github.cyfko.inputspec.spring;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.cyfko.inputspec.FormSpec;
+import io.github.cyfko.inputspec.spring.bootstrap.FormValidatorRegistry;
 import io.github.cyfko.inputspec.validation.FormSpecValidator;
 import io.github.cyfko.inputspec.validation.FormValidator;
 import org.junit.jupiter.api.BeforeEach;

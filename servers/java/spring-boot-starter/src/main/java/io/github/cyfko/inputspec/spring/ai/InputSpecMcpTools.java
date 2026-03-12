@@ -1,9 +1,12 @@
-package io.github.cyfko.inputspec.spring;
+package io.github.cyfko.inputspec.spring.ai;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.github.cyfko.inputspec.cache.BundleResolver;
 import io.github.cyfko.inputspec.cache.FormSpecCache;
 import io.github.cyfko.inputspec.model.FormSpecModel;
+import io.github.cyfko.inputspec.spring.bootstrap.FormHandlerRegistry;
+import io.github.cyfko.inputspec.spring.config.InputSpecMcpAutoConfiguration;
+import io.github.cyfko.inputspec.spring.SubmitResponse;
 import io.github.cyfko.inputspec.validation.FormSpecValidator;
 import io.github.cyfko.inputspec.validation.FormSpecValidator.ValidationResult;
 import org.springframework.ai.tool.annotation.Tool;
@@ -145,11 +148,11 @@ public class InputSpecMcpTools {
         }
 
         // 3. Delegate to @FormHandler
-        FormHandlerRegistry.ResolvedHandler handler = registry.find(formId)
+        FormHandlerRegistry.HandlerResolution handler = registry.find(formId)
             .orElseThrow(() -> new IllegalStateException(
                 "No @FormHandler registered for form '" + formId + "'"));
 
-        return switch (handler.invoke(data)) {
+        return switch (handler.invoke(formId, data)) {
             case SubmitResponse.Accepted a when a.body() != null ->
                 McpSubmitResult.accepted(a.body());
 

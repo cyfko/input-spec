@@ -5,6 +5,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.cyfko.inputspec.cache.BundleResolver;
 import io.github.cyfko.inputspec.cache.FormSpecCache;
 import io.github.cyfko.inputspec.model.FormSpecModel;
+import io.github.cyfko.inputspec.spring.ai.InputSpecMcpTools;
+import io.github.cyfko.inputspec.spring.bootstrap.FormHandlerRegistry;
+import io.github.cyfko.inputspec.spring.ai.McpSubmitResult;
 import io.github.cyfko.inputspec.validation.FormSpecValidator;
 import io.github.cyfko.inputspec.validation.FormSpecValidator.ValidationError;
 import io.github.cyfko.inputspec.validation.FormSpecValidator.ValidationResult;
@@ -28,7 +31,8 @@ class InputSpecMcpToolsTest {
 
     @Mock FormSpecCache       cache;
     @Mock FormSpecValidator   validator;
-    @Mock FormHandlerRegistry registry;
+    @Mock
+    FormHandlerRegistry registry;
     @Mock BundleResolver      bundleResolver;
 
     InputSpecMcpTools tools;
@@ -210,7 +214,7 @@ class InputSpecMcpToolsTest {
 
             FormHandlerRegistry.ResolvedHandler handler = mock(FormHandlerRegistry.ResolvedHandler.class);
             when(registry.find("test-form")).thenReturn(Optional.of(handler));
-            when(handler.invoke(anyMap())).thenReturn(SubmitResponse.ok(Map.of("id", 42)));
+            when(handler.invoke(any(), anyMap())).thenReturn(SubmitResponse.ok(Map.of("id", 42)));
 
             McpSubmitResult result = tools.inputspec_submit_form("test-form", Map.of("name", "John"));
 
@@ -229,7 +233,7 @@ class InputSpecMcpToolsTest {
             FormHandlerRegistry.ResolvedHandler handler = mock(FormHandlerRegistry.ResolvedHandler.class);
             when(registry.find("test-form")).thenReturn(Optional.of(handler));
             ValidationError error = ValidationError.field("email", "unique", "Already taken", "x@x.com");
-            when(handler.invoke(anyMap())).thenReturn(SubmitResponse.rejected(List.of(error)));
+            when(handler.invoke(any(), anyMap())).thenReturn(SubmitResponse.rejected(List.of(error)));
 
             McpSubmitResult result = tools.inputspec_submit_form("test-form", Map.of("email", "x@x.com"));
 
