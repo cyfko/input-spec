@@ -207,15 +207,18 @@ public class InputSpecAutoConfiguration {
                     "No @FormHandler found for form '" + id +
                     "' — this should have been caught at startup"));
 
-            return switch (handler.invoke(id, values)) {
-                case SubmitResponse.Accepted a when a.body() != null ->
-                    ResponseEntity.status(HttpStatus.CREATED).body(a.body());
+            return switch (handler.validate(id, values)) {
+                case SubmitResponse.Accepted _ignored -> switch (handler.invoke(id, values)) {
+                    case SubmitResponse.Accepted a when a.body() != null ->
+                            ResponseEntity.status(a.status()).body(a.body());
 
-                case SubmitResponse.Accepted a ->
-                    ResponseEntity.noContent().build();
+                    case SubmitResponse.Accepted a -> ResponseEntity.noContent().build();
 
-                case SubmitResponse.Rejected r ->
-                    ResponseEntity.ok(new ValidationResult(false, r.errors()));
+                    case SubmitResponse.Rejected r ->
+                            ResponseEntity.ok(new ValidationResult(false, r.errors()));
+                };
+
+                case SubmitResponse.Rejected r -> ResponseEntity.ok(new ValidationResult(false, r.errors()));
             };
         }
 

@@ -7,6 +7,7 @@ import io.github.cyfko.inputspec.model.FormSpecModel;
 import io.github.cyfko.inputspec.spring.bootstrap.FormHandlerRegistry;
 import org.junit.jupiter.api.*;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpStatus;
 
 import java.util.Map;
 import java.util.Optional;
@@ -115,7 +116,7 @@ class FormHandlerRegistryTest {
         class RejectingService {
             @FormHandler
             public SubmitResponse handle(SampleForm form) {
-                return SubmitResponse.rejected("Not available");
+                return SubmitResponse.rejected("Not available", HttpStatus.BAD_REQUEST);
             }
         }
         mockFormExists("sample-form");
@@ -249,7 +250,7 @@ class FormHandlerRegistryTest {
 
         @Test @DisplayName("rejected(message) → Rejected with server constraint")
         void rejected_message() {
-            var r = SubmitResponse.rejected("Room not available");
+            var r = SubmitResponse.rejected("Room not available", HttpStatus.BAD_REQUEST);
             assertThat(r).isInstanceOf(SubmitResponse.Rejected.class);
             var errors = ((SubmitResponse.Rejected) r).errors();
             assertThat(errors).hasSize(1);

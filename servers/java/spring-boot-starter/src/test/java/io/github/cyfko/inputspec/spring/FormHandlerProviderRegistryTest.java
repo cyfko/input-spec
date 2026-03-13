@@ -9,6 +9,7 @@ import io.github.cyfko.inputspec.spring.spi.FormHandlerProvider;
 import io.github.cyfko.inputspec.validation.FormSpecValidator;
 import org.junit.jupiter.api.*;
 import org.springframework.context.ApplicationContext;
+import org.springframework.http.HttpStatus;
 
 import java.util.*;
 
@@ -129,7 +130,7 @@ class FormHandlerProviderRegistryTest {
         class RejectingService {
             @FormHandler
             public SubmitResponse handle(SampleForm form) {
-                return SubmitResponse.rejected("Not available");
+                return SubmitResponse.rejected("Not available", HttpStatus.BAD_REQUEST);
             }
         }
         mockFormExists("sample-form");
@@ -265,7 +266,7 @@ class FormHandlerProviderRegistryTest {
         public SubmitResponse validate(Class<?> spec, Map<String, Object> rawForm) {
             Object field = rawForm.get("field");
             if (field == null || field.toString().isBlank()) {
-                return SubmitResponse.rejected("field must not be blank");
+                return SubmitResponse.rejected("field must not be blank", HttpStatus.BAD_REQUEST);
             }
             return SubmitResponse.ok();
         }
@@ -339,10 +340,10 @@ class FormHandlerProviderRegistryTest {
                 Map.of("p", new FormHandlerProvider() {
                     @Override public Set<String> getSupportedForms() { return Set.of("sample-form"); }
                     @Override public SubmitResponse validate(Class<?> spec, Map<String, Object> f) {
-                        return SubmitResponse.rejected("should not be called");
+                        return SubmitResponse.rejected("should not be called", HttpStatus.BAD_REQUEST);
                     }
                     @Override public SubmitResponse submit(Class<?> spec, Map<String, Object> f) {
-                        return SubmitResponse.rejected("should not be called");
+                        return SubmitResponse.rejected("should not be called", HttpStatus.BAD_REQUEST);
                     }
                 }),
                 new GoodService()
@@ -416,7 +417,7 @@ class FormHandlerProviderRegistryTest {
 
         @Test @DisplayName("rejected(message) → Rejected with server constraint")
         void rejected_message() {
-            var r = SubmitResponse.rejected("Room not available");
+            var r = SubmitResponse.rejected("Room not available", HttpStatus.BAD_REQUEST);
             assertThat(r).isInstanceOf(SubmitResponse.Rejected.class);
             var errors = ((SubmitResponse.Rejected) r).errors();
             assertThat(errors).hasSize(1);
