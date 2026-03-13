@@ -195,8 +195,7 @@ public class InputSpecAutoConfiguration {
             FormSpecModel spec = specOpt.get();
 
             // 2. Stateless validation
-            ValidationResult validation =
-                validator.validateForm(spec, values, resolveLocale(acceptLanguage));
+            ValidationResult validation = validator.validateForm(spec, values, resolveLocale(acceptLanguage));
 
             if (!validation.isValid()) {
                 return ResponseEntity.ok(validation);

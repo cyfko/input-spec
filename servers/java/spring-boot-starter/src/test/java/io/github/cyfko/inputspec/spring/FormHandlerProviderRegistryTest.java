@@ -66,6 +66,10 @@ class FormHandlerProviderRegistryTest {
         for (int i = 0; i < beans.length; i++) beanMap.put("bean" + i, beans[i]);
         when(ctx.getBeansOfType(Object.class)).thenReturn(beanMap);
         when(ctx.getBeansOfType(FormHandlerProvider.class)).thenReturn(providers);
+        // Mock resolveClass for every formId declared by any provider
+        providers.values().forEach(p -> p.getSupportedForms().forEach(formId ->
+                when(cache.resolveClass(formId)).thenReturn(Optional.of(SampleForm.class))
+        ));
         FormHandlerRegistry registry = new FormHandlerRegistry(ctx, cache, mapper);
         registry.afterSingletonsInstantiated();
         return registry;
@@ -258,7 +262,7 @@ class FormHandlerProviderRegistryTest {
         public Set<String> getSupportedForms() { return Set.of("contributed-form"); }
 
         @Override
-        public SubmitResponse validate(String formId, Map<String, Object> rawForm) {
+        public SubmitResponse validate(Class<?> spec, Map<String, Object> rawForm) {
             Object field = rawForm.get("field");
             if (field == null || field.toString().isBlank()) {
                 return SubmitResponse.rejected("field must not be blank");
@@ -267,7 +271,7 @@ class FormHandlerProviderRegistryTest {
         }
 
         @Override
-        public SubmitResponse submit(String formId, Map<String, Object> rawForm) {
+        public SubmitResponse submit(Class<?> spec, Map<String, Object> rawForm) {
             return SubmitResponse.ok(rawForm.get("field"));
         }
     }
@@ -334,10 +338,10 @@ class FormHandlerProviderRegistryTest {
         var registry = registryWithProviders(
                 Map.of("p", new FormHandlerProvider() {
                     @Override public Set<String> getSupportedForms() { return Set.of("sample-form"); }
-                    @Override public SubmitResponse validate(String id, Map<String, Object> f) {
+                    @Override public SubmitResponse validate(Class<?> spec, Map<String, Object> f) {
                         return SubmitResponse.rejected("should not be called");
                     }
-                    @Override public SubmitResponse submit(String id, Map<String, Object> f) {
+                    @Override public SubmitResponse submit(Class<?> spec, Map<String, Object> f) {
                         return SubmitResponse.rejected("should not be called");
                     }
                 }),
@@ -354,10 +358,10 @@ class FormHandlerProviderRegistryTest {
         FormHandlerProvider p1 = new SampleProvider();
         FormHandlerProvider p2 = new FormHandlerProvider() {
             @Override public Set<String> getSupportedForms() { return Set.of("contributed-form"); }
-            @Override public SubmitResponse validate(String id, Map<String, Object> f) {
+            @Override public SubmitResponse validate(Class<?> spec, Map<String, Object> f) {
                 return SubmitResponse.ok();
             }
-            @Override public SubmitResponse submit(String id, Map<String, Object> f) {
+            @Override public SubmitResponse submit(Class<?> spec, Map<String, Object> f) {
                 return SubmitResponse.ok();
             }
         };

@@ -49,7 +49,7 @@ public class FormHandlerRegistry implements SmartInitializingSingleton {
     private final Map<String, ResolvedHandler>      registry         = new HashMap<>();
 
     /** Fallback providers — keyed by formId for O(1) lookup. */
-    private final Map<String, FormHandlerProvider>  fallbackRegistry = new HashMap<>();
+    private final Map<String, ResolvedProvider>     fallbackRegistry = new HashMap<>();
 
     /** Tracks which provider bean covers each formId — used for conflict error messages. */
     private final Map<String, String>               providerBeanNames = new HashMap<>();
@@ -211,10 +211,15 @@ public class FormHandlerRegistry implements SmartInitializingSingleton {
                     ));
                 }
 
+                // ── Resolve @FormSpec class from compile-time registry ─────────
+                // Optional.empty() for dynamic/plugin forms not compiled together —
+                // the provider will receive null and must handle formId itself.
+                Class<?> specClass = cache.resolveClass(formId).orElse(null);
+
                 // ── @FormHandler already covers this id — provider is shadowed ─
                 // Silent: @FormHandler is primary, provider is fallback by design.
 
-                fallbackRegistry.put(formId, provider);
+                fallbackRegistry.put(formId, new ResolvedProvider(provider, specClass));
                 providerBeanNames.put(formId, beanName);
             }
         });
@@ -284,8 +289,8 @@ public class FormHandlerRegistry implements SmartInitializingSingleton {
         ResolvedHandler handler = registry.get(formId);
         if (handler != null) return Optional.of(handler);
 
-        FormHandlerProvider provider = fallbackRegistry.get(formId);
-        if (provider != null) return Optional.of(new ResolvedProvider(provider));
+        ResolvedProvider provider = fallbackRegistry.get(formId);
+        if (provider != null) return Optional.of(provider);
 
         return Optional.empty();
     }
@@ -376,25 +381,31 @@ public class FormHandlerRegistry implements SmartInitializingSingleton {
 
     /**
      * Fallback resolution — a {@link FormHandlerProvider} that declared support
-     * for the formId.
+     * for the formId, paired with the {@code @FormSpec}-annotated class resolved
+     * at startup from the compile-time registry.
      *
-     * <p>{@link #validate} delegates to {@link FormHandlerProvider#validate}.
-     * {@link #invoke} delegates to {@link FormHandlerProvider#submit}.
+     * <p>{@code specClass} is {@code null} for forms contributed by an external
+     * plugin JAR compiled separately — the provider receives {@code null} and must
+     * resolve the form identity itself (e.g. via a stored {@code formId} map).</p>
+     *
+     * <p>{@link #validate} delegates to {@link FormHandlerProvider#validate(Class, Map)}.
+     * {@link #invoke} delegates to {@link FormHandlerProvider#submit(Class, Map)}.
      * The controller guarantees that {@link #invoke} is never called if
      * {@link #validate} returned a rejected response.</p>
      */
     public record ResolvedProvider(
-            FormHandlerProvider provider
+            FormHandlerProvider provider,
+            Class<?>            specClass
     ) implements HandlerResolution {
 
         @Override
         public SubmitResponse validate(String formId, Map<String, Object> rawValues) {
-            return provider.validate(formId, rawValues);
+            return provider.validate(specClass, rawValues);
         }
 
         @Override
         public SubmitResponse invoke(String formId, Map<String, Object> rawValues) {
-            return provider.submit(formId, rawValues);
+            return provider.submit(specClass, rawValues);
         }
     }
 

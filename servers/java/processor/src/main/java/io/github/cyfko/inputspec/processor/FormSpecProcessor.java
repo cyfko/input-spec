@@ -59,6 +59,9 @@ public class FormSpecProcessor extends AbstractProcessor {
     private Messager messager;
     private SpiDispatcher spi;
 
+    /** Accumulates formId → FQN across all processing rounds. Written once at the end. */
+    private final Map<String, String> classRegistry = new LinkedHashMap<>();
+
     // Jakarta Validation annotation FQNs
     private static final String NOT_NULL          = "jakarta.validation.constraints.NotNull";
     private static final String NOT_EMPTY         = "jakarta.validation.constraints.NotEmpty";
@@ -103,6 +106,9 @@ public class FormSpecProcessor extends AbstractProcessor {
                                 + "\n" + sw,
                         element);
             }
+        }
+        if (roundEnv.processingOver()) {
+            writeClassRegistry();
         }
         return true;
     }
@@ -354,76 +360,6 @@ public class FormSpecProcessor extends AbstractProcessor {
         buildConstraintNodes(el, typeInfo.dataType(), fieldName, formId, bundle, constraints);
 
         return node;
-    }
-
-    // ─── ValuesEndpoint node building ────────────────────────────────────────
-
-    private ObjectNode buildValuesEndpointNode(ValuesSource vs, String fieldName,
-                                               String formId, Map<String, String> bundle) {
-        ObjectNode ve = MAPPER.createObjectNode();
-        ve.put("protocol", vs.protocol());
-        ve.put("mode", vs.mode().name());
-
-        if ("INLINE".equalsIgnoreCase(vs.protocol())) {
-            // ── @Inline[] → items array ────────────────────────────────────
-            Inline[] items = vs.items();
-            if (items.length == 0) {
-                messager.printMessage(Diagnostic.Kind.WARNING,
-                        "[InputSpec] -  INLINE protocol without items on field '" + fieldName + "'");
-            }
-            ArrayNode itemsArray = ve.putArray("items");
-            for (Inline item : items) {
-                String labelKey = formId + ".fields." + fieldName
-                        + ".items." + item.value() + ".label";
-                addBundleEntry(bundle, labelKey, item.label());
-
-                ObjectNode alias = MAPPER.createObjectNode();
-                alias.put("value", item.value());
-                alias.set("label", i18nNode(item.label(), labelKey));
-                itemsArray.add(alias);
-            }
-        } else {
-            // ── Remote endpoint ────────────────────────────────────────────
-            ve.put("uri", vs.uri());
-            ve.put("method", vs.method());
-            ve.put("paginationStrategy", vs.pagination().name());
-
-            // ── @SearchParam[] → searchParamsSchema + searchParams ─────────
-            SearchParam[] searchParams = vs.searchParams();
-            if (searchParams.length > 0) {
-                validateSearchParams(searchParams, fieldName);
-                ve.set("searchParamsSchema", buildSearchParamsSchemaNode(searchParams));
-
-                // Concrete searchParams defaults map
-                ObjectNode defaults = buildSearchParamsDefaultsNode(searchParams);
-                if (defaults != null) {
-                    ve.set("searchParams", defaults);
-                }
-            }
-
-            // ── Response mapping ───────────────────────────────────────────
-            if (!vs.dataField().isEmpty()) {
-                ObjectNode responseMapping = ve.putObject("responseMapping");
-                responseMapping.put("dataField", vs.dataField());
-                if (!vs.totalField().isEmpty())
-                    responseMapping.put("totalField", vs.totalField());
-                if (!vs.hasNextField().isEmpty())
-                    responseMapping.put("hasNextField", vs.hasNextField());
-            }
-
-            // ── requestParams ──────────────────────────────────────────────
-            ObjectNode reqParams = ve.putObject("requestParams");
-            reqParams.put("pageParam", vs.pageParam());
-            reqParams.put("limitParam", vs.limitParam());
-            reqParams.put("defaultLimit", vs.defaultLimit());
-
-            // ── Performance hints ──────────────────────────────────────────
-            ve.put("cacheStrategy", vs.cacheStrategy());
-            if (vs.debounceMs() > 0)     ve.put("debounceMs", vs.debounceMs());
-            if (vs.minSearchLength() > 0) ve.put("minSearchLength", vs.minSearchLength());
-        }
-
-        return ve;
     }
 
     // ─── Enum auto-detection → INLINE CLOSED ─────────────────────────────────
@@ -749,6 +685,28 @@ public class FormSpecProcessor extends AbstractProcessor {
     }
 
     // ─── Resource writer ─────────────────────────────────────────────────────
+
+    private void writeClassRegistry() {
+        if (classRegistry.isEmpty()) return;
+        try {
+            FileObject file = filer.createResource(
+                    StandardLocation.CLASS_OUTPUT, "", "META-INF/input-spec/registry.properties");
+            try (PrintWriter w = new PrintWriter(
+                    new OutputStreamWriter(file.openOutputStream(), StandardCharsets.UTF_8))) {
+                w.println("# InputSpec class registry — generated at compile time");
+                w.println("# Maps formId -> fully qualified @FormSpec class name");
+                w.println("# Used at runtime by FormHandlerProvider resolution");
+                w.println("# Do not edit manually.");
+                w.println();
+                classRegistry.forEach((id, fqn) -> w.println(id + "=" + fqn));
+            }
+            messager.printMessage(Diagnostic.Kind.NOTE,
+                    "[InputSpec] Generated class registry with " + classRegistry.size() + " form(s)");
+        } catch (IOException e) {
+            messager.printMessage(Diagnostic.Kind.WARNING,
+                    "[InputSpec] Failed to write class registry: " + e.getMessage());
+        }
+    }
 
     private void writeResource(String path, String content,
                                TypeElement origin) throws IOException {

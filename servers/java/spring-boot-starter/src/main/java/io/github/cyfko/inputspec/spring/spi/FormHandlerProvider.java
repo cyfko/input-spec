@@ -125,12 +125,21 @@ public interface FormHandlerProvider {
      * {@link SubmitResponse#rejected(java.util.List)} — {@link #submit}
      * will not be invoked.</p>
      *
-     * @param formId  the id of the form being validated (one of {@link #getSupportedForms()})
+     * <p>The {@code spec} parameter is the {@code @FormSpec}-annotated class
+     * resolved from the compile-time registry. It can be used to identify
+     * the form (via {@code spec.getAnnotation(FormSpec.class).id()}) or to
+     * deserialize the raw values to a typed object:</p>
+     * <pre>{@code
+     * Object typed = objectMapper.convertValue(rawForm, spec);
+     * }</pre>
+     *
+     * @param spec    the {@code @FormSpec}-annotated class for this form,
+     *                as generated in {@code META-INF/input-spec/registry.properties}
      * @param rawForm the raw field values submitted by the client, keyed by field name
      * @return {@link SubmitResponse#ok()} if validation passes,
      *         or a {@link SubmitResponse#rejected} response with error details otherwise
      */
-    SubmitResponse validate(String formId, Map<String, Object> rawForm);
+    SubmitResponse validate(Class<?> spec, Map<String, Object> rawForm);
 
     /**
      * Processes a validated form submission and produces a result.
@@ -140,11 +149,20 @@ public interface FormHandlerProvider {
      * is guaranteed to be structurally and semantically valid — this method
      * should focus exclusively on the business action (persist, notify, etc.).</p>
      *
-     * @param formId  the id of the form being submitted (one of {@link #getSupportedForms()})
+     * <p>The {@code spec} parameter is the {@code @FormSpec}-annotated class
+     * resolved from the compile-time registry. It can be used to identify
+     * the form (via {@code spec.getAnnotation(FormSpec.class).id()}) or to
+     * deserialize the raw values to a typed object:</p>
+     * <pre>{@code
+     * Object typed = objectMapper.convertValue(rawForm, spec);
+     * }</pre>
+     *
+     * @param spec    the {@code @FormSpec}-annotated class for this form,
+     *                as generated in {@code META-INF/input-spec/registry.properties}
      * @param rawForm the raw field values submitted by the client, keyed by field name
      * @return {@link SubmitResponse#ok()} or {@link SubmitResponse#ok(Object)} on success,
      *         or a {@link SubmitResponse#rejected} response if a last-moment business
      *         condition prevents the submission (e.g. optimistic lock conflict)
      */
-    SubmitResponse submit(String formId, Map<String, Object> rawForm);
+    SubmitResponse submit(Class<?> spec, Map<String, Object> rawForm);
 }
