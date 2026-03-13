@@ -118,6 +118,7 @@ public class FormSpecProcessor extends AbstractProcessor {
     private void processTopLevelForm(TypeElement clazz) throws IOException {
         FormSpec formSpec = clazz.getAnnotation(FormSpec.class);
         String formId = formSpec.id();
+        classRegistry.put(formId, clazz.getQualifiedName().toString());
 
         Map<String, String> bundle = new LinkedHashMap<>();
         ObjectNode root = buildFormNode(clazz, formSpec, formId, bundle);
